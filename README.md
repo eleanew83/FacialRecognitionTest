@@ -1,2 +1,2 @@
-# GorillaVision
-Repo for running GorillaVision.
+# FacialRecognitionTest
+Repo for running facial recognition tests.
