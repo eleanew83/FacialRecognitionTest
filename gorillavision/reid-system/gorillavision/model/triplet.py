@@ -138,7 +138,7 @@ class TripletLoss(pl.LightningModule):
         wandb.log({'train_loss': loss})
         return loss
 
-    def training_epoch_end(self, training_step_outputs):
+    def on_train_epoch_end(self, training_step_outputs):
         pass
 
     def validation_step(self, batch: dict, _batch_idx: int):
@@ -151,7 +151,7 @@ class TripletLoss(pl.LightningModule):
         wandb.log({'val_loss': loss})
         return {'val_loss': loss}
     
-    def validation_epoch_end(self, validationStepOutputs):
+    def on_validation_epoch_end(self, validationStepOutputs):
         avgLoss = torch.stack([x['val_loss'] for x in validationStepOutputs]).mean()
         self.log('avg_val_loss_epoch', avgLoss, prog_bar=True)
         wandb.log({'avg_val_loss_epoch': avgLoss})
