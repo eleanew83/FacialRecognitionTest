@@ -32,6 +32,10 @@ class TripletLoss(pl.LightningModule):
                  class_sampler_config={}, cutoff_classes=True, l2_factor=1e-5, img_preprocess="crop", backbone="inception"):
         super(TripletLoss, self).__init__()
         self.save_hyperparameters()
+
+        # Decide whether to use CPU or GPU automatically
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
         self.df = df
         self.batch_size = batch_size
         self.lr = lr
@@ -134,7 +138,7 @@ class TripletLoss(pl.LightningModule):
         inputs, labels = batch['images'], batch['labels']
         labels = labels.flatten()
         outputs = self.forward(inputs)
-        loss = triplet_semihard_loss(labels, outputs, 'cuda:0')
+        loss = triplet_semihard_loss(labels, outputs, self.device)
         wandb.log({'train_loss': loss})
         return loss
 
@@ -146,7 +150,7 @@ class TripletLoss(pl.LightningModule):
         labels = labels.flatten()
         outputs = self.forward(inputs)
 
-        loss = triplet_semihard_loss(labels, outputs, 'cuda:0')
+        loss = triplet_semihard_loss(labels, outputs, self.device)
         self.log('val_loss', loss)
         wandb.log({'val_loss': loss})
         return {'val_loss': loss}
