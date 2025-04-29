@@ -34,7 +34,7 @@ class TripletLoss(pl.LightningModule):
         self.save_hyperparameters()
 
         # Decide whether to use CPU or GPU automatically
-        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self._device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
         self.df = df
         self.batch_size = batch_size
@@ -138,7 +138,7 @@ class TripletLoss(pl.LightningModule):
         inputs, labels = batch['images'], batch['labels']
         labels = labels.flatten()
         outputs = self.forward(inputs)
-        loss = triplet_semihard_loss(labels, outputs, self.device)
+        loss = triplet_semihard_loss(labels, outputs, self._device)
         wandb.log({'train_loss': loss})
         return loss
 
@@ -150,7 +150,7 @@ class TripletLoss(pl.LightningModule):
         labels = labels.flatten()
         outputs = self.forward(inputs)
 
-        loss = triplet_semihard_loss(labels, outputs, self.device)
+        loss = triplet_semihard_loss(labels, outputs, self._device)
         self.log('val_loss', loss)
         wandb.log({'val_loss': loss})
         return {'val_loss': loss}
