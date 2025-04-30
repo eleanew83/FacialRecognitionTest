@@ -16,6 +16,6 @@ docker run \
     -v "${WORKSPACE_DIR}/macaque_training_config.json:/gorilla-reidentification/reid-system/gorillavision/configs/custom/macaque_config.json" \
     --ipc="host" \
     -it gorilla_triplet \
-    bash -c "pip install traitlets==5.9.0 wandb==0.15.0 && python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json"
+    bash -c "python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json"
 
 echo "Training complete. Stored models in ${MODELS_DIR}" 
