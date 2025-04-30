@@ -88,13 +88,13 @@ annotated-types==0.5.0
 pydantic-core==2.27.2
 sentry-sdk==2.11.0
 setproctitle==1.2.2
-ipython==8.6.0
+ipython==7.34.0
+traitlets==5.1.1
 decorator==5.1.1
 exceptiongroup==1.0.0
 jedi==0.18.1
 parso==0.8.3
 matplotlib-inline==0.1.5
-traitlets==5.2.2
 pexpect==4.8.0
 ptyprocess==0.7.0
 prompt-toolkit==3.0.28
@@ -108,3 +108,4 @@ spacy==3.2.1
 thinc==8.0.13
 jupytext==1.13.7
 jaraco.text==3.7.0
+backports.tarfile==0.1

@@ -6,28 +6,16 @@ import sys
 import os
 import json
 import argparse
-
-# Make sure backports.tarfile is available
-try:
-    import backports.tarfile
-except ImportError:
-    # Create a simple mock module
-    class MockTarfile:
-        @staticmethod
-        def open(*args, **kwargs):
-            pass
-    sys.modules['backports.tarfile'] = MockTarfile()
-    
-# Make sure setuptools is properly set up
-os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'stdlib'
-
-# Now import pytorch lightning
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 # Add the reid-system directory to the path
 sys.path.insert(0, '/gorilla-reidentification/reid-system')
+
+from gorillavision.model.triplet import TripletLoss
+from gorillavision.utils.dataset_utils import load_data
+from gorillavision.utils.logger import logger
 
 # Set up mock wandb
 class MockWandb:
@@ -57,18 +45,9 @@ class MockRun:
     def finish(self):
         pass
 
-# Only create a mock if needed
-try:
-    import wandb
-    print("Using real wandb")
-except ImportError:
-    # Create mock module
-    sys.modules['wandb'] = MockWandb()
-    wandb = sys.modules['wandb']
-
-from gorillavision.model.triplet import TripletLoss
-from gorillavision.utils.dataset_utils import load_data
-from gorillavision.utils.logger import logger
+# Create mock module
+sys.modules['wandb'] = MockWandb()
+wandb = sys.modules['wandb']
 
 def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epochs, sampler, use_augmentation,
           augment_config, model_save_path, train_val_split_overlapping, class_sampler_config, cutoff_classes, 

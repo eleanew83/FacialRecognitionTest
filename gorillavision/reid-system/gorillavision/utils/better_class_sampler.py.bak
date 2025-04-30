@@ -3,35 +3,7 @@ import numpy as np
 from torch.utils.data.sampler import BatchSampler
 from torch.utils.data import DataLoader
 from numpy.random import shuffle, choice
-
-# Safe import of wandb
-try:
-    import wandb
-except Exception as e:
-    print(f"Warning: Could not import wandb - {str(e)}")
-    # Create a mock wandb if import fails
-    class MockWandb:
-        def __init__(self):
-            self.run = MockRun()
-        def init(self, **kwargs):
-            print("Using mock wandb.init()")
-            return self.run
-        def log(self, data, **kwargs):
-            pass
-        def watch(self, model, **kwargs):
-            pass
-        def finish(self):
-            pass
-    
-    class MockRun:
-        def __init__(self):
-            self.name = "mock_run"
-        def log(self, data, **kwargs):
-            pass
-        def finish(self):
-            pass
-    
-    wandb = MockWandb()
+import wandb
 
 class BatchSamplerByClass(BatchSampler):
     def __init__(self, ds, seed=123, classes_per_batch=15, samples_per_class=3):
@@ -68,4 +40,4 @@ class BatchSamplerByClass(BatchSampler):
             yield batch
 
     def __len__(self) -> int:
-        return len(self.ds) // self.batch_size
+        return len(self.ds) // self.batch_size 
