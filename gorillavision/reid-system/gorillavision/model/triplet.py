@@ -33,6 +33,9 @@ class TripletLoss(pl.LightningModule):
         super(TripletLoss, self).__init__()
         self.save_hyperparameters()
 
+        # Initialize WandB here
+        wandb.init(project='Gibraltar_Macaques_TripletLoss', config=self.hparams)  # Pass hyperparameters to WandB
+
         # Decide whether to use CPU or GPU automatically
         self._device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 

@@ -1,5 +1,5 @@
 torchvision==0.14.1
-numpy==1.24.1
+numpy==1.23.5
 pillow==9.3.0
 requests==2.32.3
 certifi==2025.1.31
@@ -61,7 +61,7 @@ ml-dtypes==0.1.0
 namex==0.0.8
 optree==0.14.1
 rich==12.6.0
-markdown-it-py==2.1.0
+markdown-it-py==1.0.0
 mdurl==0.1.2
 pygments==2.13.0
 libclang==14.0.6
@@ -83,7 +83,7 @@ gitdb==4.0.9
 smmap==5.0.0
 platformdirs==4.3.3
 psutil==5.9.4
-pydantic==1.10.2
+pydantic==1.8.2
 annotated-types==0.5.0
 pydantic-core==2.27.2
 sentry-sdk==2.11.0
@@ -104,3 +104,7 @@ asttokens==2.2.1
 executing==0.8.3
 pure-eval==0.2.2
 thop==0.1.1.post2209072238
+spacy==3.2.1
+thinc==8.0.13
+jupytext==1.13.7
+jaraco.text==3.7.0
