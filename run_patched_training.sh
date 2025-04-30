@@ -24,7 +24,7 @@ docker run \
     -v "${HOME}/.config/wandb:/root/.config/wandb" \
     --ipc="host" \
     -it gorilla_triplet \
-    bash -c "set -e; chmod +x /fix_wandb_in_container.sh && /fix_wandb_in_container.sh && python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json" 2>&1 | tee "${LOG_FILE}"
+    bash -c "/fix_wandb_in_container.sh && python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json" 2>&1 | tee "${LOG_FILE}"
 
 EXIT_CODE=${PIPESTATUS[0]}
 
