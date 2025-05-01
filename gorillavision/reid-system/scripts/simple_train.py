@@ -25,6 +25,7 @@ os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'stdlib'
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
 
 # Add the reid-system directory to the path
 sys.path.insert(0, '/gorilla-reidentification/reid-system')
@@ -75,6 +76,32 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
           l2_factor, img_preprocess, backbone, experiment_desc="-"):
     
     logger.info("Initializing Model")
+
+    # WandB initialization
+    wandb.init(
+        project="Gibraltar_Macaques_TripletLoss",
+        config={
+            "lr": lr,
+            "batch_size": batch_size,
+            "embedding_size": embedding_size,
+            "nb_epochs": nb_epochs,
+            "sampler": sampler,
+            "use_augmentation": use_augmentation,
+            "augment_config": augment_config,
+            "cutoff_classes": cutoff_classes,
+            "l2_factor": l2_factor,
+            "img_preprocess": img_preprocess,
+            "backbone": backbone,
+            "experiment_desc": experiment_desc
+        }
+    )
+    
+    # Define the logger
+    wandb_logger = WandbLogger(
+        project="Gibraltar_Macaques_TripletLoss",
+        log_model=True
+    )
+
     img_size = (input_width, input_height)
 
     if not os.path.exists(model_save_path):
@@ -110,7 +137,11 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
     # CPU training
     trainer = pl.Trainer(
         max_epochs=nb_epochs,
-        callbacks=[checkpointCallback]
+        callbacks=[checkpointCallback],
+        logger=wandb_logger,  # <- Add this
+        enable_progress_bar=True,  # <- Show tqdm bar
+        log_every_n_steps=1,       # <- Log frequently
+        enable_model_summary=True  # <- Show model summary
     )
 
     logger.info("Starting Training")

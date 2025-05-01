@@ -130,6 +130,12 @@ class TripletLoss(pl.LightningModule):
         elif self.sampler == "ensure_positive":
             return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=8)
         raise Exception("No sampler specified")
+    
+    def on_train_start(self):
+        try:
+            wandb.watch(self, log='all')
+        except Exception as e:
+            print(f"[wandb] watch failed: {e}")
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
         # GPU & Batched Data augmentation being applied to training
@@ -154,12 +160,12 @@ class TripletLoss(pl.LightningModule):
         outputs = self.forward(inputs)
 
         loss = triplet_semihard_loss(labels, outputs, self._device)
-        self.log('val_loss', loss)
-        wandb.log({'val_loss': loss})
+        self.log('val_loss', loss, prog_bar=True)
+        wandb.log({'val_loss': loss, 'step': self.global_step}})
         return {'val_loss': loss}
     
     def on_validation_epoch_end(self, validationStepOutputs):
         avgLoss = torch.stack([x['val_loss'] for x in validationStepOutputs]).mean()
         self.log('avg_val_loss_epoch', avgLoss, prog_bar=True)
-        wandb.log({'avg_val_loss_epoch': avgLoss})
+        wandb.log({'avg_val_loss_epoch': avgLoss, 'epoch': self.current_epoch})
 
