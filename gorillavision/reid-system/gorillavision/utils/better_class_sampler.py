@@ -53,8 +53,10 @@ class BatchSamplerByClass(BatchSampler):
         np.random.seed(seed)
 
     def __iter__(self):
+        print("[BatchSamplerByClass] Starting iteration")
         current_classes = list(self.classes_ds.keys())
         for i in range(0, self.__len__()):
+            print(f"[BatchSamplerByClass] Yielding batch {i+1}")
             batch = [0] * self.batch_size
             idx_in_batch = 0
             amount_cls = min(self.classes_per_batch, len(current_classes))
@@ -68,4 +70,6 @@ class BatchSamplerByClass(BatchSampler):
             yield batch
 
     def __len__(self) -> int:
-        return len(self.ds) // self.batch_size
+        size = len(self.ds) // self.batch_size
+        print(f"[BatchSamplerByClass] __len__ = {size}")
+        return size

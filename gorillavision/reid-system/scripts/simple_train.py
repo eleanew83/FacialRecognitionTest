@@ -110,11 +110,30 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
     # CPU training
     trainer = pl.Trainer(
         max_epochs=nb_epochs,
-        callbacks=[checkpointCallback]
+        callbacks=[checkpointCallback],
+        enable_progress_bar=False,
+        enable_model_summary=True,
+        log_every_n_steps=1,
+        detect_anomaly=True,  # Helps catch exploding gradients or NaNs
+        num_sanity_val_steps=0
     )
 
+    logger.info("⚠️ Manually calling prepare_data for debug")
+    model.prepare_data()
+    logger.info("⚠️ Manually calling train_dataloader for debug")
+    try:
+        dl = model.train_dataloader()
+        logger.info("✅ train_dataloader returned successfully")
+        # Optional: fetch one batch to force the iteration
+        first_batch = next(iter(dl))
+        logger.info(f"✅ Retrieved first batch with keys: {list(first_batch.keys())}")
+    except Exception as e:
+        logger.error(f"❌ Error in train_dataloader: {e}")
+
+    print("🟡 About to call trainer.fit(model)")
     logger.info("Starting Training")
     trainer.fit(model)
+    print("✅ trainer.fit(model) returned")
     logger.info("Model trained.")
     
     # Find best model

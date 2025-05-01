@@ -150,7 +150,9 @@ class TripletLoss(pl.LightningModule):
                 classes_per_batch = self.class_sampler_config["classes_per_batch"]
                 samples_per_class = self.class_sampler_config["samples_per_class"]
                 logger.info(f"Using BatchSamplerByClass with {classes_per_batch} classes per batch, {samples_per_class} samples per class")
+                logger.info("Creating BatchSamplerByClass...")
                 self.batch_sampler_train = BatchSamplerByClass(ds=self.train_ds, classes_per_batch=classes_per_batch, samples_per_class=samples_per_class)
+                logger.info("BatchSamplerByClass created successfully")
                 self.batch_sampler_val = BatchSamplerByClass(ds=self.validate_ds, classes_per_batch=classes_per_batch, samples_per_class=samples_per_class)
             elif self.sampler == "ensure_positive":
                 logger.info(f"Using BatchSamplerEnsurePositives with batch size {self.batch_size}")
@@ -176,6 +178,9 @@ class TripletLoss(pl.LightningModule):
         except Exception as e:
             logger.error(f"Error in configure_optimizers: {e}")
             raise
+
+    def setup(self, stage: str):
+        logger.info(f"🛠 setup() called with stage: {stage}")
 
     def train_dataloader(self):
         logger.info(f"Setting up train dataloader with sampler: {self.sampler}")

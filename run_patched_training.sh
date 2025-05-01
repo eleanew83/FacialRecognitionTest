@@ -19,12 +19,11 @@ docker run \
     -v "${MODELS_DIR}:/models" \
     -v "${WORKSPACE_DIR}/gorillavision/reid-system:/gorilla-reidentification/reid-system" \
     -v "${WORKSPACE_DIR}/macaque_training_config.json:/gorilla-reidentification/reid-system/gorillavision/configs/custom/macaque_config.json" \
-    -v "${WORKSPACE_DIR}/fix_wandb_in_container.sh:/fix_wandb_in_container.sh" \
     -v "${HOME}/.netrc:/root/.netrc" \
     -v "${HOME}/.config/wandb:/root/.config/wandb" \
     --ipc="host" \
     -it gorilla_triplet \
-    bash -c "/fix_wandb_in_container.sh && python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json" 2>&1 | tee "${LOG_FILE}"
+    bash -c "python3 /gorilla-reidentification/reid-system/scripts/simple_train.py -c custom/macaque_config.json" 2>&1 | tee "${LOG_FILE}"
 
 EXIT_CODE=${PIPESTATUS[0]}
 
