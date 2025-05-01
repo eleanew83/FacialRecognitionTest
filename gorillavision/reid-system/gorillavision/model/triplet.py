@@ -161,7 +161,7 @@ class TripletLoss(pl.LightningModule):
 
         loss = triplet_semihard_loss(labels, outputs, self._device)
         self.log('val_loss', loss, prog_bar=True)
-        wandb.log({'val_loss': loss, 'step': self.global_step}})
+        wandb.log({'val_loss': loss, 'step': self.global_step})
         return {'val_loss': loss}
     
     def on_validation_epoch_end(self, validationStepOutputs):
