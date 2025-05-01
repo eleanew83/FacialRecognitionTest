@@ -6,16 +6,16 @@
 echo "Fixing dependency issues..."
 
 # Install the specific versions known to work together
-pip install --force-reinstall setuptools==65.6.0
-pip install --force-reinstall backports.tarfile==0.1
-pip install --force-reinstall jaraco.text==3.7.0
-pip install --force-reinstall traitlets==5.1.1 ipython==7.34.0
-pip install --force-reinstall pydantic==1.8.2
-pip install --force-reinstall markdown-it-py==1.0.0
+#pip install --force-reinstall setuptools==65.6.0
+#pip install --force-reinstall backports.tarfile==0.1
+#pip install --force-reinstall jaraco.text==3.7.0
+#pip install --force-reinstall traitlets==5.1.1 ipython==7.34.0
+#pip install --force-reinstall pydantic==1.8.2
+#pip install --force-reinstall markdown-it-py==1.0.0
 
 # Try to force reinstall pytorch-lightning to pick up the new dependencies
-pip install --force-reinstall --no-deps pytorch_lightning==2.2.5
-pip install --force-reinstall --no-deps lightning-utilities==0.11.9
+#pip install --force-reinstall --no-deps pytorch_lightning==2.2.5
+#pip install --force-reinstall --no-deps lightning-utilities==0.11.9
 
 # Run pip check to see if there are any remaining conflicts
 echo "Checking for remaining dependency issues..."
