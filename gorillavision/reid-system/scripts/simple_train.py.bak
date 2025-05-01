@@ -6,6 +6,7 @@ import sys
 import os
 import json
 import argparse
+import traceback
 
 # Make sure backports.tarfile is available
 try:
@@ -25,7 +26,7 @@ os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'stdlib'
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 # Add the reid-system directory to the path
 sys.path.insert(0, '/gorilla-reidentification/reid-system')
@@ -76,54 +77,47 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
           l2_factor, img_preprocess, backbone, experiment_desc="-"):
     
     logger.info("Initializing Model")
-
-    # WandB initialization
-    wandb.init(
-        project="Gibraltar_Macaques_TripletLoss",
-        config={
-            "lr": lr,
-            "batch_size": batch_size,
-            "embedding_size": embedding_size,
-            "nb_epochs": nb_epochs,
-            "sampler": sampler,
-            "use_augmentation": use_augmentation,
-            "augment_config": augment_config,
-            "cutoff_classes": cutoff_classes,
-            "l2_factor": l2_factor,
-            "img_preprocess": img_preprocess,
-            "backbone": backbone,
-            "experiment_desc": experiment_desc
-        }
-    )
-    
-    # Define the logger
-    wandb_logger = WandbLogger(
-        project="Gibraltar_Macaques_TripletLoss",
-        log_model=True
-    )
-
     img_size = (input_width, input_height)
 
     if not os.path.exists(model_save_path):
         logger.warning(f"Path {model_save_path} does not exist. Creating it...")
         os.makedirs(model_save_path, exist_ok=True)
 
-    model = TripletLoss(
-        df=df,
-        embedding_size=embedding_size,
-        lr=lr,
-        batch_size=batch_size,
-        sampler=sampler,
-        use_augmentation=use_augmentation,
-        augment_config=augment_config,
-        train_val_split_overlapping=train_val_split_overlapping,
-        class_sampler_config=class_sampler_config,
-        cutoff_classes=cutoff_classes,
-        l2_factor=l2_factor,
-        img_size=img_size,
-        img_preprocess=img_preprocess,
-        backbone=backbone
-    )
+    try:
+        # Initialize model
+        logger.info(f"Creating TripletLoss model with backbone: {backbone}")
+        model = TripletLoss(
+            df=df,
+            embedding_size=embedding_size,
+            lr=lr,
+            batch_size=batch_size,
+            sampler=sampler,
+            use_augmentation=use_augmentation,
+            augment_config=augment_config,
+            train_val_split_overlapping=train_val_split_overlapping,
+            class_sampler_config=class_sampler_config,
+            cutoff_classes=cutoff_classes,
+            l2_factor=l2_factor,
+            img_size=img_size,
+            img_preprocess=img_preprocess,
+            backbone=backbone
+        )
+        logger.info("Model initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize model: {e}")
+        logger.error(traceback.format_exc())
+        raise
+
+    try:
+        # Test forward pass with dummy data
+        logger.info("Testing forward pass with dummy data...")
+        dummy_input = torch.randn(1, 3, input_height, input_width)
+        output = model(dummy_input)
+        logger.info(f"Forward pass successful. Output shape: {output.shape}")
+    except Exception as e:
+        logger.error(f"Forward pass test failed: {e}")
+        logger.error(traceback.format_exc())
+        raise
 
     logger.info("Initializing Trainer")
     checkpointCallback = ModelCheckpoint(
@@ -134,19 +128,59 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
         mode='min'
     )
     
-    # CPU training
-    trainer = pl.Trainer(
-        max_epochs=nb_epochs,
-        callbacks=[checkpointCallback],
-        logger=wandb_logger,  # <- Add this
-        enable_progress_bar=True,  # <- Show tqdm bar
-        log_every_n_steps=1,       # <- Log frequently
-        enable_model_summary=True  # <- Show model summary
+    early_stop_callback = EarlyStopping(
+        monitor='val_loss',
+        patience=3,
+        verbose=True,
+        mode='min'
     )
+    
+    try:
+        # Initialize trainer
+        trainer = pl.Trainer(
+            max_epochs=nb_epochs,
+            callbacks=[checkpointCallback, early_stop_callback],
+            enable_progress_bar=True,
+            log_every_n_steps=1,
+            default_root_dir=model_save_path
+        )
+        logger.info("Trainer initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize trainer: {e}")
+        logger.error(traceback.format_exc())
+        raise
+
+    try:
+        # Call prepare_data manually to check for errors
+        logger.info("Manually calling prepare_data...")
+        model.prepare_data()
+        logger.info("prepare_data completed successfully")
+    except Exception as e:
+        logger.error(f"Error in prepare_data: {e}")
+        logger.error(traceback.format_exc())
+        raise
+
+    try:
+        # Check if dataloaders can be created
+        logger.info("Testing dataloaders...")
+        train_loader = model.train_dataloader()
+        val_loader = model.val_dataloader()
+        logger.info(f"Train dataloader created successfully: {type(train_loader)}")
+        logger.info(f"Validation dataloader created successfully: {type(val_loader)}")
+    except Exception as e:
+        logger.error(f"Error creating dataloaders: {e}")
+        logger.error(traceback.format_exc())
+        raise
 
     logger.info("Starting Training")
-    trainer.fit(model)
-    logger.info("Model trained.")
+    try:
+        # Start training
+        trainer.fit(model)
+        logger.info("Model trained successfully")
+    except Exception as e:
+        logger.error(f"Training failed: {e}")
+        logger.error(traceback.format_exc())
+        raise
     
     # Find best model
     best_loss = float('inf')
@@ -172,11 +206,34 @@ def main():
     args = argparser.parse_args()
     conf_name = args.conf
     
-    config_path = os.path.join("/gorilla-reidentification/reid-system/gorillavision/configs", conf_name)
-    with open(config_path) as config_buffer:    
-        config = json.loads(config_buffer.read())
+    try:
+        config_path = os.path.join("/gorilla-reidentification/reid-system/gorillavision/configs", conf_name)
+        logger.info(f"Loading config from: {config_path}")
+        with open(config_path) as config_buffer:    
+            config = json.loads(config_buffer.read())
+        
+        # Log config values
+        logger.info("Config loaded successfully")
+        logger.info(f"Dataset path: {config['train']['dataset']['path']}")
+        logger.info(f"Backbone: {config['model']['backbone']}")
+        logger.info(f"Image size: {config['model']['input_width']}x{config['model']['input_height']}")
+        logger.info(f"Batch size: {config['train']['batch_size']}")
+        logger.info(f"Embedding size: {config['model']['embedding_size']}")
+        logger.info(f"Using sampler: {config['train']['sampler']}")
+    except Exception as e:
+        logger.error(f"Failed to load config: {e}")
+        logger.error(traceback.format_exc())
+        sys.exit(1)
     
-    df = load_data(config["train"]["dataset"]["path"])
+    try:
+        logger.info(f"Loading dataset from {config['train']['dataset']['path']}...")
+        df = load_data(config["train"]["dataset"]["path"])
+        logger.info(f"Dataset loaded. Shape: {df.shape}")
+    except Exception as e:
+        logger.error(f"Failed to load dataset: {e}")
+        logger.error(traceback.format_exc())
+        sys.exit(1)
+        
     lr = config["train"]["learning_rate"]
     batch_size = config["train"]["batch_size"]
     input_width = config['model']['input_width']
@@ -194,24 +251,29 @@ def main():
     img_preprocess = config["model"]["img_preprocess"]
     backbone = config["model"]["backbone"]
     
-    model_path = train(
-        df, lr, batch_size, input_width, input_height, embedding_size, nb_epochs, 
-        sampler, use_augmentation, augment_config, model_save_path, 
-        train_val_split_overlapping, class_sampler_config, cutoff_classes, 
-        l2_factor, img_preprocess, backbone
-    )
-    
-    logger.info(f"Training completed. Best model: {model_path}")
-    
-    # Update config with model path
-    if model_path:
-        config["create_db"]["model_path"] = model_path
-        config["eval"]["model_path"] = model_path
+    try:
+        model_path = train(
+            df, lr, batch_size, input_width, input_height, embedding_size, nb_epochs, 
+            sampler, use_augmentation, augment_config, model_save_path, 
+            train_val_split_overlapping, class_sampler_config, cutoff_classes, 
+            l2_factor, img_preprocess, backbone
+        )
         
-        with open(config_path, 'w') as f:
-            json.dump(config, f, indent=4)
+        logger.info(f"Training completed. Best model: {model_path}")
         
-        logger.info(f"Updated config file with best model path: {model_path}")
+        # Update config with model path
+        if model_path:
+            config["create_db"]["model_path"] = model_path
+            config["eval"]["model_path"] = model_path
+            
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=4)
+            
+            logger.info(f"Updated config file with best model path: {model_path}")
+    except Exception as e:
+        logger.error(f"Training failed: {e}")
+        logger.error(traceback.format_exc())
+        sys.exit(1)
 
 if __name__ == '__main__':
     main() 

@@ -25,7 +25,6 @@ os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'stdlib'
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
 
 # Add the reid-system directory to the path
 sys.path.insert(0, '/gorilla-reidentification/reid-system')
@@ -99,12 +98,6 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
         backbone=backbone
     )
 
-    # Define the logger
-    wandb_logger = WandbLogger(
-        project="Gibraltar_Macaques_TripletLoss",
-        log_model=True
-    )
-
     logger.info("Initializing Trainer")
     checkpointCallback = ModelCheckpoint(
         dirpath=model_save_path,
@@ -117,11 +110,7 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
     # CPU training
     trainer = pl.Trainer(
         max_epochs=nb_epochs,
-        callbacks=[checkpointCallback],
-        logger=wandb_logger,  # <- Add this
-        enable_progress_bar=True,  # <- Show tqdm bar
-        log_every_n_steps=1,       # <- Log frequently
-        enable_model_summary=True  # <- Show model summary
+        callbacks=[checkpointCallback]
     )
 
     logger.info("Starting Training")
