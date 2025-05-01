@@ -115,20 +115,20 @@ class TripletLoss(pl.LightningModule):
 
     def train_dataloader(self):
         if self.sampler == "class_sampler":
-            return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=8)
+            return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=0)
         elif self.sampler == "random_sampler":
-            return DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=4, drop_last=True)
+            return DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=0, drop_last=True)
         elif self.sampler == "ensure_positive":
-            return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=8)
+            return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=0)
         raise Exception("No sampler specified")
 
     def val_dataloader(self):
         if self.sampler == "class_sampler":
-            return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=8)
+            return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=0)
         elif self.sampler == "random_sampler":
-            return DataLoader(self.validate_ds, batch_size=self.batch_size, shuffle=True, num_workers=4, drop_last=True)
+            return DataLoader(self.validate_ds, batch_size=self.batch_size, shuffle=True, num_workers=0, drop_last=True)
         elif self.sampler == "ensure_positive":
-            return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=8)
+            return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=0)
         raise Exception("No sampler specified")
     
     def on_train_start(self):
@@ -144,6 +144,7 @@ class TripletLoss(pl.LightningModule):
         return batch
 
     def training_step(self, batch: dict, _batch_idx: int):
+        print("⚠️ Entered training_step")
         inputs, labels = batch['images'], batch['labels']
         labels = labels.flatten()
         outputs = self.forward(inputs)
