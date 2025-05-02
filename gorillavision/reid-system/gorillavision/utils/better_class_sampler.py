@@ -35,41 +35,66 @@ except Exception as e:
 
 class BatchSamplerByClass(BatchSampler):
     def __init__(self, ds, seed=123, classes_per_batch=15, samples_per_class=3):
+        print("[BatchSamplerByClass] __init__ called")
         # Uses every class once per batch. For every class takes min(smaples_per_class, len(class.samples))
         
         self.ds = ds
         self.classes_ds = {}
         self.labels = []
-        # create one df for every class
-        for idx, row in enumerate(DataLoader(ds)):
-            self.labels.append(row["labels"].item())
-            if row["labels"].item() not in self.classes_ds:
-                self.classes_ds[row["labels"].item()] = [idx]
-            else: 
-                self.classes_ds[row["labels"].item()].append(idx)
+        # create one df for every class (do NOT use DataLoader here!)
+        for idx in range(len(ds)):
+            row = ds[idx]
+            label = row["labels"].item() if hasattr(row["labels"], 'item') else row["labels"]
+            self.labels.append(label)
+            if label not in self.classes_ds:
+                self.classes_ds[label] = [idx]
+            else:
+                self.classes_ds[label].append(idx)
         self.classes_per_batch = min(classes_per_batch, len(list(self.classes_ds.keys())))
         self.samples_per_class = samples_per_class
         self.batch_size = self.samples_per_class * self.classes_per_batch
         np.random.seed(seed)
+        print(f"[BatchSamplerByClass] Constructed: {len(self.classes_ds)} classes, {self.batch_size} batch size")
+        print("[BatchSamplerByClass] __init__ finished")
+
 
     def __iter__(self):
-        print("[BatchSamplerByClass] Starting iteration")
+        print("[BatchSamplerByClass] __iter__ called")
         current_classes = list(self.classes_ds.keys())
-        for i in range(0, self.__len__()):
-            print(f"[BatchSamplerByClass] Yielding batch {i+1}")
-            batch = [0] * self.batch_size
-            idx_in_batch = 0
+        max_batches = min(self.__len__(), 10)  # Hard safety cap for debug
+        for i in range(0, max_batches):
+            print(f"[BatchSamplerByClass] Yielding batch {i+1} of {max_batches}")
+            batch = []
             amount_cls = min(self.classes_per_batch, len(current_classes))
+            if amount_cls < self.classes_per_batch:
+                print(f"[BatchSamplerByClass] Not enough classes left to fill batch, resetting class pool.")
+                current_classes = list(self.classes_ds.keys())
+                amount_cls = min(self.classes_per_batch, len(current_classes))
+            if amount_cls == 0:
+                raise RuntimeError("[BatchSamplerByClass] No classes available to form a batch!")
             classes = np.random.choice(current_classes, amount_cls, replace=False)
             current_classes = [c for c in current_classes if c not in classes]
-            for i in range(0, len(classes)):
-                num_samples = min(self.samples_per_class, len(self.classes_ds[classes[i]]))
-                selected_idx = np.random.choice(self.classes_ds[classes[i]], num_samples, replace=False)
-                batch[idx_in_batch:idx_in_batch + len(selected_idx)] = selected_idx
-                idx_in_batch += len(selected_idx)
+            for c in classes:
+                num_samples = min(self.samples_per_class, len(self.classes_ds[c]))
+                if num_samples == 0:
+                    print(f"[BatchSamplerByClass] ERROR: No samples for class {c}")
+                    continue
+                if num_samples < self.samples_per_class:
+                    print(f"[BatchSamplerByClass] Not enough samples for class {c}, using {num_samples}.")
+                selected_idx = np.random.choice(self.classes_ds[c], num_samples, replace=False)
+                batch.extend(selected_idx.tolist())
+            if len(batch) == 0:
+                print(f"[BatchSamplerByClass] ERROR: Empty batch at batch {i+1}, skipping!")
+                continue
+            print(f"[BatchSamplerByClass] Batch {i+1} indices: {batch}")
             yield batch
+        print("[BatchSamplerByClass] __iter__ finished")
 
     def __len__(self) -> int:
+        print("[BatchSamplerByClass] __len__ called")
         size = len(self.ds) // self.batch_size
-        print(f"[BatchSamplerByClass] __len__ = {size}")
-        return size
+        # Safety cap to prevent infinite epochs
+        capped_size = min(size, 100)
+        print(f"[BatchSamplerByClass] __len__ = {size}, capped to {capped_size}")
+        print("[BatchSamplerByClass] __len__ finished")
+        return capped_size

@@ -26,11 +26,25 @@ class IndividualsDS(Dataset):
         self.transformations = transformations_crop if img_preprocess == "crop" else transformations_pad
     
     def __getitem__(self, key):
+        print(f"[IndividualsDS] __getitem__ called for index: {key}")
         row = self.dataFrame.iloc[key]
+        try:
+            img = self.transformations(row['images'])
+            print(f"[IndividualsDS] Image transformed for index: {key} (shape: {getattr(img, 'shape', 'unknown')})")
+        except Exception as e:
+            print(f"[IndividualsDS] ERROR transforming image at index {key}: {e}")
+            raise
+        try:
+            label = tensor([row['labels_numeric']], dtype=long)
+        except Exception as e:
+            print(f"[IndividualsDS] ERROR creating label at index {key}: {e}")
+            raise
         return {
-            'images': self.transformations(row['images']),
-            'labels': tensor([row['labels_numeric']], dtype=long),
+            'images': img,
+            'labels': label,
         }
     
     def __len__(self):
-        return len(self.dataFrame.index)
+        l = len(self.dataFrame.index)
+        print(f"[IndividualsDS] __len__ called: {l}")
+        return l

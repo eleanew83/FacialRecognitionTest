@@ -18,7 +18,7 @@
         "model_save_path": "/models",
         "train_val_split_overlapping": true,
         "batch_size": 64,
-        "learning_rate": 1e-5,
+        "learning_rate": 1e-6,
         "nb_epochs": 5,
         "sampler": "class_sampler",
         "class_sampler_config": {

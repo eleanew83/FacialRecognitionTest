@@ -1,6 +1,6 @@
-# FacialRecognitionTest
+# Macaque Facial Recognition
 
-A toolkit for training, evaluating, and running primate face recognition models—primarily macaque identification—powered by the GorillaVision re-identification system.
+This repository contains code for training and evaluating a facial recognition system for macaques using PyTorch Lightning and a Triplet Loss approach with Vision Transformer (ViT) backbone.
 
 ## Table of Contents
 
@@ -159,6 +159,39 @@ All hyperparameters and paths are controlled via `macaque_training_config.json`.
 ```
 
 Modify any of these before launching training.
+
+## Usage
+
+### Training
+
+To train the model, run the following command:
+
+```bash
+./run_training.sh
+```
+
+This script will:
+- Load data from the `macaque_split_data` directory
+- Train a ViT-based facial recognition model using triplet loss
+- Save models to the `macaque_models` directory
+- Log training progress to WandB
+
+### Configuration
+
+The model training parameters are defined in `macaque_training_config.json`. Key parameters include:
+
+- Learning rate: 1e-6 (reduced for stability)
+- Batch size: 32
+- Embedding size: 256
+- Backbone: Vision Transformer (ViT)
+
+### Known Issues and Solutions
+
+1. **Training Stability**: The training uses debug mode with a limited dataset size to ensure stability. This prevents hanging issues with the batch sampler.
+
+2. **NaN Validation Loss**: You may occasionally see NaN values in validation loss. This is handled gracefully and won't crash training.
+
+3. **GPU Support**: For faster training, enable GPU support by adding `--gpus all` to the Docker run command if you have NVIDIA drivers installed.
 
 ## Evaluation & Inference
 

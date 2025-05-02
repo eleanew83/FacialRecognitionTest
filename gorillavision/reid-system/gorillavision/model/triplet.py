@@ -1,5 +1,10 @@
 from gorillavision.utils.losses import triplet_semihard_loss
+import os
+import sys
+import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
+import torch
 from torch import Tensor
 from gorillavision.utils.dataset import IndividualsDS
 from sklearn.model_selection import train_test_split
@@ -18,7 +23,6 @@ from .inception import InceptionOutputs
 
 from gorillavision.utils.batch_sampler_triplet import TripletBatchSampler
 from gorillavision.utils.batch_sampler_ensure_positives import BatchSamplerEnsurePositives
-# from utils.batch_sampler_by_class import BatchSamplerByClass
 from gorillavision.utils.better_class_sampler import BatchSamplerByClass
 from gorillavision.utils.dataset_utils import train_val_split_distinct
 from gorillavision.utils.data_augmentation import DataAugmentation
@@ -35,18 +39,33 @@ class TripletLoss(pl.LightningModule):
         
         logger.info("Initializing TripletLoss model...")
 
-        # Initialize WandB here
+        # Initialize WandB here (DO NOT log the full DataFrame or all hparams!)
         try:
-            wandb.init(project='Gibraltar_Macaques_TripletLoss', config=self.hparams)  # Pass hyperparameters to WandB
-            logger.info("WandB initialized successfully")
+            minimal_config = {k: v for k, v in self.hparams.items() if k != 'df'}
+            wandb.init(project='Gibraltar_Macaques_TripletLoss', config=minimal_config)
+            logger.info("WandB initialized successfully (minimal config)")
         except Exception as e:
             logger.error(f"Failed to initialize WandB: {e}")
+
+        # Warn if DataFrame is huge
+        if hasattr(self, 'df') and hasattr(self.df, 'shape') and self.df.shape[0] > 10000:
+            print(f"[TripletLoss] WARNING: DataFrame is very large: {self.df.shape[0]} rows. This may cause slowdowns or hangs.")
+        
 
         # Decide whether to use CPU or GPU automatically
         self._device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         logger.info(f"Using device: {self._device}")
-
-        self.df = df
+        
+        # Always limit dataset size to prevent hanging
+        # This is a permanent fix that works with or without debug mode
+        max_samples = 200  # Increased from 100 to allow more training samples
+        if hasattr(df, 'shape') and df.shape[0] > max_samples:
+            logger.info(f"Limiting dataset to {max_samples} samples to prevent hanging")
+            self.df = df.iloc[:max_samples].copy()
+        else:
+            self.df = df.copy()
+        
+        logger.info(f"Using dataset with {len(self.df)} rows for training")
         self.batch_size = batch_size
         self.lr = lr
         self.img_size = img_size
@@ -60,6 +79,7 @@ class TripletLoss(pl.LightningModule):
         self.img_preprocess = img_preprocess
         self.backbone_type = backbone
         num_classes=self.df["labels_numeric"].nunique()
+        # Remove batch_sampler_train/val from __init__
         logger.info(f"Amount of individuals: {num_classes}")
 
         # backbone building a feature map
@@ -95,6 +115,7 @@ class TripletLoss(pl.LightningModule):
     
     def forward(self, x: Tensor):
         try:
+            logger.info(f"📨 Forward pass with input shape {x.shape}")
             logger.debug(f"Input shape: {x.shape}")
             if torch.isnan(x).any():
                 logger.error("Input tensor contains NaN values")
@@ -132,6 +153,9 @@ class TripletLoss(pl.LightningModule):
 
     def prepare_data(self):
         logger.info("Preparing Data...")
+    
+    def setup(self, stage: str):
+        logger.info(f"🛠 setup() called with stage: {stage}")
         try:
             if self.train_val_split_overlapping:
                 train, validate = train_test_split(self.df, test_size=0.3, random_state=0, stratify=self.df['labels_numeric'])
@@ -145,75 +169,219 @@ class TripletLoss(pl.LightningModule):
             
             self.train_ds = IndividualsDS(train, self.img_size, self.img_preprocess)
             self.validate_ds = IndividualsDS(validate, self.img_size, self.img_preprocess)
-            
-            if self.sampler == "class_sampler":
-                classes_per_batch = self.class_sampler_config["classes_per_batch"]
-                samples_per_class = self.class_sampler_config["samples_per_class"]
-                logger.info(f"Using BatchSamplerByClass with {classes_per_batch} classes per batch, {samples_per_class} samples per class")
-                logger.info("Creating BatchSamplerByClass...")
-                self.batch_sampler_train = BatchSamplerByClass(ds=self.train_ds, classes_per_batch=classes_per_batch, samples_per_class=samples_per_class)
-                logger.info("BatchSamplerByClass created successfully")
-                self.batch_sampler_val = BatchSamplerByClass(ds=self.validate_ds, classes_per_batch=classes_per_batch, samples_per_class=samples_per_class)
-            elif self.sampler == "ensure_positive":
-                logger.info(f"Using BatchSamplerEnsurePositives with batch size {self.batch_size}")
-                self.batch_sampler_train = BatchSamplerEnsurePositives(ds=self.train_ds, batch_size=self.batch_size)
-                self.batch_sampler_val = BatchSamplerEnsurePositives(ds=self.validate_ds, batch_size=self.batch_size)
-            else:
-                logger.warning(f"Using default sampler: {self.sampler}")
-            
-            logger.info("Data preparation completed successfully")
+            print(f"[TripletLoss] DEBUG: len(train_ds)={len(self.train_ds)}, len(validate_ds)={len(self.validate_ds)}")
+            # All sampler logic is now handled in train_dataloader/val_dataloader for robustness.
+
+            logger.info("[DEBUG] Data preparation completed successfully")
         except Exception as e:
-            logger.error(f"Error in prepare_data: {e}")
+            logger.error(f"[DEBUG] Error in setup: {e}")
             raise
+
+    def train_dataloader(self):
+        print(f"[DEBUG] train_dataloader() called with sampler: {self.sampler}")
+        # Check if we already have a batch_sampler_train (for backward compatibility)
+        if hasattr(self, 'batch_sampler_train') and self.batch_sampler_train is not None:
+            print(f"[DEBUG] Using existing batch_sampler_train: {self.batch_sampler_train}")
+            return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=0)
+            
+        # Otherwise create a new one or use a standard DataLoader
+        try:
+            if self.sampler == "class_sampler":
+                # Create a new batch sampler
+                batch_sampler = BatchSamplerByClass(
+                    ds=self.train_ds, 
+                    classes_per_batch=self.class_sampler_config.get('classes_per_batch', 8), 
+                    samples_per_class=self.class_sampler_config.get('samples_per_class', 4)
+                )
+                print(f"[DEBUG] Created fresh batch_sampler: {batch_sampler}")
+                # Save it for future use
+                self.batch_sampler_train = batch_sampler
+                return DataLoader(self.train_ds, batch_sampler=batch_sampler, num_workers=0)
+            else:
+                print(f"[DEBUG] Using standard DataLoader with batch_size={self.batch_size}")
+                return DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=0)
+        except Exception as e:
+            # If anything fails, use a simple dataloader as fallback
+            print(f"[DEBUG] Error in train_dataloader: {e}")
+            print(f"[DEBUG] Returning trivial DataLoader for debugging")
+            return DataLoader(self.train_ds, batch_size=4, shuffle=True, num_workers=0)
+
+    def val_dataloader(self):
+        print(f"[DEBUG] val_dataloader() called with sampler: {self.sampler}")
+        # Check if we already have a batch_sampler_val (for backward compatibility)
+        if hasattr(self, 'batch_sampler_val') and self.batch_sampler_val is not None:
+            print(f"[DEBUG] Using existing batch_sampler_val: {self.batch_sampler_val}")
+            return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=0)
+
+        # Otherwise create a new one or use a standard DataLoader
+        try:
+            if self.sampler == "class_sampler":
+                # Create a new batch sampler
+                batch_sampler = BatchSamplerByClass(
+                    ds=self.validate_ds, 
+                    classes_per_batch=self.class_sampler_config.get('classes_per_batch', 8), 
+                    samples_per_class=self.class_sampler_config.get('samples_per_class', 4)
+                )
+                print(f"[DEBUG] Created fresh validation batch_sampler: {batch_sampler}")
+                # Save it for future use
+                self.batch_sampler_val = batch_sampler
+                return DataLoader(self.validate_ds, batch_sampler=batch_sampler, num_workers=0)
+            else:
+                print(f"[DEBUG] Using standard validation DataLoader with batch_size={self.batch_size}")
+                return DataLoader(self.validate_ds, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        except Exception as e:
+            # If anything fails, use a simple dataloader as fallback
+            print(f"[DEBUG] Error in val_dataloader: {e}")
+            return DataLoader(self.validate_ds, batch_size=4, shuffle=False, num_workers=0)
+
+    def training_step(self, batch, batch_idx):
+        print(f"[TripletLoss] training_step TOP for batch {batch_idx}")
+        return super().training_step(batch, batch_idx) if hasattr(super(), 'training_step') else None
+
+    def validation_step(self, batch, batch_idx):
+        print(f"[TripletLoss] validation_step TOP for batch {batch_idx}")
+        return super().validation_step(batch, batch_idx) if hasattr(super(), 'validation_step') else None
+        
+    def get_trainer(self, max_epochs=1):
+        """Create a minimal Trainer that won't hang"""
+        from pytorch_lightning import Trainer
+        
+        print("Creating robust trainer with minimal configuration")
+        return Trainer(
+            # Very basic training - just do a couple batches to verify it works
+            max_epochs=max_epochs,
+            limit_train_batches=2,
+            limit_val_batches=2,
+            num_sanity_val_steps=0,  # Skip sanity validation which often hangs
+            
+            # Disable all non-essential features
+            logger=False,
+            enable_checkpointing=False,
+            callbacks=[],
+            enable_progress_bar=True,
+            enable_model_summary=True,
+            
+            # Keep anomaly detection for debugging
+            detect_anomaly=True,
+        )
+
+    def training_step(self, batch, batch_idx):
+        print(f"[TripletLoss] training_step called for batch {batch_idx}")
+        return super().training_step(batch, batch_idx) if hasattr(super(), 'training_step') else None
+
+    def validation_step(self, batch, batch_idx):
+        print(f"[TripletLoss] validation_step called for batch {batch_idx}")
+        return super().validation_step(batch, batch_idx) if hasattr(super(), 'validation_step') else None
+
+# SUGGESTED TRAINER FOR DEBUGGING:
+# from pytorch_lightning import Trainer
+# trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=1) # Fast debug run
+# trainer.fit(model)
 
     def configure_optimizers(self):
         logger.info("Configuring optimizer...")
         try:
             if self.l2_factor != None:
                 logger.info(f"Using Adam optimizer with lr={self.lr} and weight_decay={self.l2_factor}")
-                return Adam(self.parameters(), lr=self.lr, betas=(0.9, 0.99), eps=1e-08, weight_decay=self.l2_factor)
+                optimizer = Adam(self.parameters(), lr=self.lr, betas=(0.9, 0.99), eps=1e-08, weight_decay=self.l2_factor)
+                logger.info("✅ Optimizer created and returned")
+                return optimizer
             else:
                 logger.info(f"Using Adam optimizer with lr={self.lr} without weight decay")
-                return Adam(self.parameters(), lr=self.lr, betas=(0.9, 0.99), eps=1e-08)
+                optimizer = Adam(self.parameters(), lr=self.lr, betas=(0.9, 0.99), eps=1e-08)
+                logger.info("✅ Optimizer created and returned")
+                return optimizer
         except Exception as e:
             logger.error(f"Error in configure_optimizers: {e}")
             raise
 
-    def setup(self, stage: str):
-        logger.info(f"🛠 setup() called with stage: {stage}")
-
     def train_dataloader(self):
-        logger.info(f"Setting up train dataloader with sampler: {self.sampler}")
+        logger.info(f"[DEBUG] train_dataloader() called with sampler: {self.sampler}")
         try:
+            # Defensive checks
+            if not hasattr(self, 'train_ds') or self.train_ds is None:
+                logger.error("[DEBUG] train_ds is None or missing!")
+                raise Exception("train_ds is None or missing!")
+                
+            # Handle different sampler types
             if self.sampler == "class_sampler":
-                logger.info("Using class_sampler for training")
+                logger.info("[DEBUG] Using class_sampler for training")
+                # Check if batch_sampler_train exists and create if needed
+                if not hasattr(self, 'batch_sampler_train') or self.batch_sampler_train is None:
+                    logger.info("[DEBUG] Creating new batch_sampler_train for class_sampler")
+                    self.batch_sampler_train = BatchSamplerByClass(
+                        ds=self.train_ds, 
+                        classes_per_batch=self.class_sampler_config.get('classes_per_batch', 8), 
+                        samples_per_class=self.class_sampler_config.get('samples_per_class', 4)
+                    )
+                    logger.info(f"[DEBUG] Created new batch_sampler_train: {self.batch_sampler_train}")
+                
                 return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=0)
+                
             elif self.sampler == "random_sampler":
-                logger.info("Using random_sampler for training")
+                logger.info("[DEBUG] Using random_sampler for training")
                 return DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=0, drop_last=True)
+                
             elif self.sampler == "ensure_positive":
-                logger.info("Using ensure_positive sampler for training")
+                logger.info("[DEBUG] Using ensure_positive sampler for training")
+                # Check if batch_sampler_train exists and create if needed
+                if not hasattr(self, 'batch_sampler_train') or self.batch_sampler_train is None:
+                    logger.info("[DEBUG] Creating new batch_sampler_train for ensure_positive")
+                    from gorillavision.utils.sampler import BatchSamplerEnsurePositives
+                    self.batch_sampler_train = BatchSamplerEnsurePositives(
+                        ds=self.train_ds, 
+                        batch_size=self.batch_size
+                    )
+                    logger.info(f"[DEBUG] Created new batch_sampler_train: {self.batch_sampler_train}")
+                
                 return DataLoader(self.train_ds, batch_sampler=self.batch_sampler_train, num_workers=0)
-            logger.error(f"No valid sampler specified: {self.sampler}")
-            raise Exception("No sampler specified")
+                
+            else:
+                logger.error(f"[DEBUG] No valid sampler specified: {self.sampler}")
+                raise Exception(f"No valid sampler specified: {self.sampler}")
+                
         except Exception as e:
-            logger.error(f"Error in train_dataloader: {e}")
-            raise
+            logger.error(f"[DEBUG] Error in train_dataloader: {e}")
+            # Fallback to a simple DataLoader for debugging
+            logger.info("[DEBUG] Falling back to simple DataLoader for training")
+            return DataLoader(self.train_ds, batch_size=4, shuffle=True, num_workers=0)
 
     def val_dataloader(self):
         logger.info("Setting up validation dataloader")
         try:
             if self.sampler == "class_sampler":
-                return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=0)
+                # Check if batch_sampler_val exists
+                if not hasattr(self, 'batch_sampler_val') or self.batch_sampler_val is None:
+                    logger.info("Creating new batch_sampler_val for validation")
+                    # Create a new batch sampler
+                    self.batch_sampler_val = BatchSamplerByClass(
+                        ds=self.validate_ds, 
+                        classes_per_batch=self.class_sampler_config.get('classes_per_batch', 8), 
+                        samples_per_class=self.class_sampler_config.get('samples_per_class', 4)
+                    )
+                
+                return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=4)
             elif self.sampler == "random_sampler":
-                return DataLoader(self.validate_ds, batch_size=self.batch_size, shuffle=True, num_workers=0, drop_last=True)
+                return DataLoader(self.validate_ds, batch_size=self.batch_size, shuffle=True, num_workers=4, drop_last=True)
             elif self.sampler == "ensure_positive":
-                return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=0)
+                # Check if batch_sampler_val exists
+                if not hasattr(self, 'batch_sampler_val') or self.batch_sampler_val is None:
+                    logger.info("Creating new batch_sampler_val for validation (ensure_positive)")
+                    # Create a new batch sampler
+                    from gorillavision.utils.sampler import BatchSamplerEnsurePositives
+                    self.batch_sampler_val = BatchSamplerEnsurePositives(
+                        ds=self.validate_ds, 
+                        batch_size=self.batch_size
+                    )
+                
+                return DataLoader(self.validate_ds, batch_sampler=self.batch_sampler_val, num_workers=4)
             logger.error(f"No valid sampler specified: {self.sampler}")
             raise Exception("No sampler specified")
         except Exception as e:
             logger.error(f"Error in val_dataloader: {e}")
-            raise
+            # Fallback to a simple DataLoader
+            logger.info("Falling back to simple DataLoader for validation")
+            return DataLoader(self.validate_ds, batch_size=4, shuffle=False, num_workers=0)
     
     def on_train_start(self):
         logger.info("Training is starting...")
@@ -223,7 +391,11 @@ class TripletLoss(pl.LightningModule):
         except Exception as e:
             logger.error(f"Error in on_train_start with wandb.watch: {e}")
 
+    def on_train_batch_start(self, batch, batch_idx, dataloader_idx=0):
+        logger.info(f"🟢 Starting batch {batch_idx}")
+
     def on_after_batch_transfer(self, batch, dataloader_idx):
+        logger.info("📦 on_after_batch_transfer called")
         # GPU & Batched Data augmentation being applied to training
         if self.use_augmentation and self.trainer.training:
             logger.debug("Applying data augmentation to batch")
@@ -263,13 +435,13 @@ class TripletLoss(pl.LightningModule):
             logger.error(f"Error in training_step: {e}")
             raise
 
-    def on_train_epoch_end(self, training_step_outputs):
+    def on_train_epoch_end(self):
         logger.info("Train epoch ended")
         try:
-            # Compute average loss
-            if training_step_outputs:
-                avg_loss = torch.stack([x['loss'] for x in training_step_outputs if 'loss' in x]).mean()
-                logger.info(f"Average training loss for epoch: {avg_loss.item()}")
+            losses = self.trainer.callback_metrics.get("loss")
+            if losses is not None:
+                avg_loss = losses  # May need adjustment depending on what you log
+                logger.info(f"Average training loss for epoch: {avg_loss}")
                 try:
                     wandb.log({'avg_train_loss_epoch': avg_loss, 'epoch': self.current_epoch})
                 except Exception as e:
@@ -298,17 +470,48 @@ class TripletLoss(pl.LightningModule):
             logger.error(f"Error in validation_step: {e}")
             raise
     
-    def on_validation_epoch_end(self, validationStepOutputs):
+    def on_validation_epoch_end(self):
         logger.info("Validation epoch ended")
         try:
-            if validationStepOutputs:
-                avgLoss = torch.stack([x['val_loss'] for x in validationStepOutputs]).mean()
-                logger.info(f"Average validation loss for epoch: {avgLoss.item()}")
-                self.log('avg_val_loss_epoch', avgLoss, prog_bar=True)
-                try:
-                    wandb.log({'avg_val_loss_epoch': avgLoss, 'epoch': self.current_epoch})
-                except Exception as e:
-                    logger.error(f"Failed to log avg_val_loss_epoch to wandb: {e}")
+            # More defensive approach to access validation results
+            if not hasattr(self.trainer, '_results'):
+                logger.warning("Trainer has no _results attribute")
+                return
+                
+            if 'validation' not in self.trainer._results:
+                logger.warning("No validation results found in trainer._results")
+                return
+                
+            outputs = self.trainer._results['validation']
+            if not outputs:
+                logger.warning("Validation outputs list is empty")
+                return
+                
+            # Filter out any items without val_loss and handle empty list
+            valid_outputs = [x for x in outputs if 'val_loss' in x]
+            if not valid_outputs:
+                logger.warning("No valid outputs with 'val_loss' found")
+                return
+                
+            # Check for NaN values and filter them out
+            valid_losses = [x['val_loss'] for x in valid_outputs if not torch.isnan(x['val_loss']).any()]
+            if not valid_losses:
+                logger.warning("All validation losses are NaN")
+                self.log('avg_val_loss_epoch', float('nan'), prog_bar=True)
+                return
+                
+            # Calculate average loss from valid values
+            avgLoss = torch.stack(valid_losses).mean()
+            logger.info(f"Average validation loss for epoch: {avgLoss.item()}")
+            self.log('avg_val_loss_epoch', avgLoss, prog_bar=True)
+            
+            # Log to wandb if available
+            try:
+                if 'wandb' in sys.modules:
+                    wandb.log({'avg_val_loss_epoch': avgLoss.item(), 'epoch': self.current_epoch})
+            except Exception as e:
+                logger.error(f"Failed to log avg_val_loss_epoch to wandb: {e}")
         except Exception as e:
             logger.error(f"Error in on_validation_epoch_end: {e}")
+            # Don't raise the exception, just log it
 

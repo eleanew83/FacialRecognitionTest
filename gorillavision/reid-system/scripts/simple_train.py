@@ -99,36 +99,73 @@ def train(df, lr, batch_size, input_width, input_height, embedding_size, nb_epoc
     )
 
     logger.info("Initializing Trainer")
-    checkpointCallback = ModelCheckpoint(
-        dirpath=model_save_path,
-        filename=f"Model_macaque_{{epoch}}-loss-{{val_loss:.50f}}",
-        verbose=True,
-        monitor='val_loss',
-        mode='min'
-    )
     
-    # CPU training
-    trainer = pl.Trainer(
-        max_epochs=nb_epochs,
-        callbacks=[checkpointCallback],
-        enable_progress_bar=False,
-        enable_model_summary=True,
-        log_every_n_steps=1,
-        detect_anomaly=True,  # Helps catch exploding gradients or NaNs
-        num_sanity_val_steps=0
-    )
-
-    logger.info("⚠️ Manually calling prepare_data for debug")
-    model.prepare_data()
-    logger.info("⚠️ Manually calling train_dataloader for debug")
-    try:
-        dl = model.train_dataloader()
-        logger.info("✅ train_dataloader returned successfully")
-        # Optional: fetch one batch to force the iteration
-        first_batch = next(iter(dl))
-        logger.info(f"✅ Retrieved first batch with keys: {list(first_batch.keys())}")
-    except Exception as e:
-        logger.error(f"❌ Error in train_dataloader: {e}")
+    # Check for debug mode (fast run with minimal settings)
+    debug_mode = os.environ.get("GORILLA_DEBUG", "0") == "1"
+    if debug_mode:
+        logger.info("🐛 RUNNING IN DEBUG MODE with minimal configuration")
+        # Ultra minimal trainer - just to verify things work
+        trainer = pl.Trainer(
+            max_epochs=1,
+            limit_train_batches=2,  # Run only 2 training batches
+            limit_val_batches=2,    # Run only 2 validation batches
+            num_sanity_val_steps=0, # Skip validation sanity checks
+            logger=False,           # Disable logging
+            enable_checkpointing=False, # Disable checkpointing
+            callbacks=[],           # No callbacks
+            enable_progress_bar=True,
+            enable_model_summary=True,
+            detect_anomaly=True,    # Keep anomaly detection
+        )
+    else:
+        # Regular training but with more robust settings
+        # Only create checkpoint callback if directory is writable
+        try:
+            # Test if directory is writable
+            test_file = os.path.join(model_save_path, ".write_test")
+            with open(test_file, 'w') as f:
+                f.write("test")
+            os.remove(test_file)
+            
+            # Directory is writable, create checkpoint callback
+            checkpointCallback = ModelCheckpoint(
+                dirpath=model_save_path,
+                filename=f"Model_macaque_{{epoch}}-loss-{{val_loss:.50f}}",
+                verbose=True,
+                monitor='val_loss',
+                mode='min',
+                save_top_k=2,  # Only keep 2 best models
+                save_last=True  # Always keep last model
+            )
+            callbacks = [checkpointCallback]
+        except Exception as e:
+            logger.warning(f"Could not write to checkpoint directory: {e}")
+            logger.warning("Training will proceed without checkpointing")
+            callbacks = []
+        
+        # CPU training with safer settings to prevent hanging
+        trainer = pl.Trainer(
+            max_epochs=nb_epochs,
+            callbacks=callbacks,
+            enable_progress_bar=True,
+            enable_model_summary=True,
+            log_every_n_steps=10,
+            detect_anomaly=True,
+            num_sanity_val_steps=0,         # Skip validation sanity checks that often hang
+            max_time={"hours": 12},         # Limit total training time 
+            gradient_clip_val=1.0,          # Prevent exploding gradients
+            gradient_clip_algorithm="norm", # Use gradient norm clipping (more stable)
+            reload_dataloaders_every_n_epochs=1  # Refresh dataloaders between epochs
+        )
+    #     logger.info("✅ train_dataloader returned successfully")
+    #     # Optional: fetch one batch to force the iteration
+    #     first_batch = next(iter(dl))
+    #     logger.info(f"✅ Retrieved first batch with keys: {list(first_batch.keys())}")
+    # except Exception as e:
+    #     logger.error(f"❌ Error in train_dataloader: {e}")
+    # for i, batch in enumerate(dl):
+    #     print(f"✅ Got batch {i}: {batch['images'].shape}")
+    #     break
 
     print("🟡 About to call trainer.fit(model)")
     logger.info("Starting Training")
