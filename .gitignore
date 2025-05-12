@@ -40,6 +40,8 @@ ENV/
 macaque_models/
 macaque_split_data/
 dummy_model.ckpt
+yolo_detection/yolo_detection_data/
+yolo_detection/yolo_detection_code/models
 
 # OS specific
 .DS_Store
