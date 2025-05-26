@@ -8,21 +8,17 @@ from ultralytics import YOLO
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-# Paths setup for running from scripts directory
-script_dir = os.path.dirname(os.path.abspath(__file__))
-yolo_code_dir = os.path.dirname(script_dir)
-yolo_dir = os.path.dirname(yolo_code_dir)
-root_dir = os.path.dirname(yolo_dir)
-
-SOURCE_DIR = os.path.join(root_dir, "macaque_split_data")
-DESTINATION_DIR = os.path.join(root_dir, "yolo_detection", "yolo_detection_data")
+# Paths
+YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
+SOURCE_DIR = os.path.join(os.path.dirname(os.path.dirname(YOLO_BASE)), "macaque_split_data")
+DESTINATION_DIR = os.path.join(os.path.dirname(os.path.dirname(YOLO_BASE)), "yolo_detection", "yolo_detection_data")
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
 def process_images():
     """Process macaque images and generate YOLO format annotations"""
     print("Loading pretrained model for face detection...")
-    model_path = os.path.join(script_dir, "yolov8n.pt")
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
     print(f"Model path: {model_path}")
     print(f"Source directory: {SOURCE_DIR}")
     print(f"Destination directory: {DESTINATION_DIR}")
@@ -32,12 +28,6 @@ def process_images():
     if not os.path.exists(train_dir):
         print(f"ERROR: Train directory does not exist: {train_dir}")
         return
-    
-    # Create destination directories if they don't exist
-    os.makedirs(os.path.join(DESTINATION_DIR, 'images', 'train'), exist_ok=True)
-    os.makedirs(os.path.join(DESTINATION_DIR, 'images', 'val'), exist_ok=True)
-    os.makedirs(os.path.join(DESTINATION_DIR, 'labels', 'train'), exist_ok=True)
-    os.makedirs(os.path.join(DESTINATION_DIR, 'labels', 'val'), exist_ok=True)
     
     model = YOLO(model_path)  # Using YOLOv8 nano model
     
@@ -95,7 +85,7 @@ def process_images():
                     # For macaques, we'll assume the entire image has a macaque
                     # and use a central region as an initial guess
                     center_x, center_y = width / 2, height / 2
-                    box_w, box_h = width * 0.25, height * 0.25  # Smaller boxes work better for macaque faces
+                    box_w, box_h = width * 0.5, height * 0.5
                     x1 = max(0, center_x - box_w / 2)
                     y1 = max(0, center_y - box_h / 2)
                     x2 = min(width, center_x + box_w / 2)
@@ -104,13 +94,11 @@ def process_images():
                 
                 # Save the image
                 img_save_path = os.path.join(DESTINATION_DIR, 'images', split, new_filename)
-                os.makedirs(os.path.dirname(img_save_path), exist_ok=True)
                 cv2.imwrite(img_save_path, img)
                 
                 # Create YOLO format annotation (class x_center y_center width height)
                 label_save_path = os.path.join(DESTINATION_DIR, 'labels', split, 
                                            os.path.splitext(new_filename)[0] + '.txt')
-                os.makedirs(os.path.dirname(label_save_path), exist_ok=True)
                 
                 with open(label_save_path, 'w') as f:
                     for x1, y1, x2, y2 in detections:
@@ -128,7 +116,7 @@ def process_images():
 
 def main():    
     # Download YOLOv8 model if not present
-    model_path = os.path.join(script_dir, "yolov8n.pt")
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
     if not os.path.exists(model_path):
         print("Downloading YOLOv8 nano model...")
         os.system(f"wget -O {model_path} https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt")
@@ -137,13 +125,10 @@ def main():
     print("Dataset preparation completed!")
     
     # Print statistics
-    try:
-        train_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'train')))
-        val_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'val')))
-        print(f"Train images: {train_images}")
-        print(f"Validation images: {val_images}")
-    except Exception as e:
-        print(f"Error getting statistics: {e}")
+    train_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'train')))
+    val_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'val')))
+    print(f"Train images: {train_images}")
+    print(f"Validation images: {val_images}")
 
 if __name__ == "__main__":
     main() 
