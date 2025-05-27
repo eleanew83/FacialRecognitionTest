@@ -40,9 +40,6 @@ names:
 def process_images():
     """Process macaque images and generate YOLO format annotations"""
     print("Loading pretrained model for face detection...")
-
-    yolo_detected_count = 0
-    fallback_count = 0
     
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
     model = YOLO(model_path)
@@ -98,9 +95,6 @@ def process_images():
                     x2 = min(width, center_x + box_w / 2)
                     y2 = min(height, center_y + box_h / 2)
                     detections = [(x1, y1, x2, y2)]
-                    fallback_count += 1
-                else:
-                    yolo_detected_count += 1
 
                 img_save_path = os.path.join(DATA_DIR, 'images', split, new_filename)
                 cv2.imwrite(img_save_path, img)
@@ -115,10 +109,6 @@ def process_images():
                         f.write(f"0 {x_center} {y_center} {w} {h}\n")
             except Exception as e:
                 print(f"Error processing {img_path}: {e}")
-
-    print(f"\n🧾 Detection summary:")
-    print(f"Images with YOLO-detected faces: {yolo_detected_count}")
-    print(f"Images using fallback center box: {fallback_count}")
 
 def main():
     # Clean existing output directory
