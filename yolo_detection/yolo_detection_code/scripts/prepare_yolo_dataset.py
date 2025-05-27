@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import cv2
 import numpy as np
@@ -8,148 +10,140 @@ from ultralytics import YOLO
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-# Paths
-YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
-SOURCE_DIR = os.path.join(os.path.dirname(os.path.dirname(YOLO_BASE)), "macaque_split_data")
-DESTINATION_DIR = os.path.join(os.path.dirname(os.path.dirname(YOLO_BASE)), "yolo_detection", "yolo_detection_data")
+# === Fixed absolute paths ===
+YOLO_BASE = "/home/ylj20/FacialRecognitionTest"
+SOURCE_DIR = os.path.join(YOLO_BASE, "macaque_split_data")
+DATA_DIR = os.path.join(YOLO_BASE, "yolo_detection", "yolo_detection_data")
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
-def ensure_dir_exists(dir_path):
-    """Create directory if it doesn't exist"""
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path, exist_ok=True)
-        print(f"Created directory: {dir_path}")
+def create_dataset_structure():
+    """Create the necessary directory structure for YOLOv8"""
+    for split in ['train', 'val']:
+        for folder in ['images', 'labels']:
+            path = os.path.join(DATA_DIR, folder, split)
+            os.makedirs(path, exist_ok=True)
+
+    # Create dataset.yaml for YOLO training
+    yaml_content = f"""
+path: {os.path.abspath(DATA_DIR)}
+train: images/train
+val: images/val
+
+# Classes
+names:
+  0: macaque_face
+"""
+    with open(os.path.join(DATA_DIR, 'dataset.yaml'), 'w') as f:
+        f.write(yaml_content)
 
 def process_images():
     """Process macaque images and generate YOLO format annotations"""
     print("Loading pretrained model for face detection...")
+
+    yolo_detected_count = 0
+    fallback_count = 0
+    
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
-    print(f"Model path: {model_path}")
-    print(f"Source directory: {SOURCE_DIR}")
-    print(f"Destination directory: {DESTINATION_DIR}")
-    
-    # Check if the source directory exists
-    train_dir = os.path.join(SOURCE_DIR, "train")
-    if not os.path.exists(train_dir):
-        print(f"ERROR: Train directory does not exist: {train_dir}")
-        return
-    
-    # Create destination directories if they don't exist
-    ensure_dir_exists(os.path.join(DESTINATION_DIR, 'images', 'train'))
-    ensure_dir_exists(os.path.join(DESTINATION_DIR, 'images', 'val'))
-    ensure_dir_exists(os.path.join(DESTINATION_DIR, 'labels', 'train'))
-    ensure_dir_exists(os.path.join(DESTINATION_DIR, 'labels', 'val'))
-    
-    model = YOLO(model_path)  # Using YOLOv8 nano model
-    
-    # Collect all image paths from subdirectories (case-insensitive extension search)
+    model = YOLO(model_path)
+
     all_images = []
-    for root, dirs, files in os.walk(train_dir):
+    for root, _, files in os.walk(os.path.join(SOURCE_DIR, "train")):
         for file in files:
-            # Case-insensitive check for image extensions
-            if file.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
+            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
                 all_images.append(os.path.join(root, file))
-    
-    print(f"Found {len(all_images)} images in macaque_split_data/train")
-    
-    # Shuffle and split the dataset
+
+    if not all_images:
+        print("❌ No images found! Ensure SOURCE_DIR/train contains images.")
+        return
+
     random.shuffle(all_images)
     train_size = int(len(all_images) * TRAIN_RATIO)
     train_images = all_images[:train_size]
     val_images = all_images[train_size:]
-    
-    # Process train and validation images
+
     for split, image_list in [('train', train_images), ('val', val_images)]:
         print(f"Processing {split} images...")
         for img_path in tqdm(image_list):
             try:
-                # Read image
                 img = cv2.imread(img_path)
                 if img is None:
                     print(f"Warning: Could not read {img_path}")
                     continue
-                
+
                 height, width = img.shape[:2]
-                
-                # Generate unique filename
                 filename = os.path.basename(img_path)
                 base_name = os.path.splitext(filename)[0]
                 new_filename = f"{base_name}_{hash(img_path) % 10000:04d}.jpg"
-                
-                # Run inference with standard YOLOv8 model
+
                 results = model(img, verbose=False)
-                
-                # Find person detections (class 0 in COCO)
+
                 detections = []
                 for result in results:
                     boxes = result.boxes
                     for box in boxes:
                         cls = int(box.cls.item())
-                        if cls == 0:  # Person class, which might include faces
+                        if cls == 0:
                             x1, y1, x2, y2 = box.xyxy[0].tolist()
                             confidence = box.conf.item()
-                            if confidence > 0.3:  # Confidence threshold
+                            if confidence > 0.3:
                                 detections.append((x1, y1, x2, y2))
-                
-                # If no detections, skip or use the whole image
+
                 if not detections:
-                    # For macaques, we'll assume the entire image has a macaque
-                    # and use a central region as an initial guess
+                    # Use fallback center box
                     center_x, center_y = width / 2, height / 2
-                    box_w, box_h = width * 0.25, height * 0.25  # Smaller boxes for macaque faces
+                    box_w, box_h = width * 0.5, height * 0.5
                     x1 = max(0, center_x - box_w / 2)
                     y1 = max(0, center_y - box_h / 2)
                     x2 = min(width, center_x + box_w / 2)
                     y2 = min(height, center_y + box_h / 2)
                     detections = [(x1, y1, x2, y2)]
-                
-                # Save the image
-                img_dir = os.path.join(DESTINATION_DIR, 'images', split)
-                ensure_dir_exists(img_dir)
-                img_save_path = os.path.join(img_dir, new_filename)
+                    fallback_count += 1
+                else:
+                    yolo_detected_count += 1
+
+                img_save_path = os.path.join(DATA_DIR, 'images', split, new_filename)
                 cv2.imwrite(img_save_path, img)
-                
-                # Create YOLO format annotation (class x_center y_center width height)
-                label_dir = os.path.join(DESTINATION_DIR, 'labels', split)
-                ensure_dir_exists(label_dir)
-                label_save_path = os.path.join(label_dir, os.path.splitext(new_filename)[0] + '.txt')
-                
+
+                label_save_path = os.path.join(DATA_DIR, 'labels', split, os.path.splitext(new_filename)[0] + '.txt')
                 with open(label_save_path, 'w') as f:
                     for x1, y1, x2, y2 in detections:
-                        # Convert to YOLO format (normalized)
                         x_center = ((x1 + x2) / 2) / width
                         y_center = ((y1 + y2) / 2) / height
                         w = (x2 - x1) / width
                         h = (y2 - y1) / height
-                        
-                        # Class 0 for macaque face
                         f.write(f"0 {x_center} {y_center} {w} {h}\n")
-                
             except Exception as e:
                 print(f"Error processing {img_path}: {e}")
 
-def main():    
-    # Download YOLOv8 model if not present
+    print(f"\n🧾 Detection summary:")
+    print(f"Images with YOLO-detected faces: {yolo_detected_count}")
+    print(f"Images using fallback center box: {fallback_count}")
+
+def main():
+    # Clean existing output directory
+    if os.path.exists(DATA_DIR):
+        print(f"Removing existing data directory: {DATA_DIR}")
+        shutil.rmtree(DATA_DIR)
+
+    print(f"[INFO] SOURCE_DIR: {SOURCE_DIR}")
+    print(f"[INFO] DATA_DIR:   {DATA_DIR}")
+
+    create_dataset_structure()
+
+    # Download model if not present
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
     if not os.path.exists(model_path):
         print("Downloading YOLOv8 nano model...")
         os.system(f"wget -O {model_path} https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt")
-    
-    # Ensure destination directory exists
-    ensure_dir_exists(DESTINATION_DIR)
-    
+
     process_images()
-    print("Dataset preparation completed!")
-    
-    # Print statistics
-    try:
-        train_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'train')))
-        val_images = len(os.listdir(os.path.join(DESTINATION_DIR, 'images', 'val')))
-        print(f"Train images: {train_images}")
-        print(f"Validation images: {val_images}")
-    except Exception as e:
-        print(f"Error getting statistics: {e}")
+    print("✅ Dataset preparation completed!")
+
+    train_images = len(os.listdir(os.path.join(DATA_DIR, 'images', 'train')))
+    val_images = len(os.listdir(os.path.join(DATA_DIR, 'images', 'val')))
+    print(f"Train images: {train_images}")
+    print(f"Validation images: {val_images}")
 
 if __name__ == "__main__":
-    main() 
+    main()
