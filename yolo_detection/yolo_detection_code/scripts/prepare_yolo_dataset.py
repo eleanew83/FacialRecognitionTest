@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import random
 import shutil
+import hashlib
 from pathlib import Path
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
@@ -37,6 +38,23 @@ names:
     with open(os.path.join(DATA_DIR, 'dataset.yaml'), 'w') as f:
         f.write(yaml_content)
 
+def get_unique_filename(img_path, base_name):
+    """Generate a unique filename using MD5 hash of the full path"""
+    # Create an MD5 hash of the full path
+    hash_obj = hashlib.md5(img_path.encode())
+    hash_hex = hash_obj.hexdigest()
+    # Use just the first 8 characters of the hash
+    return f"{base_name}_{hash_hex[:8]}.jpg"
+
+def select_best_detection(detections_with_conf):
+    """Select the best detection based on confidence score"""
+    if not detections_with_conf:
+        return None
+    # Sort by confidence (highest first)
+    sorted_detections = sorted(detections_with_conf, key=lambda x: x[1], reverse=True)
+    # Return the coordinates of the highest confidence detection
+    return sorted_detections[0][0]
+
 def process_images():
     """Process macaque images and generate YOLO format annotations"""
     print("Loading pretrained model for face detection...")
@@ -59,6 +77,10 @@ def process_images():
     train_images = all_images[:train_size]
     val_images = all_images[train_size:]
 
+    # Track statistics
+    multi_detection_count = 0
+    placeholder_count = 0
+
     for split, image_list in [('train', train_images), ('val', val_images)]:
         print(f"Processing {split} images...")
         for img_path in tqdm(image_list):
@@ -71,11 +93,12 @@ def process_images():
                 height, width = img.shape[:2]
                 filename = os.path.basename(img_path)
                 base_name = os.path.splitext(filename)[0]
-                new_filename = f"{base_name}_{hash(img_path) % 10000:04d}.jpg"
+                new_filename = get_unique_filename(img_path, base_name)
 
                 results = model(img, verbose=False)
 
-                detections = []
+                # Store detections with their confidence scores
+                detections_with_conf = []
                 for result in results:
                     boxes = result.boxes
                     for box in boxes:
@@ -84,9 +107,17 @@ def process_images():
                             x1, y1, x2, y2 = box.xyxy[0].tolist()
                             confidence = box.conf.item()
                             if confidence > 0.3:
-                                detections.append((x1, y1, x2, y2))
+                                detections_with_conf.append(((x1, y1, x2, y2), confidence))
 
-                if not detections:
+                # Count multiple detections for statistics
+                if len(detections_with_conf) > 1:
+                    multi_detection_count += 1
+
+                # Choose the best detection or use a fallback
+                if detections_with_conf:
+                    best_detection = select_best_detection(detections_with_conf)
+                    x1, y1, x2, y2 = best_detection
+                else:
                     # Use fallback center box
                     center_x, center_y = width / 2, height / 2
                     box_w, box_h = width * 0.5, height * 0.5
@@ -94,27 +125,35 @@ def process_images():
                     y1 = max(0, center_y - box_h / 2)
                     x2 = min(width, center_x + box_w / 2)
                     y2 = min(height, center_y + box_h / 2)
-                    detections = [(x1, y1, x2, y2)]
+                    placeholder_count += 1
 
                 img_save_path = os.path.join(DATA_DIR, 'images', split, new_filename)
                 cv2.imwrite(img_save_path, img)
 
+                # Convert to YOLO format (normalized)
+                x_center = ((x1 + x2) / 2) / width
+                y_center = ((y1 + y2) / 2) / height
+                w = (x2 - x1) / width
+                h = (y2 - y1) / height
+
+                # Write only one annotation per file
                 label_save_path = os.path.join(DATA_DIR, 'labels', split, os.path.splitext(new_filename)[0] + '.txt')
                 with open(label_save_path, 'w') as f:
-                    for x1, y1, x2, y2 in detections:
-                        x_center = ((x1 + x2) / 2) / width
-                        y_center = ((y1 + y2) / 2) / height
-                        w = (x2 - x1) / width
-                        h = (y2 - y1) / height
-                        f.write(f"0 {x_center} {y_center} {w} {h}\n")
+                    f.write(f"0 {x_center} {y_center} {w} {h}\n")
             except Exception as e:
                 print(f"Error processing {img_path}: {e}")
+
+    print(f"📊 Images with multiple detections (used highest confidence): {multi_detection_count}")
+    print(f"📊 Images with placeholder boxes (no detection): {placeholder_count}")
 
 def main():
     # Clean existing output directory
     if os.path.exists(DATA_DIR):
         print(f"Removing existing data directory: {DATA_DIR}")
         shutil.rmtree(DATA_DIR)
+    
+    print(f"Creating fresh data directory: {DATA_DIR}")
+    os.makedirs(DATA_DIR, exist_ok=True)
 
     print(f"[INFO] SOURCE_DIR: {SOURCE_DIR}")
     print(f"[INFO] DATA_DIR:   {DATA_DIR}")

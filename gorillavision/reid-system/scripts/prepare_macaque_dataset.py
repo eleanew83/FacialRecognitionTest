@@ -19,6 +19,14 @@ def split_dataset(source_dir, target_dir, train_ratio=0.7, db_ratio=0.15, eval_r
     """
     random.seed(random_seed)
     
+    # Clean and recreate target directory
+    if os.path.exists(target_dir):
+        print(f"Removing existing target directory: {target_dir}")
+        shutil.rmtree(target_dir)
+    
+    print(f"Creating fresh target directory: {target_dir}")
+    os.makedirs(target_dir, exist_ok=True)
+    
     # Create target directories
     train_dir = os.path.join(target_dir, 'train')
     db_dir = os.path.join(target_dir, 'database_set')

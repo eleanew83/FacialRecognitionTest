@@ -11,8 +11,14 @@ def flatten_directory_structure(source_dir, target_dir):
         source_dir: Path to the source directory with nested structure
         target_dir: Path to create the flattened directory structure
     """
-    # Create target directory if it doesn't exist
+    # Remove target directory if it exists, then recreate it
+    if os.path.exists(target_dir):
+        print(f"Removing existing target directory: {target_dir}")
+        shutil.rmtree(target_dir)
+    
+    # Create target directory
     os.makedirs(target_dir, exist_ok=True)
+    print(f"Created fresh target directory: {target_dir}")
     
     # Walk through the directory structure
     for location in os.listdir(source_dir):
@@ -38,8 +44,8 @@ def flatten_directory_structure(source_dir, target_dir):
                 if not os.path.isdir(individual_path) or individual.startswith('.'):
                     continue
                 
-                # Create a unique name for each individual to avoid conflicts
-                unique_name = f"{location}_{gender}_{individual}"
+                # Use just the individual name instead of the full path structure
+                unique_name = individual
                 target_individual_path = os.path.join(target_dir, unique_name)
                 
                 # Create target directory

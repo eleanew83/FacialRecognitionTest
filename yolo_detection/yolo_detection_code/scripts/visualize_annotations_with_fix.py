@@ -13,6 +13,11 @@ MEDIAPIPE_MODEL = None
 YOLO_MODEL = None
 HAAR_MODEL = None
 
+# Minimum acceptable box size (as a ratio of image dimensions)
+MIN_BOX_SIZE_RATIO = 0.1
+# Standard placeholder annotation values
+PLACEHOLDER_ANNOTATION = (0.5, 0.5, 0.5, 0.5)
+
 def load_mediapipe(conf=0.3):
     """Load MediaPipe face detection model"""
     try:
@@ -52,11 +57,17 @@ def load_haar():
         return None
 
 def is_placeholder_annotation(x_center, y_center, w, h):
-    """Check if annotation is likely a placeholder (centered box)"""
-    return (abs(x_center - 0.5) < 0.05 and 
-            abs(y_center - 0.5) < 0.05 and 
-            abs(w - 0.5) < 0.05 and 
-            abs(h - 0.5) < 0.05)
+    """Check if annotation is exactly the placeholder (0.5, 0.5, 0.5, 0.5)"""
+    # Use a small epsilon for float comparison
+    epsilon = 1e-6
+    return (abs(x_center - 0.5) < epsilon and 
+            abs(y_center - 0.5) < epsilon and 
+            abs(w - 0.5) < epsilon and 
+            abs(h - 0.5) < epsilon)
+
+def is_box_too_small(w, h):
+    """Check if the box is too small (less than the minimum ratio)"""
+    return w < MIN_BOX_SIZE_RATIO or h < MIN_BOX_SIZE_RATIO
 
 def detect_face_mediapipe(image, confidence=0.3):
     """Detect faces using MediaPipe"""
@@ -163,25 +174,25 @@ def detect_face_multi_method(image, confidence=0.3):
     """Try multiple face detection methods and return the best one"""
     detections = []
     
-    # Try MediaPipe (usually works well for primates)
-    mp_dets = detect_face_mediapipe(image, confidence)
-    if mp_dets:
-        detections.extend(mp_dets)
-        method = "MediaPipe"
+    # Try YOLO first
+    yolo_dets = detect_face_yolo(image, confidence)
+    if yolo_dets:
+        detections.extend(yolo_dets)
+        method = "YOLO"
     
-    # If no MediaPipe detections, try YOLO
-    if not detections:
-        yolo_dets = detect_face_yolo(image, confidence)
-        if yolo_dets:
-            detections.extend(yolo_dets)
-            method = "YOLO"
-    
-    # If still no detections, try Haar
+    # If no YOLO detections, try Haar
     if not detections:
         haar_dets = detect_face_haar(image)
         if haar_dets:
             detections.extend(haar_dets)
             method = "Haar"
+    
+    # If still no detections, try MediaPipe with higher confidence
+    if not detections:
+        mp_dets = detect_face_mediapipe(image, 0.4)  # Use 0.4 confidence for MediaPipe
+        if mp_dets:
+            detections.extend(mp_dets)
+            method = "MediaPipe"
     
     # If all methods failed, use central box
     if not detections:
@@ -276,59 +287,98 @@ def fix_annotations(images_dir, labels_dir, confidence=0.3):
         HAAR_MODEL = load_haar()
     
     image_files = [f for f in os.listdir(images_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    print(f"Fixing annotations for {len(image_files)} images")
+    print(f"Found {len(image_files)} images in {images_dir}")
+    
+    # Check how many already have valid annotations (for resume functionality)
+    already_fixed = 0
+    placeholder_count = 0
+    needs_processing = []
+    
+    for img_file in image_files:
+        label_file = os.path.join(labels_dir, f"{os.path.splitext(img_file)[0]}.txt")
+        
+        needs_fixing = True
+        if os.path.exists(label_file):
+            try:
+                with open(label_file, 'r') as f:
+                    annotations = f.readlines()
+                
+                # If exactly one annotation and not a placeholder and not too small, keep it
+                if len(annotations) == 1:
+                    parts = annotations[0].strip().split()
+                    if len(parts) == 5:
+                        _, x_center, y_center, w, h = map(float, parts)
+                        
+                        # Check if this is a placeholder annotation
+                        if is_placeholder_annotation(x_center, y_center, w, h):
+                            placeholder_count += 1
+                            needs_fixing = True  # Force re-processing of placeholder annotations
+                        elif not is_box_too_small(w, h):
+                            needs_fixing = False
+                            already_fixed += 1
+            except Exception as e:
+                # If there's an error reading the file, it needs fixing
+                print(f"Error reading {label_file}: {e}")
+                pass
+        
+        if needs_fixing:
+            needs_processing.append(img_file)
+    
+    print(f"📊 Resume status: {already_fixed} already have good annotations")
+    print(f"📊 Found {placeholder_count} placeholder annotations to be fixed")
+    print(f"📊 Total {len(needs_processing)} images need processing")
+    
+    if len(needs_processing) == 0:
+        print("✅ All annotations are already fixed!")
+        return 0, {}
     
     # Statistics
     fixed_count = 0
-    method_counts = {"MediaPipe": 0, "YOLO": 0, "Haar": 0, "Fallback": 0}
+    small_box_count = 0
+    skipped_count = 0
+    method_counts = {"MediaPipe": 0, "YOLO": 0, "Haar": 0, "Fallback": 0, "Placeholder (small box)": 0}
     
-    for img_file in tqdm(image_files, desc="Fixing annotations"):
+    for img_file in tqdm(needs_processing, desc="Fixing annotations"):
         label_file = os.path.join(labels_dir, f"{os.path.splitext(img_file)[0]}.txt")
         img_path = os.path.join(images_dir, img_file)
         
         # Read image
         image = cv2.imread(img_path)
         if image is None:
+            skipped_count += 1
             continue
         
         height, width = image.shape[:2]
         
-        # Check if annotation needs fixing
-        needs_fixing = True
-        if os.path.exists(label_file):
-            with open(label_file, 'r') as f:
-                annotations = f.readlines()
-            
-            # If exactly one annotation and not a placeholder, keep it
-            if len(annotations) == 1:
-                parts = annotations[0].strip().split()
-                if len(parts) == 5:
-                    _, x_center, y_center, w, h = map(float, parts)
-                    if not is_placeholder_annotation(x_center, y_center, w, h):
-                        needs_fixing = False
+        # Detect face using multiple methods
+        best_detection, method = detect_face_multi_method(image, confidence)
         
-        # Fix annotation if needed
-        if needs_fixing:
-            # Detect face using multiple methods
-            best_detection, method = detect_face_multi_method(image, confidence)
+        if best_detection:
+            x1, y1, x2, y2, conf = best_detection
             
-            if best_detection:
-                x1, y1, x2, y2, conf = best_detection
-                
-                # Convert to YOLO format (normalized)
-                x_center = ((x1 + x2) / 2) / width
-                y_center = ((y1 + y2) / 2) / height
-                w = (x2 - x1) / width
-                h = (y2 - y1) / height
-                
-                # Write new annotation
-                with open(label_file, 'w') as f:
-                    f.write(f"0 {x_center} {y_center} {w} {h}\n")
-                
-                fixed_count += 1
-                method_counts[method] += 1
+            # Convert to YOLO format (normalized)
+            x_center = ((x1 + x2) / 2) / width
+            y_center = ((y1 + y2) / 2) / height
+            w = (x2 - x1) / width
+            h = (y2 - y1) / height
+            
+            # Check if box is too small, use placeholder if it is
+            if is_box_too_small(w, h):
+                x_center, y_center, w, h = PLACEHOLDER_ANNOTATION
+                method = "Placeholder (small box)"
+                small_box_count += 1
+            
+            # Write new annotation
+            with open(label_file, 'w') as f:
+                f.write(f"0 {x_center} {y_center} {w} {h}\n")
+            
+            fixed_count += 1
+            method_counts[method] += 1
     
     print(f"✅ Fixed {fixed_count} annotations")
+    if skipped_count > 0:
+        print(f"⚠️ Skipped {skipped_count} images (could not read)")
+    print(f"📊 Boxes replaced with placeholder due to small size: {small_box_count}")
     print(f"📊 Detection methods used:")
     for method, count in method_counts.items():
         if count > 0:
@@ -344,6 +394,12 @@ def main():
     args = parser.parse_args()
 
     dataset_dir = "/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_data"
+    
+    # Clean visualization directory if it exists
+    vis_base_dir = os.path.join(dataset_dir, 'visualization')
+    if os.path.exists(vis_base_dir):
+        print(f"Cleaning visualization directory: {vis_base_dir}")
+        shutil.rmtree(vis_base_dir)
     
     # Load models if fixing
     global MEDIAPIPE_MODEL, YOLO_MODEL, HAAR_MODEL
