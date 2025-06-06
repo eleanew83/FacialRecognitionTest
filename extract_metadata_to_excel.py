@@ -59,9 +59,17 @@ def parse_filename(filename):
         if len(parts) >= 2:
             parsed_info['location_code'] = parts[1]
         
-        # Third part should be sex code
-        if len(parts) >= 3:
-            parsed_info['sex_code'] = parts[2]
+        # Extract sex/age code - only if there's exactly one valid code
+        valid_codes = []
+        sex_age_pattern = re.compile(r'^(A?[MF]|S[AM]M?)$')  # Matches AM, AF, SAM, SM, etc.
+        
+        for part in parts[2:]:
+            if sex_age_pattern.match(part):
+                valid_codes.append(part)
+        
+        # Only set sex_code if there's exactly one valid code found
+        if len(valid_codes) == 1:
+            parsed_info['sex_code'] = valid_codes[0]
         
         # Extract waypoint number from anywhere in the filename
         waypoint_match = re.search(r'wpt(\d+)', name_without_ext)
@@ -246,9 +254,9 @@ def get_file_stats(file_path):
             'file_created': ''
         }
 
-def process_directory(base_path):
+def process_directory(base_path, group_name):
     """
-    Process all images in the Middle Hill directory structure.
+    Process all images in the given directory structure.
     """
     all_data = []
     
@@ -296,7 +304,7 @@ def process_directory(base_path):
                 row_data = {
                     'filename': filename_info['filename'],
                     'individual_name': individual_dir,  # Use directory name as the true individual name
-                    'group': 'Middle Hill',
+                    'group': group_name,
                     'sex': sex_dir.rstrip('s'),  # 'females' -> 'female', 'males' -> 'male'
                     'date_from_filename': filename_info['parsed_date'],
                     'location_code': filename_info['location_code'],
@@ -344,22 +352,35 @@ def process_directory(base_path):
 def main():
     parser = argparse.ArgumentParser(description='Extract metadata from Gibraltar Macaque photos')
     parser.add_argument('--base-path', 
-                       default='/home/ylj20/Gibraltar_Macaques_Photos_Cleaned/Middle Hill',
-                       help='Base path to the Middle Hill directory')
-    parser.add_argument('--output', 
-                       default='macaque_metadata.xlsx',
-                       help='Output Excel file name')
+                       default='/home/ylj20/Gibraltar_Macaques_Photos_Cleaned',
+                       help='Base path to the directory containing macaque photos')
+    parser.add_argument('--group',
+                       default='Middle Hill',
+                       help='Name of the macaque group being processed')
+    parser.add_argument('--output',
+                       default=None,
+                       help='Output Excel file name (defaults to <group_name>_macaque_metadata.xlsx)')
     
     args = parser.parse_args()
     
-    if not os.path.exists(args.base_path):
-        print(f"Error: Base path does not exist: {args.base_path}")
+    # Construct the full path by joining base_path with group name
+    # Keep the original group name with spaces for directory path
+    full_path = os.path.join(args.base_path, args.group)
+    
+    if not os.path.exists(full_path):
+        print(f"Error: Path does not exist: {full_path}")
         return
     
-    print(f"Starting metadata extraction from: {args.base_path}")
+    # Set the output filename based on group name if not explicitly provided
+    if args.output is None:
+        args.output = f"{args.group.replace(' ', '_').lower()}_macaque_metadata.xlsx"
+    
+    print(f"Starting metadata extraction from: {full_path}")
+    print(f"Group name: {args.group}")
+    print(f"Output will be saved to: {args.output}")
     
     # Process all images
-    all_data = process_directory(args.base_path)
+    all_data = process_directory(full_path, args.group)
     
     if not all_data:
         print("No images found to process!")
@@ -370,6 +391,19 @@ def main():
     
     # Sort by individual name and filename
     df = df.sort_values(['individual_name', 'filename'])
+    
+    # Function to clean strings for Excel
+    def clean_for_excel(value):
+        if isinstance(value, str):
+            # Replace any characters that Excel might have trouble with
+            # This includes control characters, especially \x00-\x1F except for \t, \r, \n
+            result = ''.join(ch if ch >= ' ' and ch != '\x7f' else ' ' for ch in value)
+            return result
+        return value
+    
+    # Apply cleaning to all string columns in the DataFrame
+    for column in df.select_dtypes(include=['object']).columns:
+        df[column] = df[column].apply(clean_for_excel)
     
     # Save to Excel
     with pd.ExcelWriter(args.output, engine='openpyxl') as writer:
@@ -396,6 +430,10 @@ def main():
             })
         
         summary_df = pd.DataFrame(summary_data)
+        # Clean summary data strings too
+        for column in summary_df.select_dtypes(include=['object']).columns:
+            summary_df[column] = summary_df[column].apply(clean_for_excel)
+            
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
         
         # Waypoint analysis sheet
@@ -407,6 +445,11 @@ def main():
                 'date_from_filename': ['min', 'max']
             }).reset_index()
             waypoint_summary.columns = ['Waypoint', 'Image Count', 'Individuals', 'First Date', 'Last Date']
+            
+            # Clean waypoint summary strings too
+            for column in waypoint_summary.select_dtypes(include=['object']).columns:
+                waypoint_summary[column] = waypoint_summary[column].apply(clean_for_excel)
+                
             waypoint_summary.to_excel(writer, sheet_name='Waypoint Analysis', index=False)
     
     print(f"\nMetadata extraction complete!")
