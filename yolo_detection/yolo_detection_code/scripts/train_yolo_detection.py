@@ -8,7 +8,7 @@ import shutil
 YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
 MODEL_DIR = os.path.join(YOLO_BASE, "models")
 OUTPUT_DIR = os.path.join(YOLO_BASE, "output")
-DATASET_DIR = os.path.join(os.path.dirname(YOLO_BASE), "yolo_detection")  # Parent directory's yolo_detection
+DATASET_DIR = "/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_data"  # Absolute path to dataset
 
 def train_model(epochs=100, batch_size=16, img_size=640, device="0"):
     """
