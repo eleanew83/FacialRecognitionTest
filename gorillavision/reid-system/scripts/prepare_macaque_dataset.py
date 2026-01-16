@@ -5,16 +5,16 @@ import random
 import argparse
 from pathlib import Path
 
-def split_dataset(source_dir, target_dir, train_ratio=0.7, db_ratio=0.15, eval_ratio=0.15, random_seed=42):
+def split_dataset(source_dir, target_dir, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15, random_seed=42):
     """
-    Split the dataset into train, database and evaluation sets.
+    Split the dataset into train, validation, and test sets.
     
     Args:
         source_dir: Path to the source directory with individual folders
         target_dir: Path to create the split datasets
         train_ratio: Ratio of images to use for training
-        db_ratio: Ratio of images to use for database creation
-        eval_ratio: Ratio of images to use for evaluation
+        val_ratio: Ratio of images to use for validation
+        test_ratio: Ratio of images to use for testing
         random_seed: Random seed for reproducibility
     """
     random.seed(random_seed)
@@ -29,12 +29,12 @@ def split_dataset(source_dir, target_dir, train_ratio=0.7, db_ratio=0.15, eval_r
     
     # Create target directories
     train_dir = os.path.join(target_dir, 'train')
-    db_dir = os.path.join(target_dir, 'database_set')
-    eval_dir = os.path.join(target_dir, 'eval')
+    val_dir = os.path.join(target_dir, 'val')
+    test_dir = os.path.join(target_dir, 'test')
     
     os.makedirs(train_dir, exist_ok=True)
-    os.makedirs(db_dir, exist_ok=True)
-    os.makedirs(eval_dir, exist_ok=True)
+    os.makedirs(val_dir, exist_ok=True)
+    os.makedirs(test_dir, exist_ok=True)
     
     # Process each individual's folder
     for individual in os.listdir(source_dir):
@@ -63,18 +63,18 @@ def split_dataset(source_dir, target_dir, train_ratio=0.7, db_ratio=0.15, eval_r
         
         # Calculate split sizes
         n_train = max(2, int(len(image_files) * train_ratio))
-        n_db = max(1, int(len(image_files) * db_ratio))
-        n_eval = max(1, len(image_files) - n_train - n_db)
+        n_val = max(1, int(len(image_files) * val_ratio))
+        n_test = max(1, len(image_files) - n_train - n_val)
         
         # Split images
         train_images = image_files[:n_train]
-        db_images = image_files[n_train:n_train+n_db]
-        eval_images = image_files[n_train+n_db:n_train+n_db+n_eval]
+        val_images = image_files[n_train:n_train+n_val]
+        test_images = image_files[n_train+n_val:n_train+n_val+n_test]
         
         # Create individual folders in each split
         os.makedirs(os.path.join(train_dir, individual), exist_ok=True)
-        os.makedirs(os.path.join(db_dir, individual), exist_ok=True)
-        os.makedirs(os.path.join(eval_dir, individual), exist_ok=True)
+        os.makedirs(os.path.join(val_dir, individual), exist_ok=True)
+        os.makedirs(os.path.join(test_dir, individual), exist_ok=True)
         
         # Copy images to respective splits
         for img in train_images:
@@ -83,45 +83,45 @@ def split_dataset(source_dir, target_dir, train_ratio=0.7, db_ratio=0.15, eval_r
                 os.path.join(train_dir, individual, img)
             )
         
-        for img in db_images:
+        for img in val_images:
             shutil.copy2(
                 os.path.join(individual_dir, img),
-                os.path.join(db_dir, individual, img)
+                os.path.join(val_dir, individual, img)
             )
         
-        for img in eval_images:
+        for img in test_images:
             shutil.copy2(
                 os.path.join(individual_dir, img),
-                os.path.join(eval_dir, individual, img)
+                os.path.join(test_dir, individual, img)
             )
         
-        print(f"Processed {individual}: {n_train} train, {n_db} database, {n_eval} eval images")
+        print(f"Processed {individual}: {n_train} train, {n_val} val, {n_test} test images")
 
 def main():
-    parser = argparse.ArgumentParser(description='Split dataset into train, database and evaluation sets')
+    parser = argparse.ArgumentParser(description='Split dataset into train, validation, and test sets')
     parser.add_argument('--source', type=str, required=True, help='Source directory with individual folders')
     parser.add_argument('--target', type=str, required=True, help='Target directory for the split datasets')
     parser.add_argument('--train-ratio', type=float, default=0.7, help='Ratio of images for training')
-    parser.add_argument('--db-ratio', type=float, default=0.15, help='Ratio of images for database')
-    parser.add_argument('--eval-ratio', type=float, default=0.15, help='Ratio of images for evaluation')
+    parser.add_argument('--val-ratio', type=float, default=0.15, help='Ratio of images for validation')
+    parser.add_argument('--test-ratio', type=float, default=0.15, help='Ratio of images for testing')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     
     args = parser.parse_args()
     
     # Ensure ratios sum to 1
-    total_ratio = args.train_ratio + args.db_ratio + args.eval_ratio
+    total_ratio = args.train_ratio + args.val_ratio + args.test_ratio
     if abs(total_ratio - 1.0) > 0.001:
         args.train_ratio /= total_ratio
-        args.db_ratio /= total_ratio
-        args.eval_ratio /= total_ratio
-        print(f"Warning: Ratios adjusted to sum to 1: {args.train_ratio:.2f}, {args.db_ratio:.2f}, {args.eval_ratio:.2f}")
+        args.val_ratio /= total_ratio
+        args.test_ratio /= total_ratio
+        print(f"Warning: Ratios adjusted to sum to 1: {args.train_ratio:.2f}, {args.val_ratio:.2f}, {args.test_ratio:.2f}")
     
     split_dataset(
         args.source,
         args.target,
         args.train_ratio,
-        args.db_ratio,
-        args.eval_ratio,
+        args.val_ratio,
+        args.test_ratio,
         args.seed
     )
 

@@ -14,6 +14,8 @@ This repository contains code for training and evaluating a facial recognition s
 - [Evaluation & Inference](#evaluation--inference)  
 - [Scripts & Utilities](#scripts--utilities)  
 - [YOLO Detection Pipeline](#yolo-detection-pipeline)  
+- [Identification Training (GorillaVision)](#identification-training-gorillavision)  
+- [Troubleshooting](#troubleshooting)  
 - [Contributing](#contributing)  
 - [License](#license)  
 
@@ -39,7 +41,7 @@ FacialRecognitionTest/
 │   ├── gorillavisionarchitecture.png
 │   ├── LICENSE
 │   └── README.md                  # GorillaVision docs
-├── macaque_split_data/            # Auto-generated train/db/eval splits
+├── macaque_split_data/            # Auto-generated train/val/test splits
 ├── macaque_models/                # Output trained models & checkpoints
 ├── run_patched_training.sh        # Entrypoint for Dockerized training
 ├── patch_triplet.py               # Fixes Lightning v2.0 API in TripletLoss
@@ -65,8 +67,8 @@ Gibraltar_Macaques/
 Place this folder anywhere (e.g. in `data/`), then use our split script to generate:
 
 - `train/`
-- `database_set/`
-- `eval/`
+- `val/`
+- `test/`
 
 under `macaque_split_data/`.
 
@@ -79,13 +81,13 @@ python3 gorillavision/reid-system/scripts/prepare_macaque_dataset.py \
   --source /path/to/Gibraltar_Macaques \
   --target ./macaque_split_data \
   --train-ratio 0.7 \
-  --db-ratio 0.15 \
-  --eval-ratio 0.15
+  --val-ratio 0.15 \
+  --test-ratio 0.15
 ```
 
 - **train**: for model fitting  
-- **database_set**: for building the identity database  
-- **eval**: for final performance metrics  
+- **val**: for building the identity database  
+- **test**: for final performance metrics  
 
 ## Training
 
@@ -128,11 +130,11 @@ All hyperparameters and paths are controlled via `macaque_training_config.json`.
     "use_augmentation": true
   },
   "create_db": {
-    "image_folder": "/data/database_set",
+    "image_folder": "/data/val",
     "db_path": "/data/db/"
   },
   "eval": {
-    "img_folder": "/data/eval",
+    "img_folder": "/data/test",
     "db_path": "/data/db/"
   }
 }
@@ -181,7 +183,7 @@ python3 flatten_macaque_dirs.py
 Prepare the split data using:
 
 ```bash
-python3 gorillavision/reid-system/scripts/prepare_macaque_dataset.py --source /home/ylj20/macaque_flattened --target /home/ylj20/FacialRecognitionTest/macaque_split_data --train-ratio 0.7 --db-ratio 0.15 --eval-ratio 0.15
+python3 gorillavision/reid-system/scripts/prepare_macaque_dataset.py --source /home/ylj20/macaque_flattened --target /home/ylj20/FacialRecognitionTest/macaque_split_data --train-ratio 0.7 --val-ratio 0.15 --test-ratio 0.15
 ```
 
 ### 3. YOLO Detection Preparation
@@ -213,6 +215,55 @@ Change to the scripts directory and start training:
 cd yolo_detection/yolo_detection_code/scripts
 python3 train_yolo_detection.py --mode train --epochs 100 --batch 4 --img-size 416 --device cpu
 ```
+
+## Identification Training (GorillaVision)
+
+This section describes how to run the identification training pipeline with GorillaVision.
+
+### Prerequisites
+
+1. Install Docker with GPU support.
+2. Build the `gorilla_triplet` image:
+
+```bash
+docker build -t gorilla_triplet .
+```
+
+3. Ensure the Gibraltar_Macaques dataset is available (typically in the parent directory of this repository).
+
+### Run the training pipeline
+
+The training pipeline is automated via `gorillavision/reid-system/scripts/train_macaque_identification.sh`.
+
+From the repo root:
+
+```bash
+cd /home/ylj20/FacialRecognitionTest
+./gorillavision/reid-system/scripts/train_macaque_identification.sh
+```
+
+This script will:
+- split the dataset into `train/val/test`
+- train the identification model
+- create the identification database
+- evaluate model performance
+
+All trained models and the identification database are stored in `macaque_models`.
+
+### Configuration
+
+To change training parameters, edit:
+
+`gorillavision/reid-system/gorillavision/configs/custom/macaque_config.json`
+
+Common knobs include input size, batch size, learning rate, epochs, and augmentation settings.
+
+## Troubleshooting
+
+- If training fails, check console output for errors.
+- Verify GPU access in Docker (`nvidia-smi`).
+- For memory issues, reduce batch size in the config.
+- Ensure each individual has at least 3 images.
 
 ## Contributing
 
