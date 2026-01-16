@@ -1,0 +1,39 @@
+name: chimp-min10-resnet18
+
+data:
+  dataset_name: chimpanzee_faces
+  raw_root: data/chimpanzee_faces/raw
+  splits_path: data/chimpanzee_faces/annotations/splits_min10.json
+  batch_size: 64
+  num_workers: 4
+  image_size: 224
+  num_classes: 87
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+model:
+  backbone: resnet18
+  embedding_dim: 256
+  head: arcface          # options: linear, arcface
+  margin: 0.5            # arcface margin
+  scale: 30.0            # arcface scale
+  pretrained: true
+
+trainer:
+  max_epochs: 50         # increase to 50+ for full run
+  lr: 0.0003
+  weight_decay: 0.01
+  scheduler: cosine      # options: cosine, step, null
+  device: cuda
+  amp: true
+  grad_clip: 1.0
+  loss: cross_entropy
+  checkpoint_dir: artifacts
+  seed: 42
+
+inference:
+  checkpoint: artifacts/chimp-min10-resnet18_best.pt
+  gallery_path: artifacts/gallery_index.pkl
+  knn:
+    metric: cosine
+    top_k: 5

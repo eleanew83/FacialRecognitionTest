@@ -1,0 +1,27 @@
+{
+  "annotations_merged_all": {
+    "total_lines": 7187,
+    "valid_paths": 7187,
+    "missing_paths_count": 0,
+    "missing_paths": [],
+    "ctai_count": 5078,
+    "czoo_count": 2109,
+    "unique_ids_count": 102
+  },
+  "annotations_merged_min10": {
+    "total_lines": 7150,
+    "valid_paths": 7150,
+    "missing_paths_count": 0,
+    "missing_paths": [],
+    "ctai_count": 5041,
+    "czoo_count": 2109,
+    "unique_ids_count": 87
+  },
+  "id_consistency": {
+    "kept_ids_count": 87,
+    "annotation_ids_count": 87,
+    "ids_not_in_kept": [],
+    "kept_ids_not_in_annotation": [],
+    "ids_below_threshold": {}
+  }
+}

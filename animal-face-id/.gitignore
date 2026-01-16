@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# PyTorch / ML
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.pkl
+*.h5
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project-specific
+artifacts/
+logs/
+runs/
+outputs/
+checkpoints/
+wandb/
+
+# Dataset-specific
+# Ignore raw data and processed outputs, but keep annotations
+data/chimpanzee_faces/raw/
+data/chimpanzee_faces/processed/
+!data/chimpanzee_faces/annotations/
+!data/chimpanzee_faces/annotations/*.txt
+
+# Data archives
+*.mat
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Config overrides (optional - uncomment if needed)
+# configs/local_*.yaml
+
