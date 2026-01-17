@@ -14,7 +14,7 @@ YOLO_MODEL = None
 HAAR_MODEL = None
 
 # Minimum acceptable box size (as a ratio of image dimensions)
-MIN_BOX_SIZE_RATIO = 0.1
+MIN_BOX_SIZE_RATIO = 0.05
 # Standard placeholder annotation values
 PLACEHOLDER_ANNOTATION = (0.5, 0.5, 0.5, 0.5)
 
@@ -203,12 +203,19 @@ def detect_face_multi_method(image, confidence=0.3):
     best_det = select_best_detection(detections)
     return best_det, method
 
-def visualize_annotations(images_dir, labels_dir, output_dir=None):
+def _select_image_files(images_dir, limit=None):
+    image_files = [f for f in os.listdir(images_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    if limit is not None and limit > 0 and len(image_files) > limit:
+        image_files = image_files[:limit]
+    return image_files
+
+
+def visualize_annotations(images_dir, labels_dir, output_dir=None, limit=None):
     """Visualize existing annotations"""
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
-    image_files = [f for f in os.listdir(images_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    image_files = _select_image_files(images_dir, limit=limit)
     print(f"Found {len(image_files)} images in {images_dir}")
     
     # Track statistics
@@ -272,7 +279,7 @@ def visualize_annotations(images_dir, labels_dir, output_dir=None):
     
     return multi_box_count, placeholder_count
 
-def fix_annotations(images_dir, labels_dir, confidence=0.3):
+def fix_annotations(images_dir, labels_dir, confidence=0.3, limit=None):
     """Fix annotations using multiple detection methods"""
     global MEDIAPIPE_MODEL, YOLO_MODEL, HAAR_MODEL
     
@@ -286,7 +293,7 @@ def fix_annotations(images_dir, labels_dir, confidence=0.3):
     if HAAR_MODEL is None:
         HAAR_MODEL = load_haar()
     
-    image_files = [f for f in os.listdir(images_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    image_files = _select_image_files(images_dir, limit=limit)
     print(f"Found {len(image_files)} images in {images_dir}")
     
     # Check how many already have valid annotations (for resume functionality)
@@ -386,18 +393,81 @@ def fix_annotations(images_dir, labels_dir, confidence=0.3):
     
     return fixed_count, method_counts
 
+def report_problematic_annotations(images_dir, labels_dir, limit=None):
+    """Report only problematic annotation files without generating images."""
+    image_files = _select_image_files(images_dir, limit=limit)
+    print(f"Found {len(image_files)} images in {images_dir}")
+
+    issues = []
+    placeholder_count = 0
+    multi_box_count = 0
+    missing_label_count = 0
+    invalid_label_count = 0
+    small_box_count = 0
+
+    for img_file in tqdm(image_files, desc="Scanning annotations"):
+        label_file = os.path.join(labels_dir, f"{os.path.splitext(img_file)[0]}.txt")
+        if not os.path.exists(label_file):
+            issues.append((img_file, "missing_label"))
+            missing_label_count += 1
+            continue
+
+        try:
+            with open(label_file, 'r') as f:
+                annotations = [line.strip() for line in f.readlines() if line.strip()]
+        except Exception as e:
+            issues.append((img_file, f"read_error:{e}"))
+            invalid_label_count += 1
+            continue
+
+        if len(annotations) > 1:
+            issues.append((img_file, "multiple_boxes"))
+            multi_box_count += 1
+
+        for annotation in annotations:
+            parts = annotation.split()
+            if len(parts) != 5:
+                issues.append((img_file, "invalid_format"))
+                invalid_label_count += 1
+                continue
+
+            _, x_center, y_center, w, h = map(float, parts)
+            if is_placeholder_annotation(x_center, y_center, w, h):
+                issues.append((img_file, "placeholder_box"))
+                placeholder_count += 1
+            elif is_box_too_small(w, h):
+                issues.append((img_file, "box_too_small"))
+                small_box_count += 1
+
+    print("\n=== Problematic annotation summary ===")
+    print(f"missing_label: {missing_label_count}")
+    print(f"multiple_boxes: {multi_box_count}")
+    print(f"placeholder_box: {placeholder_count}")
+    print(f"box_too_small: {small_box_count}")
+    print(f"invalid_label: {invalid_label_count}")
+    print(f"total_problematic: {len(issues)}")
+
+    if issues:
+        print("\n=== Problematic files ===")
+        for img_file, reason in issues:
+            print(f"{img_file}\t{reason}")
+
+    return issues
+
 def main():
     parser = argparse.ArgumentParser(description="Visualize and fix YOLO annotations")
     parser.add_argument("--fix", action="store_true", help="Fix bad annotations")
     parser.add_argument("--confidence", type=float, default=0.3, help="Detection confidence threshold")
     parser.add_argument("--custom-model", type=str, help="Path to custom YOLO model (optional)")
+    parser.add_argument("--limit", type=int, default=None, help="Process the first N images per split")
+    parser.add_argument("--report", action="store_true", help="Report only problematic files (no visualization)")
     args = parser.parse_args()
 
     dataset_dir = "/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_data"
     
-    # Clean visualization directory if it exists
+    # Clean visualization directory if it exists (skip when reporting only)
     vis_base_dir = os.path.join(dataset_dir, 'visualization')
-    if os.path.exists(vis_base_dir):
+    if not args.report and os.path.exists(vis_base_dir):
         print(f"Cleaning visualization directory: {vis_base_dir}")
         shutil.rmtree(vis_base_dir)
     
@@ -418,21 +488,27 @@ def main():
             print(f"⚠️ {split} split not found, skipping")
             continue
         
+        if args.report:
+            print(f"\n🧾 Reporting issues for split: {split}")
+            report_problematic_annotations(images_dir, labels_dir, limit=args.limit)
+            continue
+
         os.makedirs(vis_dir, exist_ok=True)
 
         if args.fix:
             print(f"\n🔧 Fixing annotations for split: {split}")
-            fixed_count, method_counts = fix_annotations(images_dir, labels_dir, args.confidence)
+            fixed_count, method_counts = fix_annotations(images_dir, labels_dir, args.confidence, limit=args.limit)
             
             # Visualize the fixed annotations
             print(f"\n👁️ Visualizing fixed annotations for split: {split}")
-            visualize_annotations(images_dir, labels_dir, vis_dir)
+            visualize_annotations(images_dir, labels_dir, vis_dir, limit=args.limit)
         else:
             print(f"\n👁️ Visualizing annotations for split: {split}")
-            multi_box_count, placeholder_count = visualize_annotations(images_dir, labels_dir, vis_dir)
-            
+            multi_box_count, placeholder_count = visualize_annotations(images_dir, labels_dir, vis_dir, limit=args.limit)
+
             if multi_box_count > 0 or placeholder_count > 0:
-                print(f"⚠️ Found issues with annotations. Run with --fix to repair them.")
+                print("⚠️ Found issues with annotations. Run with --fix to repair them.")
+                print("ℹ️  Use --report to print filenames of problematic files.")
 
 if __name__ == "__main__":
     main()

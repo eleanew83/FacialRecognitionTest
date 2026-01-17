@@ -192,7 +192,7 @@ Prepare the YOLO dataset and visualize/fix annotations:
 
 ```bash
 python3 prepare_yolo_dataset.py
-python3 visualize_annotations_with_fix.py --fix  # (runs fixes and visualization; omit --fix to only visualize, which takes a few hours)
+python3 visualize_annotations.py --fix --limit 200  # (omit --fix to only visualize; adjust --limit or drop it to run on first n images; rerun visualize regenerates the whole visualization folder)
 ```
 
 ### 4. Cropping Images (Labeling)

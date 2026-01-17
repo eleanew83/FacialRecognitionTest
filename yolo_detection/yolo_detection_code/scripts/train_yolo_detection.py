@@ -92,36 +92,45 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
             # Run the model on the image
             results = model(img_path, conf=confidence)
             
-            # Save the crops
-            for i, result in enumerate(results):
+            # Load the image once (needed for crops and label normalization)
+            import cv2
+            img = cv2.imread(img_path)
+            if img is None:
+                continue
+            height, width = img.shape[:2]
+
+            # Collect all predicted boxes and track best for cropping
+            all_boxes = []
+            best_box = None
+            best_conf = -1.0
+            for result in results:
                 boxes = result.boxes
                 if len(boxes) == 0:
                     continue
-                
-                # Get image basename
-                base_filename = os.path.basename(img_path)
-                name, ext = os.path.splitext(base_filename)
-                
-                # Save crops
-                for j, box in enumerate(boxes):
-                    # Get crop coordinates
-                    x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-                    
-                    # Load the image
-                    import cv2
-                    img = cv2.imread(img_path)
-                    if img is None:
-                        continue
-                    
-                    # Crop the image
-                    crop = img[y1:y2, x1:x2]
-                    if crop.size == 0:
-                        continue
-                    
-                    # Save the crop
-                    crop_filename = f"{name}_crop{j}{ext}"
-                    crop_path = os.path.join(macaque_output_dir, crop_filename)
-                    cv2.imwrite(crop_path, crop)
+                for box in boxes:
+                    conf = float(box.conf.item()) if box.conf is not None else 0.0
+                    all_boxes.append((box, conf))
+                    if conf > best_conf:
+                        best_conf = conf
+                        best_box = box
+
+            if not all_boxes:
+                continue
+
+            # Get image basename
+            base_filename = os.path.basename(img_path)
+            name, ext = os.path.splitext(base_filename)
+
+            # Save only the highest-confidence crop
+            if best_box is None:
+                continue
+            x1, y1, x2, y2 = map(int, best_box.xyxy[0].tolist())
+            crop = img[y1:y2, x1:x2]
+            if crop.size == 0:
+                continue
+            crop_filename = f"{name}_crop0{ext}"
+            crop_path = os.path.join(macaque_output_dir, crop_filename)
+            cv2.imwrite(crop_path, crop)
         
         except Exception as e:
             print(f"Error processing {img_path}: {e}")
