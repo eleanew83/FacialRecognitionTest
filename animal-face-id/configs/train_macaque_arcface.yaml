@@ -2,8 +2,11 @@ name: macaque-resnet18-arcface
 
 data:
   dataset_name: macaque_faces
-  raw_root: /Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/macaque_flattened
-  splits_path: /Users/eleanew83/Library/CloudStorage/OneDrive-UniversityofCambridge/Cambridge/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
+  raw_root: /home/ylj20/macaque_flattened
+  splits_path: /home/ylj20/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
+  # Local paths
+  # raw_root: /Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/macaque_flattened
+  # splits_path: /Users/eleanew83/Library/CloudStorage/OneDrive-UniversityofCambridge/Cambridge/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
   batch_size: 32
   num_workers: 0
   image_size: 224
