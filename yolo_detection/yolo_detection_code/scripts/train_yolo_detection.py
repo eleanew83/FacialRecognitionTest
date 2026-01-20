@@ -3,14 +3,38 @@ import torch
 import os
 import argparse
 import shutil
+from datetime import datetime
 
 # Define base paths for the new structure
 YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
 MODEL_DIR = os.path.join(YOLO_BASE, "models")
+RUNS_DIR = os.path.join(MODEL_DIR, "runs")
+LEGACY_DIR = os.path.join(MODEL_DIR, "legacy")
+LAST_RUN_FILE = os.path.join(MODEL_DIR, "latest_run.txt")
 OUTPUT_DIR = os.path.join(YOLO_BASE, "output")
 DATASET_DIR = "/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_data"  # Absolute path to dataset
 
-def train_model(epochs=100, batch_size=16, img_size=640, device="0"):
+def default_run_name(version: str) -> str:
+    date_str = datetime.now().strftime("%Y%m%d")
+    return f"macaque_face_detector_{date_str}_{version}"
+
+
+def resolve_latest_run() -> str | None:
+    if os.path.exists(LAST_RUN_FILE):
+        with open(LAST_RUN_FILE, "r", encoding="utf-8") as f:
+            run_name = f.read().strip()
+            if run_name:
+                return run_name
+    if not os.path.isdir(RUNS_DIR):
+        return None
+    runs = [d for d in os.listdir(RUNS_DIR) if os.path.isdir(os.path.join(RUNS_DIR, d))]
+    if not runs:
+        return None
+    runs.sort(key=lambda d: os.path.getmtime(os.path.join(RUNS_DIR, d)), reverse=True)
+    return runs[0]
+
+
+def train_model(epochs=100, batch_size=16, img_size=640, device="0", run_name: str | None = None):
     """
     Train a YOLOv8 model for macaque face detection
     
@@ -25,9 +49,10 @@ def train_model(epochs=100, batch_size=16, img_size=640, device="0"):
         print("CUDA not available, using CPU")
         device = "cpu"
     
-    # Create model directory
-    if not os.path.exists(MODEL_DIR):
-        os.makedirs(MODEL_DIR)
+    # Create model directories
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    os.makedirs(RUNS_DIR, exist_ok=True)
+    os.makedirs(LEGACY_DIR, exist_ok=True)
     
     # Load a pretrained YOLO model
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
@@ -40,17 +65,17 @@ def train_model(epochs=100, batch_size=16, img_size=640, device="0"):
         batch=batch_size,
         imgsz=img_size,
         device=device,
-        project=MODEL_DIR,
-        name="macaque_face_detector",
+        project=RUNS_DIR,
+        name=run_name,
         patience=20,  # Early stopping patience
         save=True,  # Save best checkpoint
         verbose=True
     )
     
-    # Validate the model
-    model.val()
-    
-    print(f"Training completed. Model saved to {os.path.join(MODEL_DIR, 'macaque_face_detector')}")
+    with open(LAST_RUN_FILE, "w", encoding="utf-8") as f:
+        f.write(run_name or "")
+
+    print(f"Training completed. Model saved to {os.path.join(RUNS_DIR, run_name)}")
     return results
 
 def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
@@ -148,23 +173,31 @@ if __name__ == "__main__":
                        help="Mode: train model, crop faces, or both")
     parser.add_argument("--model", type=str, default=None, 
                        help="Path to detection model for cropping (defaults to best model)")
+    parser.add_argument("--run-version", type=str, default="v1",
+                        help="Version tag used in the run name (e.g., v1, v2)")
+    parser.add_argument("--run-name", type=str, default=None,
+                        help="Override run name (default: YYYYMMDD_<run-version>)")
     
     args = parser.parse_args()
-    
-    # Create output directory if it doesn't exist
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
     
     trained_model_path = None
     
     if args.mode in ["train", "both"]:
-        train_results = train_model(args.epochs, args.batch, args.img_size, args.device)
-        trained_model_path = os.path.join(MODEL_DIR, "macaque_face_detector", "weights", "best.pt")
+        run_name = args.run_name or default_run_name(args.run_version)
+        train_results = train_model(args.epochs, args.batch, args.img_size, args.device, run_name=run_name)
+        trained_model_path = os.path.join(RUNS_DIR, run_name, "weights", "best.pt")
     
     if args.mode in ["crop", "both"]:
+        # Create output directory only when cropping is requested
+        if not os.path.exists(OUTPUT_DIR):
+            os.makedirs(OUTPUT_DIR)
         model_path = args.model if args.model else trained_model_path
         if model_path is None:
-            model_path = os.path.join(MODEL_DIR, "macaque_face_detector", "weights", "best.pt")
+            latest_run = resolve_latest_run()
+            if latest_run:
+                model_path = os.path.join(RUNS_DIR, latest_run, "weights", "best.pt")
+            else:
+                model_path = None
         
         if not os.path.exists(model_path):
             print(f"Error: Model not found at {model_path}")
