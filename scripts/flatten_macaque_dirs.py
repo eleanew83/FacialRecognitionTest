@@ -67,9 +67,10 @@ def flatten_directory_structure(source_dir, target_dir):
 if __name__ == '__main__':
     # Choose the corresponding local or remote home directories
     local_home_dir = '/Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge'
-    # remote_home_dir = '/home/ylj20'
-    source_dir = local_home_dir + '/Gibraltar_Macaques_Photos_Cleaned'
-    target_dir = local_home_dir + '/macaque_flattened'
+    remote_home_dir = '/home/ylj20'
+    home_dir = local_home_dir if os.path.exists(local_home_dir) else remote_home_dir
+    source_dir = home_dir + '/Gibraltar_Macaques_Photos_Cleaned'
+    target_dir = home_dir + '/macaque_flattened'
     
     flatten_directory_structure(source_dir, target_dir)
     print("Flattening complete. Now you can run prepare_macaque_dataset.py on the flattened directory.")

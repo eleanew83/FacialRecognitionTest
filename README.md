@@ -161,6 +161,10 @@ docker run \
 
 - **patch_triplet.py**: Patches Lightning v1→v2 epoch hooks  
 - **run_patched_training.sh**: Docker wrapper for training  
+- `scripts/`:
+  - `flatten_macaque_dirs.py`  
+  - `extract_metadata_to_excel.py`
+  - `clean_double_spaces.py`
 - `gorillavision/reid-system/scripts/`:
   - `prepare_macaque_dataset.py`  
   - `simple_train.py` (wandb-free trainer)  
@@ -175,7 +179,7 @@ This section describes the steps for preparing data and training a YOLO-based ma
 In the project root, run:
 
 ```bash
-python3 flatten_macaque_dirs.py
+python3 scripts/flatten_macaque_dirs.py
 ```
 
 ### 2. Create `macaque_split_data`
