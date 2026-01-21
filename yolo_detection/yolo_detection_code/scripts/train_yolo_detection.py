@@ -183,6 +183,8 @@ if __name__ == "__main__":
                         help="Version tag used in the run name (e.g., v1, v2)")
     parser.add_argument("--run-name", type=str, default=None,
                         help="Override run name (default: YYYYMMDD_<run-version>)")
+    parser.add_argument("--confidence", type=float, default=0.3,
+                        help="Confidence threshold for cropping (default: 0.3)")
     
     args = parser.parse_args()
     
@@ -210,5 +212,5 @@ if __name__ == "__main__":
             print("Please train the model first or provide a valid model path with --model")
             exit(1)
             
-        output_location = crop_faces(model_path)
+        output_location = crop_faces(model_path, confidence=args.confidence)
         print(f"Cropped faces are available at: {output_location}") 
