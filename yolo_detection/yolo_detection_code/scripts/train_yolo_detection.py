@@ -7,6 +7,7 @@ from datetime import datetime
 
 # Define base paths for the new structure
 YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
+SOURCE_SPLIT_DIR = "/home/ylj20/FacialRecognitionTest/macaque_split_data"
 MODEL_DIR = os.path.join(YOLO_BASE, "models")
 RUNS_DIR = os.path.join(MODEL_DIR, "runs")
 LEGACY_DIR = os.path.join(MODEL_DIR, "legacy")
@@ -96,8 +97,8 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
     # Load the trained model
     model = YOLO(detection_model_path)
     
-    # Get all macaque images
-    source_folder = os.path.join(os.path.dirname(YOLO_BASE), "macaque_split_data")
+    # Get all macaque images in macaque_split_data
+    source_folder = SOURCE_SPLIT_DIR
     all_images = []
     for root, _, files in os.walk(source_folder):
         for file in files:
