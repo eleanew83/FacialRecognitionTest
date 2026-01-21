@@ -1,4 +1,4 @@
-name: macaque-resnet18-arcface
+name: macaque-resnet50-arcface
 
 data:
   dataset_name: macaque_faces
@@ -15,7 +15,7 @@ data:
   std: [0.229, 0.224, 0.225]
 
 model:
-  backbone: resnet18 # Use resnet50 for full run
+  backbone: resnet50 # Use resnet50 for full run; resnet18 for testing
   embedding_dim: 256
   head: arcface
   margin: 0.5
@@ -23,7 +23,7 @@ model:
   pretrained: true
 
 trainer:
-  max_epochs: 10 # default: 10, use 1 for testing
+  max_epochs: 30 # Change for testing: 1 or full run: 30
   lr: 0.0003
   weight_decay: 0.01
   scheduler: cosine
@@ -35,7 +35,7 @@ trainer:
   seed: 42
 
 inference:
-  checkpoint: artifacts/macaque-resnet18-arcface_best.pt
+  checkpoint: artifacts/macaque-resnet50-arcface_best.pt
   gallery_path: artifacts/gallery_index.pkl
   knn:
     metric: cosine
