@@ -108,9 +108,14 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
     print(f"Processing {len(all_images)} images to crop faces...")
     for img_path in all_images:
         try:
-            # Get the macaque ID from the folder name
-            macaque_id = os.path.basename(os.path.dirname(img_path))
-            macaque_output_dir = os.path.join(output_dir, macaque_id)
+            # Preserve split structure: split/macaque_id
+            rel_path = os.path.relpath(img_path, source_folder)
+            parts = rel_path.split(os.sep)
+            if len(parts) < 3:
+                continue
+            split_name = parts[0]
+            macaque_id = parts[1]
+            macaque_output_dir = os.path.join(output_dir, split_name, macaque_id)
             if not os.path.exists(macaque_output_dir):
                 os.makedirs(macaque_output_dir)
             
