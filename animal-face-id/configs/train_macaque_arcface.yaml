@@ -23,11 +23,11 @@ model:
   pretrained: true
 
 trainer:
-  max_epochs: 1 # default: 10, use 1 for testing
+  max_epochs: 10 # default: 10, use 1 for testing
   lr: 0.0003
   weight_decay: 0.01
   scheduler: cosine
-  device: mps
+  device: cpu # Use cuda for GPU run; mps for Mac
   amp: false
   grad_clip: 1.0
   loss: cross_entropy
