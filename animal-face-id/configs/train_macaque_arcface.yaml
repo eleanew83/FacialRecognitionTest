@@ -36,7 +36,7 @@ trainer:
 
 inference:
   checkpoint: artifacts/macaque-resnet50-arcface_best.pt
-  gallery_path: artifacts/gallery_index.pkl
+  gallery_path: artifacts/macaque_gallery_index.pkl
   knn:
     metric: cosine
     top_k: 5

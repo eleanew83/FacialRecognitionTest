@@ -13,6 +13,7 @@ from src.config.base import TrainingConfig, load_config
 from src.datasets.dataset_registry import build_dataloader
 from src.inference.knn import EmbeddingIndex
 from src.models.backbones import build_backbone
+from src.inference.index_store import SimpleIndex
 
 
 def _load_backbone_from_checkpoint(config: dict[str, Any], checkpoint_path: str, device: torch.device) -> torch.nn.Module:
@@ -54,7 +55,7 @@ def export_embeddings(
     split: str = "train",
     output_npz: str | None = None,
     device_str: str = "cpu",
-) -> tuple[np.ndarray, list[str]]:
+) -> tuple[np.ndarray, list[str], list[str]]:
     if isinstance(config, TrainingConfig):
         config = config.as_dict()
     data_cfg = config["data"]
@@ -71,19 +72,25 @@ def export_embeddings(
 
     embeddings: list[np.ndarray] = []
     labels: list[str] = []
+    paths: list[str] = []
     with torch.no_grad():
         for batch in loader:
             images = batch["image"].to(device, non_blocking=True)
             feats = model(images).cpu().numpy()
             embeddings.append(feats)
             labels.extend(_resolve_label_names(batch, loader.dataset))
+            if "path" in batch:
+                if isinstance(batch["path"], list):
+                    paths.extend(batch["path"])
+                else:
+                    paths.extend(list(batch["path"]))
 
     all_embeddings = np.concatenate(embeddings, axis=0)
 
     if output_npz:
         np.savez(output_npz, embeddings=all_embeddings, labels=np.array(labels))
 
-    return all_embeddings, labels
+    return all_embeddings, labels, paths
 
 
 def main() -> None:
@@ -93,6 +100,7 @@ def main() -> None:
     parser.add_argument("--split", default="train", help="Dataset split to export embeddings from.")
     parser.add_argument("--output", default=None, help="Optional .npz path to save embeddings + labels.")
     parser.add_argument("--device", default="cpu", help="Device to run inference on (cpu or cuda).")
+    parser.add_argument("--simple-index-prefix", default=None, help="Optional prefix to save SimpleIndex (*.npy/*.json).")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -101,7 +109,7 @@ def main() -> None:
     ckpt_path = args.checkpoint or inference_cfg.get("checkpoint", default_ckpt)
     output_npz = args.output or f"artifacts/{args.split}_embeddings.npz"
 
-    embeddings, labels = export_embeddings(
+    embeddings, labels, paths = export_embeddings(
         config=cfg,
         checkpoint_path=ckpt_path,
         split=args.split,
@@ -116,6 +124,22 @@ def main() -> None:
     gallery_path = inference_cfg.get("gallery_path", "artifacts/gallery_index.pkl")
     Path(gallery_path).parent.mkdir(parents=True, exist_ok=True)
     index.save(gallery_path)
+
+    # Also save a SimpleIndex for the GUI if requested or if using macaque defaults.
+    simple_prefix = args.simple_index_prefix
+    if simple_prefix is None:
+        if isinstance(cfg, TrainingConfig):
+            dataset_name = str(cfg.data.get("dataset_name", ""))
+        else:
+            dataset_name = str(cfg.get("data", {}).get("dataset_name", ""))
+        if dataset_name == "macaque_faces":
+            simple_prefix = "artifacts/index/macaque_auto"
+    if simple_prefix:
+        meta = [{"image_path": p} for p in paths] if paths else None
+        simple_index = SimpleIndex()
+        simple_index.add(embeddings, labels, meta=meta)
+        simple_index.save(simple_prefix)
+        print(f"Saved SimpleIndex to: {simple_prefix}_embeddings.npy / {simple_prefix}_meta.json")
 
     print(f"Saved embeddings to: {output_npz}")
     print(f"Saved gallery index to: {gallery_path}")

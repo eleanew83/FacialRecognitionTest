@@ -1,32 +1,32 @@
 # Final Evaluation Report — Chimpanzee Faces (ResNet50 + ArcFace)
 
-- Config: `configs/train_chimp_min10_resnet50_arc_full.yaml`
-- Checkpoint: `artifacts/chimp-min10-resnet50-arcface-full_best.pt`
-- Date: 2025-11-16 15:15:49
-- Device: cuda
-- Test samples: 1072
-- Num classes: 87
+- Config: `/home/ylj20/FacialRecognitionTest/animal-face-id/configs/train_macaque_arcface.yaml`
+- Checkpoint: `/home/ylj20/FacialRecognitionTest/animal-face-id/artifacts/macaque-resnet50-arcface_best.pt`
+- Date: 2026-01-22 01:11:57
+- Device: cpu
+- Test samples: 1584
+- Num classes: 156
 
 ## 1. Overall Metrics
-- Top-1 accuracy: 0.7920
-- Top-3 accuracy: 0.8293
-- Top-5 accuracy: 0.8424
-- Macro F1: 0.7072
-- Weighted F1: 0.7856
+- Top-1 accuracy: 0.6225
+- Top-3 accuracy: 0.6736
+- Top-5 accuracy: 0.6894
+- Macro F1: 0.5822
+- Weighted F1: 0.6210
 
 ## 2. Per-class Summary
-- Per-class metrics CSV: `artifacts/final_eval/train_chimp_min10_resnet50_arc_full_chimp-min10-resnet50-arcface-full_best_per_class_metrics.csv`
-- Confusion matrix: `artifacts/final_eval/train_chimp_min10_resnet50_arc_full_chimp-min10-resnet50-arcface-full_best_confusion_matrix.png`
+- Per-class metrics CSV: `artifacts/final_eval/train_macaque_arcface_macaque-resnet50-arcface_best_per_class_metrics.csv`
+- Confusion matrix: `artifacts/final_eval/train_macaque_arcface_macaque-resnet50-arcface_best_confusion_matrix.png`
 
 - Hardest IDs by accuracy:
-  - Alina: acc = 0.000
-  - Celine: acc = 0.000
-  - Max: acc = 0.000
-  - Rubra: acc = 0.000
-  - Totem: acc = 0.000
+  - Caro: acc = 0.000
+  - Castaf: acc = 0.000
+  - Leigh: acc = 0.000
+  - Nadia: acc = 0.000
+  - Racoon: acc = 0.000
 
 ## 3. Embedding Space Visualization
-- t-SNE / PCA plot: `artifacts/final_eval/train_chimp_min10_resnet50_arc_full_chimp-min10-resnet50-arcface-full_best_embeddings_tsne.png`
+- t-SNE / PCA plot: `artifacts/final_eval/train_macaque_arcface_macaque-resnet50-arcface_best_embeddings_tsne.png`
 
 ## 4. Known Limitations / Notes
 - Test set size is modest; per-class variation may influence stability.
