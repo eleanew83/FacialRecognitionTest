@@ -20,11 +20,11 @@ from src.inference.inference_core import infer_single_image, load_model_from_con
 from src.inference.index_store import SimpleIndex, add_individual
 
 
-DEFAULT_CONFIG = "configs/train_macaque_arcface.yaml"
-DEFAULT_CKPT = "artifacts/macaque-resnet50-arcface_best.pt"
+DEFAULT_CONFIG = str(ROOT / "configs" / "train_macaque_arcface.yaml")
+DEFAULT_CKPT = str(ROOT / "artifacts" / "macaque-resnet50-arcface_best.pt")
 DEFAULT_INDEX_CANDIDATES = [
-    "artifacts/index/macaque_auto",
-    "artifacts/index/macaque_index",
+    str(ROOT / "artifacts" / "index" / "macaque_auto"),
+    str(ROOT / "artifacts" / "index" / "macaque_index"),
 ]
 # Preferred save location (falls back to first candidate)
 DEFAULT_INDEX_SAVE_PREFIX = DEFAULT_INDEX_CANDIDATES[0]
@@ -51,7 +51,7 @@ def _find_existing_index() -> str | None:
         if emb_path.exists() and meta_path.exists():
             return cand
     # Fallback: first matching macaque_auto*.npy
-    auto = list(Path("artifacts/index").glob("macaque_*_auto*_embeddings.npy"))
+    auto = list((ROOT / "artifacts" / "index").glob("macaque_*_auto*_embeddings.npy"))
     if auto:
         prefix = str(auto[0]).replace("_embeddings.npy", "")
         meta = Path(prefix + "_meta.json")
