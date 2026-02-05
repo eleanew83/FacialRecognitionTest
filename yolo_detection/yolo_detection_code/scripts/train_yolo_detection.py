@@ -35,7 +35,19 @@ def resolve_latest_run() -> str | None:
     return runs[0]
 
 
-def train_model(epochs=100, batch_size=16, img_size=640, device="0", run_name: str | None = None):
+def train_model(
+    epochs=100,
+    batch_size=16,
+    img_size=640,
+    device="0",
+    run_name: str | None = None,
+    mosaic: float | None = None,
+    mixup: float | None = None,
+    hsv_h: float | None = None,
+    hsv_s: float | None = None,
+    hsv_v: float | None = None,
+    fliplr: float | None = None,
+):
     """
     Train a YOLOv8 model for macaque face detection
     
@@ -60,17 +72,34 @@ def train_model(epochs=100, batch_size=16, img_size=640, device="0", run_name: s
     model = YOLO(model_path)
     
     # Train the model
+    train_kwargs = {
+        "data": os.path.join(DATASET_DIR, "dataset.yaml"),
+        "epochs": epochs,
+        "batch": batch_size,
+        "imgsz": img_size,
+        "device": device,
+        "project": RUNS_DIR,
+        "name": run_name,
+        "patience": 20,  # Early stopping patience
+        "save": True,  # Save best checkpoint
+        "verbose": True,
+    }
+    # Only set augmentation overrides when explicitly provided
+    if mosaic is not None:
+        train_kwargs["mosaic"] = mosaic
+    if mixup is not None:
+        train_kwargs["mixup"] = mixup
+    if hsv_h is not None:
+        train_kwargs["hsv_h"] = hsv_h
+    if hsv_s is not None:
+        train_kwargs["hsv_s"] = hsv_s
+    if hsv_v is not None:
+        train_kwargs["hsv_v"] = hsv_v
+    if fliplr is not None:
+        train_kwargs["fliplr"] = fliplr
+
     results = model.train(
-        data=os.path.join(DATASET_DIR, "dataset.yaml"),
-        epochs=epochs,
-        batch=batch_size,
-        imgsz=img_size,
-        device=device,
-        project=RUNS_DIR,
-        name=run_name,
-        patience=20,  # Early stopping patience
-        save=True,  # Save best checkpoint
-        verbose=True
+        **train_kwargs
     )
     
     with open(LAST_RUN_FILE, "w", encoding="utf-8") as f:
@@ -185,6 +214,13 @@ if __name__ == "__main__":
                         help="Override run name (default: YYYYMMDD_<run-version>)")
     parser.add_argument("--confidence", type=float, default=0.3,
                         help="Confidence threshold for cropping (default: 0.3)")
+    # Optional YOLO augmentation overrides (defaults = Ultralytics built-ins)
+    parser.add_argument("--mosaic", type=float, default=None, help="Override mosaic prob (e.g., 0.5)")
+    parser.add_argument("--mixup", type=float, default=None, help="Override mixup prob (e.g., 0.1)")
+    parser.add_argument("--hsv-h", type=float, default=None, help="Override HSV-H (e.g., 0.015)")
+    parser.add_argument("--hsv-s", type=float, default=None, help="Override HSV-S (e.g., 0.7)")
+    parser.add_argument("--hsv-v", type=float, default=None, help="Override HSV-V (e.g., 0.4)")
+    parser.add_argument("--fliplr", type=float, default=None, help="Override horizontal flip prob (e.g., 0.5)")
     
     args = parser.parse_args()
     
@@ -192,7 +228,19 @@ if __name__ == "__main__":
     
     if args.mode in ["train", "both"]:
         run_name = args.run_name or default_run_name(args.run_version)
-        train_results = train_model(args.epochs, args.batch, args.img_size, args.device, run_name=run_name)
+        train_results = train_model(
+            args.epochs,
+            args.batch,
+            args.img_size,
+            args.device,
+            run_name=run_name,
+            mosaic=args.mosaic,
+            mixup=args.mixup,
+            hsv_h=args.hsv_h,
+            hsv_s=args.hsv_s,
+            hsv_v=args.hsv_v,
+            fliplr=args.fliplr,
+        )
         trained_model_path = os.path.join(RUNS_DIR, run_name, "weights", "best.pt")
     
     if args.mode in ["crop", "both"]:

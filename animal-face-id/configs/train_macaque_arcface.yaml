@@ -1,4 +1,4 @@
-name: macaque-resnet50-arcface
+name: macaque-resnet50-arcface_aug1 # change if want to save a different version
 
 data:
   dataset_name: macaque_faces
@@ -35,8 +35,8 @@ trainer:
   seed: 42
 
 inference:
-  checkpoint: artifacts/macaque-resnet50-arcface_best.pt
-  gallery_path: artifacts/macaque_gallery_index.pkl
+  checkpoint: artifacts/macaque-resnet50-arcface_aug1_best.pt # change if want to save a different version
+  gallery_path: artifacts/macaque_gallery_index_aug1.pkl # change if want to save a different version
   knn:
     metric: cosine
     top_k: 5

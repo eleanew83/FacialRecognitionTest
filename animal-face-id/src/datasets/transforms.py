@@ -14,7 +14,8 @@ def build_transforms(stage: str, config: dict[str, Any]) -> Any:
     if stage == "train":
         aug_list.extend(
             [
-                T.RandomResizedCrop(image_size, scale=(0.8, 1.0)),
+                T.RandomResizedCrop(image_size, scale=(0.9, 1.0)),
+                T.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.95, 1.05)),
                 T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
                 T.RandomHorizontalFlip(),
             ],
@@ -28,4 +29,6 @@ def build_transforms(stage: str, config: dict[str, Any]) -> Any:
             T.Normalize(mean=config.get("mean", [0.485, 0.456, 0.406]), std=config.get("std", [0.229, 0.224, 0.225])),
         ],
     )
+    if stage == "train":
+        aug_list.append(T.RandomErasing(p=0.2, scale=(0.02, 0.08)))
     return T.Compose(aug_list)
