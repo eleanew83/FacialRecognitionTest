@@ -31,6 +31,7 @@ This folder contains scripts and experiments for exploring SAM 3 (Segment Anythi
 
 - `hf_login.py`: Helper script for HuggingFace authentication
 - `test_sam3_basic.py`: Basic SAM 3 functionality test (requires GPU)
+- `test_sam3_macaque.py`: Basic macaque facial recognition test with 3 images each (requires GPU)
 
 ## Known Limitations
 
