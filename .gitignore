@@ -51,3 +51,5 @@ yolo_detection/yolo_detection_code/models
 .Trashes
 ehthumbs.db
 Thumbs.db 
+sam3/
+*.tar.gz
