@@ -4,24 +4,25 @@ This folder contains scripts and experiments for exploring SAM 3 (Segment Anythi
 
 ## Setup
 
-1. **Clone SAM 3 repository** (in parent directory):
-   ```bash
-   cd /home/ylj20/FacialRecognitionTest
-   git clone https://github.com/facebookresearch/sam3.git
-   cd sam3
+1. **SAM 3 repository** is cloned at:
+   ```
+   /home/ylj20/FacialRecognitionTest/sam3
    ```
 
-2. **Install dependencies**:
+2. **Python virtual environment** (`macaque`) is at `~/venvs/macaque`.
+   Activate it with:
    ```bash
-   conda create -n sam3 python=3.12 -y
-   conda activate sam3
-   pip install torch==2.7.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
-   pip install -e ".[notebooks]"
+   module load python/3.11.0-icl
+   source ~/venvs/macaque/bin/activate
    ```
+   SAM 3 is installed as an editable package (`pip install -e .`) with pip
+   cache and tmp on hpc-work to avoid home quota issues.
 
-3. **Authenticate with HuggingFace**:
+3. **Authenticate with HuggingFace** (run once):
    ```bash
-   python ../sam3_experiments/hf_login.py
+   module load python/3.11.0-icl
+   source ~/venvs/macaque/bin/activate
+   python /rds/user/ylj20/hpc-work/FacialRecognitionTest/sam3_experiments/hf_login.py
    ```
    - Get token from: https://huggingface.co/settings/tokens
    - Request access: https://huggingface.co/facebook/sam3
@@ -48,8 +49,9 @@ This folder contains scripts and experiments for exploring SAM 3 (Segment Anythi
 
 ## Status
 
-- [x] SAM 3 repository cloned
-- [x] Environment setup documented
+- [x] SAM 3 repository cloned to `/home/ylj20/FacialRecognitionTest/sam3`
+- [x] `macaque` venv created at `~/venvs/macaque` (Python 3.11)
+- [x] SAM 3 installed in venv (`pip install -e .`)
 - [x] HuggingFace authentication completed
 - [ ] GPU access obtained
 - [ ] Basic inference test completed
