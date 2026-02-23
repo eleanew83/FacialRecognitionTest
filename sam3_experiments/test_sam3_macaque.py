@@ -58,7 +58,8 @@ def draw_results(image, masks, boxes, scores, prompt, title, save_path):
 
     colours = plt.cm.Set1(np.linspace(0, 1, max(len(boxes), 1)))
     for i, (box, score) in enumerate(zip(boxes, scores)):
-        x1, y1, x2, y2 = box
+        x1, y1, x2, y2 = [v.cpu().item() if hasattr(v, 'cpu') else float(v) for v in box]
+        score = score.cpu().item() if hasattr(score, 'cpu') else float(score)
         c = colours[i % len(colours)]
         ax2.add_patch(patches.Rectangle(
             (x1, y1), x2 - x1, y2 - y1,
@@ -66,7 +67,8 @@ def draw_results(image, masks, boxes, scores, prompt, title, save_path):
         ))
         ax2.text(x1, max(y1 - 4, 0), f"{score:.2f}", color=c, fontsize=8, fontweight="bold")
         if masks is not None and i < len(masks):
-            mask = np.array(masks[i]).squeeze()
+            m = masks[i]
+            mask = np.array(m.cpu() if hasattr(m, 'cpu') else m).squeeze()
             if mask.ndim == 2:
                 overlay = np.zeros((*mask.shape, 4))
                 overlay[mask > 0.5] = [*c[:3], 0.35]
@@ -185,7 +187,7 @@ for i, img_path in enumerate(multi_candidates[:SAMPLES_PER_SCENARIO]):
         image = Image.open(img_path).convert("RGB")
         out, prompt = best_prompt_result(
             processor, image,
-            ["macaque face", "Barbary macaque", "monkey", "multiple macaques"]
+            ["macaque face", "Barbary macaque", "monkey face", "multiple macaque faces"]
         )
         if out:
             draw_results(
