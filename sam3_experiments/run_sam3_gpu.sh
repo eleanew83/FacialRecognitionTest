@@ -1,7 +1,8 @@
 #!/bin/bash
 # Usage:
 #   sbatch run_sam3_gpu.sh              # main scenario test (~9 images)
-#   sbatch run_sam3_gpu.sh --benchmark  # prompt benchmark (~9 images × 9 prompts)
+#   sbatch run_sam3_gpu.sh --benchmark  # prompt benchmark (~9 images × 9 prompts, proxy metric)
+#   sbatch run_sam3_gpu.sh --eval       # GT evaluation vs YOLO (50 val images, P/R/F1)
 #
 #SBATCH -J sam3_macaque
 #SBATCH -A LEMOINE-SL3-GPU
@@ -34,8 +35,11 @@ echo ""
 BASE=/rds/user/ylj20/hpc-work/FacialRecognitionTest/sam3_experiments
 
 if [[ "$1" == "--benchmark" ]]; then
-    echo "Running: prompt benchmark"
+    echo "Running: prompt benchmark (proxy metric)"
     python -u "$BASE/benchmark_prompts.py"
+elif [[ "$1" == "--eval" ]]; then
+    echo "Running: GT evaluation vs YOLO"
+    python -u "$BASE/benchmark_prompts.py" --eval
 else
     echo "Running: main scenario test"
     python -u "$BASE/test_sam3_macaque.py"
