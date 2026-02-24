@@ -547,10 +547,11 @@ if EVAL_MODE:
             pred_scored = run_sam3_boxes_scored(processor, image, prompt)
             _accumulate(key, pred_scored, gt_boxes)
             pred        = [b for _, b in pred_scored]
-            tp, fp, fn = f1_data[key][0], f1_data[key][1], f1_data[key][2]
-            _, _, f1 = prf1(tp, fp, fn)
-            if f1 > best_f1_img:
-                best_f1_img, best_prompt_img, best_boxes_img = f1, prompt, pred
+            # Use per-image match (not cumulative) to pick the best visualisation prompt
+            tp_img, fp_img, fn_img = match_boxes(pred, gt_boxes)
+            _, _, f1_img = prf1(tp_img, fp_img, fn_img)
+            if f1_img > best_f1_img:
+                best_f1_img, best_prompt_img, best_boxes_img = f1_img, prompt, pred
             print(f"       {prompt:<30s}  pred={len(pred):>2}  "
                   f"tp={f1_data[key][0]}  fp={f1_data[key][1]}  fn={f1_data[key][2]}")
 
