@@ -43,19 +43,50 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
+from torchvision.ops import nms as torchvision_nms
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-PHOTOS_DIR   = Path("/rds/user/ylj20/hpc-work/Gibraltar_Macaques_Photos")
+PHOTOS_DIR    = Path("/rds/user/ylj20/hpc-work/Gibraltar_Macaques_Photos")
+IG_PHOTOS_DIR = Path("/rds/user/ylj20/hpc-work/IG_Photos")
 _BASE_RESULTS = Path("/rds/user/ylj20/hpc-work/FacialRecognitionTest/sam3_experiments/results")
-RESULTS_DIR  = _BASE_RESULTS / datetime.now().strftime("scenario_%Y%m%d_%H%M%S")
+RESULTS_DIR   = _BASE_RESULTS / datetime.now().strftime("scenario_%Y%m%d_%H%M%S")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 SAMPLES_PER_SCENARIO = 3
 random.seed(42)
 
+# Boxes scoring at or below this are noise
+SCORE_THRESHOLD   = 0.05
+# Boxes overlapping more than this IoU are duplicates of the same face
+NMS_IOU_THRESHOLD = 0.5
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+def apply_nms(boxes, scores, masks=None):
+    """
+    Remove duplicate boxes that circle the same face.
+    Boxes with IoU > NMS_IOU_THRESHOLD are considered the same detection;
+    only the highest-confidence one is kept.
+    Returns (kept_boxes, kept_scores, kept_masks).
+    """
+    if not boxes:
+        return [], [], []
+    boxes_t  = torch.tensor(
+        [[(v.cpu().item() if hasattr(v, "cpu") else float(v)) for v in b] for b in boxes],
+        dtype=torch.float32,
+    )
+    scores_t = torch.tensor(
+        [s.cpu().item() if hasattr(s, "cpu") else float(s) for s in scores],
+        dtype=torch.float32,
+    )
+    keep = torchvision_nms(boxes_t, scores_t, NMS_IOU_THRESHOLD).tolist()
+    kept_boxes  = [boxes[i]  for i in keep]
+    kept_scores = [scores_t[i].item() for i in keep]
+    kept_masks  = [masks[i] for i in keep] if masks else None
+    return kept_boxes, kept_scores, kept_masks
+
 
 def all_images(root: Path) -> list[Path]:
     return [
@@ -158,16 +189,31 @@ def draw_results(image, masks, boxes, scores, prompt, title, save_path,
 
 
 def best_prompt_result(processor, image, prompts):
-    """Try each prompt, return the one with the most detections."""
+    """Try each prompt; apply NMS, then return the one with the most detections."""
     best_out, best_prompt, best_n = None, None, -1
     for prompt in prompts:
         try:
             state = processor.set_image(image)
-            out = processor.set_text_prompt(state=state, prompt=prompt)
-            n = len(out["boxes"])
-            print(f"     '{prompt}': {n} detections")
+            out   = processor.set_text_prompt(state=state, prompt=prompt)
+            # Filter low-confidence noise then deduplicate overlapping boxes
+            pairs = [
+                (b, s) for b, s in zip(out["boxes"], out["scores"])
+                if (s.cpu().item() if hasattr(s, "cpu") else float(s)) > SCORE_THRESHOLD
+            ]
+            if pairs:
+                raw_boxes, raw_scores = zip(*pairs)
+                boxes, scores, masks = apply_nms(
+                    raw_boxes, raw_scores,
+                    masks=out.get("masks"),
+                )
+            else:
+                boxes, scores, masks = [], [], []
+            n = len(boxes)
+            print(f"     '{prompt}': {n} detections (after NMS)")
             if n > best_n:
-                best_out, best_prompt, best_n = out, prompt, n
+                best_out   = {"boxes": boxes, "scores": scores, "masks": masks}
+                best_prompt = prompt
+                best_n      = n
         except Exception as e:
             print(f"     '{prompt}': ERROR — {e}")
     return best_out, best_prompt
@@ -313,37 +359,34 @@ for i, img_path in enumerate(multi_candidates[:SAMPLES_PER_SCENARIO]):
         traceback.print_exc()
 
 # ── Scenario 3: Macaque + human face ─────────────────────────────────────────
-# Tourist locations (Cable Car, Prince Philip Arch) are most likely to have
-# researchers or tourists in frame. We run both "macaque face" and "human face"
-# prompts and overlay all detections.
+# Use Instagram-scraped images — real tourist photos where humans and macaques
+# share the frame. This is the only dataset we have with actual human faces.
+# Falls back to uncropped tourist-location Gibraltar images if IG_Photos is empty.
 
 print("\n" + "─" * 65)
 print("SCENARIO 3: Macaque + human face")
-print("  Source: tourist locations — Cable Car, Prince Philip Arch")
+print(f"  Source: IG_Photos ({IG_PHOTOS_DIR})")
 print("─" * 65)
 
-tourist_imgs = []
-for loc_name in ["Cable Car", "Prince Philip Arch"]:
-    loc_path = PHOTOS_DIR / loc_name
-    if loc_path.exists():
-        # Prefer uncropped images — those are the original scene shots most
-        # likely to contain both macaques and humans in the same frame.
-        uncropped = [p for p in all_images(loc_path) if "cropped" not in p.name.lower()]
-        all_loc   = all_images(loc_path)
-        found     = uncropped if uncropped else all_loc
-        print(f"  {loc_name}: {len(all_loc)} total, {len(found)} uncropped used")
-        tourist_imgs.extend(found)
+tourist_imgs = all_images(IG_PHOTOS_DIR) if IG_PHOTOS_DIR.exists() else []
+print(f"  IG_Photos: {len(tourist_imgs)} images found")
 
 if not tourist_imgs:
-    print("  No tourist location images found — falling back to all locations")
-    tourist_imgs = all_images(PHOTOS_DIR)
+    print("  WARNING: IG_Photos empty — falling back to uncropped Gibraltar tourist images")
+    for loc_name in ["Cable Car", "Prince Philip Arch"]:
+        loc_path = PHOTOS_DIR / loc_name
+        if loc_path.exists():
+            uncropped = [p for p in all_images(loc_path) if "cropped" not in p.name.lower()]
+            tourist_imgs.extend(uncropped if uncropped else all_images(loc_path))
+    print(f"  Fallback: {len(tourist_imgs)} images")
 
 random.shuffle(tourist_imgs)
 
-for i, img_path in enumerate(tourist_imgs[:SAMPLES_PER_SCENARIO]):
-    individual = img_path.parent.name
-    location   = img_path.parent.parent.parent.name
-    print(f"\n  [{i+1}] {location} / {individual}")
+for i, img_path in enumerate(tourist_imgs):
+    # IG images sit directly in IG_Photos/ with no subfolders
+    is_ig = img_path.parent == IG_PHOTOS_DIR
+    label = img_path.stem if is_ig else f"{img_path.parent.parent.parent.name}/{img_path.parent.name}"
+    print(f"\n  [{i+1}] {label}")
     print(f"       {img_path.name}")
     try:
         image      = Image.open(img_path).convert("RGB")
@@ -362,14 +405,25 @@ for i, img_path in enumerate(tourist_imgs[:SAMPLES_PER_SCENARIO]):
         for grp in s3_prompts:
             state = processor.set_image(image)
             out   = processor.set_text_prompt(state=state, prompt=grp["label"])
-            n     = len(out["boxes"])
-            print(f"     SAM3 '{grp['label']}': {n} detected")
+            pairs = [
+                (b, s) for b, s in zip(out["boxes"], out["scores"])
+                if (s.cpu().item() if hasattr(s, "cpu") else float(s)) > SCORE_THRESHOLD
+            ]
+            if pairs:
+                raw_boxes, raw_scores = zip(*pairs)
+                boxes, scores, masks = apply_nms(
+                    raw_boxes, raw_scores, masks=out.get("masks")
+                )
+            else:
+                boxes, scores, masks = [], [], []
+            n = len(boxes)
+            print(f"     SAM3 '{grp['label']}': {n} detected (after NMS)")
             prompt_groups.append({
                 "label":   grp["label"],
                 "colour":  grp["colour"],
-                "boxes":   out["boxes"],
-                "scores":  out["scores"],
-                "masks":   out.get("masks"),
+                "boxes":   boxes,
+                "scores":  scores,
+                "masks":   masks,
             })
             total_sam3 += n
 
@@ -377,8 +431,8 @@ for i, img_path in enumerate(tourist_imgs[:SAMPLES_PER_SCENARIO]):
               f"{'← SAM3 finds MORE' if total_sam3 > len(yolo_boxes) else ''}")
         draw_results(
             image, None, [], [], "",
-            f"S3 — {individual} ({location}) — SAM3: {total_sam3}  YOLO: {len(yolo_boxes)}",
-            RESULTS_DIR / f"s3_{i+1}_{individual.replace(' ','_')}.jpg",
+            f"S3 — {label} — SAM3: {total_sam3}  YOLO: {len(yolo_boxes)}",
+            RESULTS_DIR / f"s3_{i+1}_{img_path.stem.replace(' ','_')}.jpg",
             yolo_boxes=yolo_boxes,
             prompt_groups=prompt_groups,
         )
