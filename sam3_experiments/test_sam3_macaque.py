@@ -43,7 +43,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
-from torchvision.ops import nms as torchvision_nms
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -67,24 +66,58 @@ NMS_IOU_THRESHOLD = 0.5
 def apply_nms(boxes, scores, masks=None):
     """
     Remove duplicate boxes that circle the same face.
-    Boxes with IoU > NMS_IOU_THRESHOLD are considered the same detection;
-    only the highest-confidence one is kept.
-    Returns (kept_boxes, kept_scores, kept_masks).
+
+    Two boxes are treated as the same detection if either:
+      - IoU > NMS_IOU_THRESHOLD  (standard overlap check), or
+      - IoMin > NMS_IOU_THRESHOLD  (one box is largely contained in the other)
+
+    IoMin = intersection / min(area_A, area_B). This catches the case where
+    SAM3 returns one tight box and one loose box around the same face — their
+    IoU can be low even though one is nearly inside the other.
+
+    Boxes are processed highest-confidence first; only the top-scoring box in
+    each overlapping group is kept.
     """
     if not boxes:
         return [], [], []
-    boxes_t  = torch.tensor(
-        [[(v.cpu().item() if hasattr(v, "cpu") else float(v)) for v in b] for b in boxes],
-        dtype=torch.float32,
-    )
-    scores_t = torch.tensor(
-        [s.cpu().item() if hasattr(s, "cpu") else float(s) for s in scores],
-        dtype=torch.float32,
-    )
-    keep = torchvision_nms(boxes_t, scores_t, NMS_IOU_THRESHOLD).tolist()
-    kept_boxes  = [boxes[i]  for i in keep]
-    kept_scores = [scores_t[i].item() for i in keep]
-    kept_masks  = [masks[i] for i in keep] if masks else None
+
+    # Normalise to plain Python floats
+    boxes_f  = [[(v.cpu().item() if hasattr(v, "cpu") else float(v)) for v in b]
+                for b in boxes]
+    scores_f = [s.cpu().item() if hasattr(s, "cpu") else float(s) for s in scores]
+
+    # Sort highest confidence first
+    order      = sorted(range(len(scores_f)), key=lambda i: scores_f[i], reverse=True)
+    suppressed = set()
+    keep       = []
+
+    for i in order:
+        if i in suppressed:
+            continue
+        keep.append(i)
+        x1i, y1i, x2i, y2i = boxes_f[i]
+        area_i = max(0.0, x2i - x1i) * max(0.0, y2i - y1i)
+
+        for j in order:
+            if j in suppressed or j == i:
+                continue
+            x1j, y1j, x2j, y2j = boxes_f[j]
+            area_j = max(0.0, x2j - x1j) * max(0.0, y2j - y1j)
+
+            inter_w = max(0.0, min(x2i, x2j) - max(x1i, x1j))
+            inter_h = max(0.0, min(y2i, y2j) - max(y1i, y1j))
+            inter   = inter_w * inter_h
+
+            union    = area_i + area_j - inter
+            iou      = inter / union          if union    > 0 else 0.0
+            i_o_min  = inter / min(area_i, area_j) if min(area_i, area_j) > 0 else 0.0
+
+            if max(iou, i_o_min) > NMS_IOU_THRESHOLD:
+                suppressed.add(j)
+
+    kept_boxes  = [boxes[i]   for i in keep]
+    kept_scores = [scores_f[i] for i in keep]
+    kept_masks  = [masks[i]   for i in keep] if masks is not None else None
     return kept_boxes, kept_scores, kept_masks
 
 
