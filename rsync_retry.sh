@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Edit these as needed before running.
-SOURCE="/Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/IG_Photos/"
-DEST="ylj20@login.hpc.cam.ac.uk:/home/ylj20/rds/hpc-work/IG_Photos/"
+SOURCE="/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops/"
+DEST="ylj20@login.hpc.cam.ac.uk:/home/ylj20/rds/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops/"
 # SOURCE="/Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/FacialRecognitionTest/yolo_detection/yolo_detection_data.tar.gz"
 # DEST="ylj20@login.hpc.cam.ac.uk:/home/ylj20/rds/hpc-work/FacialRecognitionTest/yolo_detection"
 RETRIES=5

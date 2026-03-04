@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Edit these as needed before running.
-SOURCE="/Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/FacialRecognitionTest/yolo_detection/yolo_detection_code/models/runs/macaque_face_detector_20260120_v1/weights/"
-DEST="ylj20@login.hpc.cam.ac.uk:/home/ylj20/rds/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/models/runs/macaque_face_detector_20260120_v1/weights/"
+SOURCE="/home/ylj20/FacialRecognitionTest/animal-face-id/artifacts/"
+DEST="ylj20@login.hpc.cam.ac.uk:/home/ylj20/rds/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/"
 RETRIES=5
 SLEEP_SECONDS=10
 
