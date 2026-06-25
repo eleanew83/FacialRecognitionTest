@@ -37,6 +37,16 @@ class ArcFaceHead(nn.Module):
         logits *= self.scale
         return logits
 
+    def logits_eval(self, embeddings: torch.Tensor) -> torch.Tensor:
+        """Inference-time logits WITHOUT the angular margin.
+
+        The margin is a *training* device that needs the ground-truth label;
+        applying it at test time both leaks the label and penalises the true
+        class. At eval we score with plain scaled cosine similarity.
+        """
+        cosine = F.linear(F.normalize(embeddings), F.normalize(self.weight))
+        return cosine * self.scale
+
 
 def build_classifier_head(head_type: str, embedding_dim: int, num_classes: int, margin: float = 0.5, scale: float = 30.0) -> nn.Module:
     """Return a classifier head module."""
@@ -48,9 +58,39 @@ def build_classifier_head(head_type: str, embedding_dim: int, num_classes: int, 
     raise ValueError(msg)
 
 
-def build_loss(name: str) -> nn.Module:
-    """Return a configured loss object for training."""
+def class_balanced_weights(
+    class_counts: "list[int] | torch.Tensor",
+    scheme: str = "effective_number",
+    beta: float = 0.999,
+) -> torch.Tensor:
+    """Per-class loss weights for long-tailed training.
+
+    - ``effective_number`` (Cui et al. 2019): w_c ∝ (1 - beta) / (1 - beta^{n_c}).
+      Softer than raw inverse frequency; ``beta`` near 1 => stronger re-balancing.
+    - ``inverse``: w_c ∝ 1 / n_c.
+    Weights are normalised to mean 1 so the overall loss scale is unchanged.
+    """
+    counts = torch.as_tensor(class_counts, dtype=torch.float32).clamp(min=1.0)
+    if scheme == "inverse":
+        w = 1.0 / counts
+    elif scheme == "effective_number":
+        eff = 1.0 - torch.pow(beta, counts)
+        w = (1.0 - beta) / eff
+    else:
+        msg = f"Unknown weight scheme '{scheme}'. Supported: effective_number, inverse."
+        raise ValueError(msg)
+    return w * (len(w) / w.sum())  # mean ≈ 1
+
+
+def build_loss(name: str, *, weight: torch.Tensor | None = None) -> nn.Module:
+    """Return a configured loss object for training.
+
+    ``class_balanced`` / ``weighted_ce`` apply per-class ``weight`` to the
+    cross-entropy on the (ArcFace) logits — the long-tail recognition loss.
+    """
     if name in {"cross_entropy", "ce", "arcface"}:
         return nn.CrossEntropyLoss()
-    msg = f"Unknown loss '{name}'. Supported: cross_entropy."
+    if name in {"class_balanced", "weighted_ce", "cb"}:
+        return nn.CrossEntropyLoss(weight=weight)
+    msg = f"Unknown loss '{name}'. Supported: cross_entropy, class_balanced."
     raise ValueError(msg)

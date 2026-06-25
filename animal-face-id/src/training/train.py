@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -13,7 +14,7 @@ from torch import optim
 from src.config.base import TrainingConfig, load_config
 from src.datasets.dataset_registry import build_dataloader
 from src.models.backbones import build_backbone
-from src.models.losses import build_classifier_head, build_loss
+from src.models.losses import build_classifier_head, build_loss, class_balanced_weights
 
 
 def _prepare_device(device_str: str) -> torch.device:
@@ -195,9 +196,29 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
         margin=model_cfg.get("margin", 0.5),
         scale=model_cfg.get("scale", 30.0),
     )
-    criterion = build_loss(trainer_cfg.get("loss", "cross_entropy"))
-
+    loss_name = trainer_cfg.get("loss", "cross_entropy")
     device = _prepare_device(trainer_cfg.get("device", "cuda"))
+
+    # Long-tail recognition loss: per-class weights from training-set frequencies.
+    class_weight = None
+    if loss_name in {"class_balanced", "weighted_ce", "cb"}:
+        dataset = train_loader.dataset
+        class_to_idx = getattr(dataset, "class_to_idx")
+        counts_by_name = Counter(s["id"] for s in getattr(dataset, "samples"))
+        counts = [counts_by_name.get(name, 0) for name, _ in
+                  sorted(class_to_idx.items(), key=lambda kv: kv[1])]
+        class_weight = class_balanced_weights(
+            counts,
+            scheme=trainer_cfg.get("cb_scheme", "effective_number"),
+            beta=trainer_cfg.get("cb_beta", 0.999),
+        ).to(device)
+        print(
+            f"[LTR loss] {loss_name} (scheme={trainer_cfg.get('cb_scheme', 'effective_number')}, "
+            f"beta={trainer_cfg.get('cb_beta', 0.999)}) | "
+            f"weight range [{class_weight.min():.3f}, {class_weight.max():.3f}] over {len(counts)} classes"
+        )
+    criterion = build_loss(loss_name, weight=class_weight)
+
     model.to(device)
     head.to(device)
 

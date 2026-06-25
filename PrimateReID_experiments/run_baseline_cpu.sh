@@ -1,19 +1,18 @@
 #!/bin/bash
-# Run PrimateReID zero-shot baseline on macaque test crops (all 4 backbones).
+# Run PrimateReID zero-shot baseline on macaque test crops (all 4 backbones) — CPU partition.
 #
 # Usage:
-#   sbatch run_baseline_gpu.sh                  # all 4 backbones
-#   sbatch run_baseline_gpu.sh --backbone dinov2  # single backbone
+#   sbatch run_baseline_cpu.sh                    # all 4 backbones
+#   sbatch run_baseline_cpu.sh --backbone dinov2  # single backbone
 #
-#SBATCH -J primateid_baseline
-#SBATCH -A LEMOINE-SL3-GPU
-#SBATCH -p ampere
-#SBATCH --gres=gpu:1
+#SBATCH -J primateid_baseline_cpu
+#SBATCH -A LEMOINE-SL3-CPU
+#SBATCH -p icelake
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH -o /rds/user/ylj20/hpc-work/FacialRecognitionTest/PrimateReID_experiments/logs/%j.out
 #SBATCH -e /rds/user/ylj20/hpc-work/FacialRecognitionTest/PrimateReID_experiments/logs/%j.err
 
@@ -27,7 +26,6 @@ export HF_HOME=/rds/user/ylj20/hpc-work/.cache/huggingface
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
-echo "GPU: $CUDA_VISIBLE_DEVICES"
 echo "Python: $(which python)"
 echo ""
 
@@ -43,7 +41,7 @@ if [[ "$1" == "--backbone" && -n "$2" ]]; then
     PYTHONPATH=src python -u -m primateid.run \
         --crops "$CROPS" \
         --backbone "$2" \
-        --device cuda \
+        --device cpu \
         --output "$RESULTS_DIR/$2_$(date +%Y%m%d_%H%M%S)"
 else
     # Run all 4 backbones sequentially
@@ -55,7 +53,7 @@ else
         PYTHONPATH=src python -u -m primateid.run \
             --crops "$CROPS" \
             --backbone "$BACKBONE" \
-            --device cuda \
+            --device cpu \
             --output "$RESULTS_DIR/${BACKBONE}_$(date +%Y%m%d_%H%M%S)"
     done
 

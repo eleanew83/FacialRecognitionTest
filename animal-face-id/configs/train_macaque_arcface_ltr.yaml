@@ -1,0 +1,43 @@
+name: macaque-resnet50-arcface_ltr  # long-tail run: strong aug + class-balanced loss
+
+data:
+  dataset_name: macaque_faces
+  raw_root: /rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops
+  splits_path: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
+  batch_size: 32
+  num_workers: 8
+  image_size: 224
+  num_classes: 156
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+  augment: strong          # restricted-RandAugment + affine/blur/erasing, NO h-flip
+  randaug_magnitude: 5
+
+model:
+  backbone: resnet50
+  embedding_dim: 256
+  head: arcface
+  margin: 0.5
+  scale: 30.0
+  pretrained: true
+
+trainer:
+  max_epochs: 30
+  lr: 0.0003
+  weight_decay: 0.01
+  scheduler: cosine
+  device: cuda
+  amp: true
+  grad_clip: 1.0
+  loss: class_balanced     # the long-tail recognition loss
+  cb_scheme: effective_number
+  cb_beta: 0.999
+  checkpoint_dir: artifacts
+  seed: 42
+
+inference:
+  checkpoint: artifacts/macaque-resnet50-arcface_ltr_best.pt
+  gallery_path: artifacts/macaque_gallery_index_ltr.pkl
+  knn:
+    metric: cosine
+    top_k: 5

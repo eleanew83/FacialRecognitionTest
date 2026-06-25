@@ -1,4 +1,4 @@
-# Final Evaluation Report — Chimpanzee Faces (ResNet50 + ArcFace)
+# Final Evaluation Report — Macaque Faces (ResNet50 + ArcFace)
 
 - Config: `/home/ylj20/FacialRecognitionTest/animal-face-id/configs/train_macaque_arcface.yaml`
 - Checkpoint: `/home/ylj20/FacialRecognitionTest/animal-face-id/artifacts/macaque-resnet50-arcface_aug2_best.pt`
