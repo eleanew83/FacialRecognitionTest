@@ -9,7 +9,6 @@ import yaml
 from torch.utils.data import DataLoader
 
 from .animal_faces import AnimalFaceDataset
-from .chimpanzee_faces import ChimpanzeeFacesDataset
 from .macaque_faces import MacaqueFacesDataset
 from .transforms import build_transforms
 
@@ -29,13 +28,6 @@ def _instantiate_dataset(name: str, split: str, config: dict[str, Any]) -> Any:
             split=split,
             transform=transforms,
         )
-    if name == "chimpanzee_faces":
-        return ChimpanzeeFacesDataset(
-            raw_root=config["raw_root"],
-            splits_path=config["splits_path"],
-            split=split,
-            transform=transforms,
-        )
     if name == "macaque_faces":
         return MacaqueFacesDataset(
             raw_root=config["raw_root"],
@@ -44,7 +36,7 @@ def _instantiate_dataset(name: str, split: str, config: dict[str, Any]) -> Any:
             transform=transforms,
         )
 
-    msg = f"Unknown dataset '{name}'. Supported: animal_faces, chimpanzee_faces, macaque_faces."
+    msg = f"Unknown dataset '{name}'. Supported: animal_faces, macaque_faces."
     raise ValueError(msg)
 
 

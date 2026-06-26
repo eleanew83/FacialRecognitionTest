@@ -168,17 +168,17 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
     data_cfg = config["data"]
     model_cfg = config["model"]
     trainer_cfg = config["trainer"]
-    run_name = config.get("name", "chimp-face-id")
+    run_name = config.get("name", "macaque-face-id")
 
     _set_seed(trainer_cfg.get("seed"))
 
     train_loader = build_dataloader(
-        name=data_cfg.get("dataset_name", "chimpanzee_faces"),
+        name=data_cfg.get("dataset_name", "macaque_faces"),
         split="train",
         config=data_cfg,
     )
     val_loader = build_dataloader(
-        name=data_cfg.get("dataset_name", "chimpanzee_faces"),
+        name=data_cfg.get("dataset_name", "macaque_faces"),
         split="val",
         config=data_cfg,
     )
@@ -301,11 +301,11 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
 
 
 def build_argparser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Train chimpanzee face ID model.")
+    parser = argparse.ArgumentParser(description="Train macaque face ID model.")
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/train_chimp_min10.yaml",
+        default="configs/train_macaque_arcface_aug2.yaml",
         help="Path to YAML config.",
     )
     return parser

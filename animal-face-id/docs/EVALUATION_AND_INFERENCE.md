@@ -10,7 +10,7 @@ Before running the commands, it's important to understand the two primary use ca
 
 1.  **Evaluation (Scientific Validation):** This is the process of measuring your model's performance on a held-out test dataset. It answers the question: **"How good is this model?"** by generating objective metrics like accuracy, precision, and confusion matrices. This is crucial for benchmarking and understanding the model's reliability.
 
-2.  **Inference (Practical Application):** This is the process of using the model to identify an unknown individual. It answers the question: **"Who is this chimpanzee?"** This involves comparing a new image against a "gallery" of known individuals.
+2.  **Inference (Practical Application):** This is the process of using the model to identify an unknown individual. It answers the question: **"Who is this macaque?"** This involves comparing a new image against a "gallery" of known individuals.
 
 For a deeper dive into these concepts, including how the model "remembers" faces and the hardware requirements, please read the **[Conceptual Overview & FAQ](./CONCEPTS.md)**.
 
@@ -40,7 +40,7 @@ python -m src.inference.build_gallery --config <path_to_your_config.yaml> --devi
 
 **Example:**
 ```bash
-python -m src.inference.build_gallery --config configs/train_chimp_min10_resnet50_arc_full.yaml --device cuda
+python -m src.inference.build_gallery --config configs/train_macaque_arcface_aug2.yaml --device cuda
 ```
 
 This script will:
@@ -67,15 +67,15 @@ python -m src.inference.predict --image <path_to_image.png> --config <path_to_yo
 
 **Example:**
 ```bash
-python -m src.inference.predict --image /path/to/some_chimp_face.png --config configs/train_chimp_min10_resnet50_arc_full.yaml --device cpu
+python -m src.inference.predict --image /path/to/macaque_face.png --config configs/train_macaque_arcface_aug2.yaml --device cpu
 ```
 
 **Output:**
 The script prints the predicted ID and the distance (lower is better). A very high distance may indicate an unknown individual.
 ```json
 {
-  "image": "/path/to/some_chimp_face.png",
-  "predicted_id": "Frodo",
+  "image": "/path/to/macaque_face.png",
+  "predicted_id": "Abby",
   "distance": 0.2345,
   ...
 }
@@ -97,8 +97,8 @@ python tools/run_final_eval.py --config <path_to_config.yaml> --ckpt <path_to_ch
 **Example:**
 ```bash
 python tools/run_final_eval.py \
-  --config configs/train_chimp_min10_resnet50_arc_full.yaml \
-  --ckpt artifacts/chimp-min10-resnet50-arcface-full_best.pt \
+  --config configs/train_macaque_arcface_aug2.yaml \
+  --ckpt artifacts/macaque-resnet50-arcface_aug2_best.pt \
   --device cuda
 ```
 
@@ -109,7 +109,7 @@ This script generates a comprehensive set of reports in `artifacts/final_eval/` 
 
 ## Enrolling New Individuals (The Future)
 
-What if you have a new chimpanzee that wasn't in the original training set? You don't need to retrain the model. You just need to **enroll** them into your gallery.
+What if you have a new macaque that wasn't in the original training set? You don't need to retrain the model. You just need to **enroll** them into your gallery.
 
 While the scripts do not yet automate this, the process would be:
 1.  **Get Pictures:** Collect one or more clear photos of the new individual's face.

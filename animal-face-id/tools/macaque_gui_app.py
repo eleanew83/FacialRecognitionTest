@@ -20,8 +20,8 @@ from src.inference.inference_core import infer_single_image, load_model_from_con
 from src.inference.index_store import SimpleIndex, add_individual
 
 
-DEFAULT_CONFIG = str(ROOT / "configs" / "train_macaque_arcface.yaml")
-DEFAULT_CKPT = str(ROOT / "artifacts" / "macaque-resnet50-arcface_best.pt")
+DEFAULT_CONFIG = str(ROOT / "configs" / "train_macaque_arcface_aug2.yaml")  # corrected /rds paths
+DEFAULT_CKPT = str(ROOT / "artifacts" / "macaque-resnet50-arcface_aug2_best.pt")  # best model (0.83 top-1)
 DEFAULT_INDEX_CANDIDATES = [
     str(ROOT / "artifacts" / "index" / "macaque_auto"),
     str(ROOT / "artifacts" / "index" / "macaque_index"),

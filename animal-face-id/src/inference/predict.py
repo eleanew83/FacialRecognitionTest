@@ -65,7 +65,7 @@ def predict_image(
     transforms = build_transforms(stage="val", config=config["data"])
     device = torch.device(device_str)
 
-    ckpt_path = checkpoint_path or inference_cfg.get("checkpoint", "artifacts/chimp-min10-resnet18_best.pt")
+    ckpt_path = checkpoint_path or inference_cfg.get("checkpoint", "artifacts/macaque-resnet50-arcface_aug2_best.pt")
     model = _load_backbone_from_checkpoint(config, ckpt_path, device)
 
     gallery_index = _load_gallery(inference_cfg.get("gallery_path", "artifacts/gallery_index.pkl"))
@@ -85,7 +85,7 @@ def predict_image(
 def build_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Predict animal ID for a cropped face.")
     parser.add_argument("--image", required=True, help="Path to the image to evaluate.")
-    parser.add_argument("--config", default="configs/train_chimp_min10.yaml", help="Path to YAML config.")
+    parser.add_argument("--config", default="configs/train_macaque_arcface_aug2.yaml", help="Path to YAML config.")
     parser.add_argument("--checkpoint", default=None, help="Path to trained checkpoint (defaults to best).")
     parser.add_argument("--device", default="cpu", help="cpu or cuda")
     return parser

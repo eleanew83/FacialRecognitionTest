@@ -2,9 +2,9 @@ name: macaque-resnet50-arcface_aug1 # change if want to save a different version
 
 data:
   dataset_name: macaque_faces
-  raw_root: /home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops
-  splits_path: /home/ylj20/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
-  # Local paths
+  raw_root: /rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops
+  splits_path: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
+  # Local paths (other machines)
   # raw_root: /Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge/macaque_flattened
   # splits_path: /Users/eleanew83/Library/CloudStorage/OneDrive-UniversityofCambridge/Cambridge/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
   batch_size: 32

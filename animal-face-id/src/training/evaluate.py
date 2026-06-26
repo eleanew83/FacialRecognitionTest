@@ -1,4 +1,4 @@
-"""Closed-set evaluation core for the macaque / chimpanzee face ID models.
+"""Closed-set evaluation core for the macaque face ID model.
 
 This is the importable, testable home for the final-evaluation logic. The CLI
 entry point in ``tools/run_final_eval.py`` is a thin wrapper around
@@ -79,7 +79,7 @@ def build_logit_adjustment(
     if not tau or tau <= 0.0:
         return None
     train_ds = build_dataloader(
-        name=data_cfg.get("dataset_name", "chimpanzee_faces"),
+        name=data_cfg.get("dataset_name", "macaque_faces"),
         split="train", config=data_cfg, shuffle=False, drop_last=False,
     ).dataset
     c2i = getattr(train_ds, "class_to_idx")
@@ -298,7 +298,7 @@ def run_final_evaluation(
     dev = _prepare_device(device)
 
     test_loader = build_dataloader(
-        name=data_cfg.get("dataset_name", "chimpanzee_faces"),
+        name=data_cfg.get("dataset_name", "macaque_faces"),
         split="test", config=data_cfg, shuffle=False, drop_last=False,
     )
     class_names = list(getattr(test_loader.dataset, "classes",

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from PIL import Image
 
 from src.config.base import TrainingConfig, load_config
-from src.datasets.chimpanzee_faces import ChimpanzeeFacesDataset
+from src.datasets.macaque_faces import MacaqueFacesDataset
 from src.datasets.transforms import build_transforms
 from src.models.backbones import build_backbone
 from src.models.losses import ArcFaceHead, build_classifier_head
@@ -48,7 +48,7 @@ def _load_model_and_head(config: dict[str, Any], checkpoint_path: str, device: t
 
 
 def _load_class_names(data_cfg: dict[str, Any]) -> List[str]:
-    dataset = ChimpanzeeFacesDataset(
+    dataset = MacaqueFacesDataset(
         raw_root=data_cfg["raw_root"],
         splits_path=data_cfg["splits_path"],
         split="train",

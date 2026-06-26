@@ -1,6 +1,6 @@
 # Model Training Guide
 
-This guide explains how to train the chimpanzee face identification model using the prepared dataset. The entire training process is controlled by a configuration file.
+This guide explains how to train the macaque face identification model using the prepared dataset. The entire training process is controlled by a configuration file.
 
 ## 1. Understanding the Configuration Files
 
@@ -8,26 +8,20 @@ All training parameters are defined in YAML files located in the `configs/` dire
 
 Here are the key configurations provided:
 
--   **`configs/train_chimp_min10.yaml`**:
-    -   **Purpose**: A baseline configuration.
-    -   **Backbone**: `resnet18` (a lighter model, good for initial tests).
-    -   **Head**: `arcface` (a metric learning head that improves identity separation).
-    -   **Epochs**: 50.
+-   **`configs/train_macaque_arcface_aug2.yaml`**:
+    -   **Purpose**: The main configuration for the current best model.
+    -   **Backbone**: `resnet50` with an `arcface` head.
+    -   **Augmentation**: basic; loss: cross-entropy. Produces `macaque-resnet50-arcface_aug2_best.pt`.
 
--   **`configs/train_chimp_min10_resnet50_arc.yaml`**:
-    -   **Purpose**: A more powerful configuration tuned for a high-end GPU (e.g., RTX 5080).
-    -   **Backbone**: `resnet50` (deeper and more powerful than ResNet18).
-    -   **Batch Size**: `128` (requires more VRAM).
-    -   **Epochs**: 30 (intended for a shorter, trial run).
+-   **`configs/train_macaque_arcface_aug1.yaml`**:
+    -   **Purpose**: An earlier augmentation variant (kept for reference).
 
--   **`configs/train_chimp_min10_resnet50_arc_full.yaml`**:
-    -   **Purpose**: The configuration for a full, production-quality training run.
-    -   **Backbone**: `resnet50` with `arcface`.
-    -   **Epochs**: `200` (designed for a long run to achieve the best possible performance).
+-   **`configs/train_macaque_arcface_ltr.yaml`**:
+    -   **Purpose**: A long-tail-recognition experiment — strong augmentation (restricted RandAugment, no horizontal flip) + class-balanced loss. Use if tail performance needs improving on harder data.
 
 ### Key Parameters to Know
 
--   `data.num_classes`: Must match the number of individuals in your dataset (e.g., `87` for the `min10` subset).
+-   `data.num_classes`: Must match the number of individuals in your dataset (`156` for the current macaque set).
 -   `model.backbone`: The neural network architecture (e.g., `resnet18`, `resnet50`).
 -   `model.head`: The final layer type. `arcface` is recommended for face ID tasks as it encourages better feature separation than a standard `linear` classifier.
 -   `trainer.max_epochs`: The total number of times the training loop will iterate over the entire dataset.
@@ -45,17 +39,16 @@ To start a training run, you execute the main training script `src/training/trai
 python -m src.training.train --config <path_to_your_config.yaml>
 ```
 
-**Example: Running the baseline ResNet18 training:**
+**Example: Training the current best model:**
 
 ```bash
-python -m src.training.train --config configs/train_chimp_min10.yaml
+python -m src.training.train --config configs/train_macaque_arcface_aug2.yaml
 ```
 
-**Example: Running the full, high-performance ResNet50 training:**
-(This may take a significant amount of time)
+**Example: Running the long-tail experiment (strong aug + class-balanced loss):**
 
 ```bash
-python -m src.training.train --config configs/train_chimp_min10_resnet50_arc_full.yaml
+python -m src.training.train --config configs/train_macaque_arcface_ltr.yaml
 ```
 
 While the script is running, you will see progress updates for each epoch printed to your console, including loss and accuracy metrics.

@@ -1,4 +1,4 @@
-name: macaque-resnet50-arcface_baseline  # corrected-path baseline (basic aug, plain CE)
+name: macaque-resnet50-arcface_aug2  # config for the aug2 best model (corrected /rds paths)
 
 data:
   dataset_name: macaque_faces

@@ -1,15 +1,14 @@
-🌐 Languages:  
-[English](./README.md) | [繁體中文](./README_zh-Hant.md)
+# Macaque Face Identification
 
-# Animal Face Identification
+This repository contains a PyTorch pipeline for **macaque face identification** — closed-set recognition of known individuals, with components that also support open-set hinting and enrollment workflows.
 
-This repository contains a proof-of-concept pipeline for animal face identification using PyTorch. It is designed for closed-set identification (recognizing known individuals) and is built with components to support future open-set and enrollment workflows.
+Faces are detected and cropped upstream (YOLO; see the `yolo_detection/` part of the wider project), split per-individual into train/val/test, and this repo trains/evaluates a **ResNet50 + ArcFace** model on those crops and serves a GUI for identification.
 
-The current implementation focuses on identifying individual chimpanzees using the [Chimpanzee Faces](https://github.com/cvjena/chimpanzee_faces) dataset.
+> Note: the codebase is dataset-agnostic at its core (a generic `AnimalFaceDataset` also exists), but the active pipeline and the trained model target macaques.
 
 ## GUI Overview
 
-Here is a quick visual guide to the GUI application (`tools/chimp_gui_app.py`).
+A quick visual guide to the GUI application (`tools/macaque_gui_app.py`).
 
 ### 1. Initial View
 The initial interface before loading a model. It shows the configuration path, checkpoint path, device selector (CUDA/CPU), and the empty "Identify" tab with its drag-and-drop upload area.
@@ -17,238 +16,130 @@ The initial interface before loading a model. It shows the configuration path, c
 ![Initial GUI before loading a model](./GUI-demo1.png)
 
 ### 2. Enroll a New Individual
-The "Enroll" workflow allows a user to add a new individual to the recognition index. The user provides a name/ID, uploads one or more cropped face images, and clicks "Add to index." The index is updated and saved automatically.
+The "Enroll" workflow lets a user add a new individual to the recognition index: provide a name/ID, upload one or more cropped face images, and click "Add to index." The index updates and saves automatically.
 
 ![Enroll workflow: add a new individual into the index](./GUI-demo2.png)
 
 ### 3. Identify a Known Individual
-This shows a result for a known individual. Both the model's confidence and the gallery similarity score exceed their respective thresholds. The system returns "Known individual (confidence above thresholds)" and lists the top matching candidates from the gallery.
+A result for a known individual. Both the model's confidence and the gallery similarity score exceed their thresholds, so the system returns "Known individual" and lists the top matching candidates.
 
 ![Identify result: known individual with high confidence](./GUI-demo3.png)
 
 ### 4. Identify an Unknown Individual (Open-Set)
-This shows a result for a new or unknown individual. Although the model's classification confidence is high, the similarity to the closest face in the gallery is below the threshold (e.g., < 0.75). This triggers the open-set logic, and the system displays "Possibly a new individual (open-set triggered)."
+A result for a new/unknown individual. The model's classification confidence may be high, but similarity to the closest gallery face is below the threshold (e.g. < 0.75), triggering the open-set logic: "Possibly a new individual."
 
 ![Identify result: open-set triggered for a new individual](./GUI-demo4.png)
 
 ## Features
 
-- **End-to-End Workflow**: Covers the full pipeline from data preparation to training, evaluation, and inference.
-- **Configuration-Driven**: All experiments are controlled via simple YAML configuration files.
-- **High-Performance Models**: Includes configurations for ResNet backbones with ArcFace loss, a standard for face recognition tasks.
-- **Reproducibility**: Provides scripts and fixed seeds to ensure that data splits and training runs are reproducible.
+- **End-to-End Workflow**: training, evaluation, inference, and a GUI.
+- **Configuration-Driven**: experiments controlled via simple YAML config files.
+- **ResNet + ArcFace**: ResNet50 backbone with an ArcFace head, a standard for face recognition.
+- **Reproducibility**: fixed seeds and explicit split manifests.
 
 ---
 
-## Project Status: High-Performance Model Trained
-
-**As of November 2025, a high-performance chimpanzee recognition model has been successfully trained.**
+## Project Status: Trained Macaque Model
 
 - **Model:** `ResNet50` backbone with an `ArcFace` head.
-- **Training:** Full run on the `min10` dataset (200 epochs, config `configs/train_chimp_min10_resnet50_arc_full.yaml`).
-- **Result:** Best checkpoint: `artifacts/chimp-min10-resnet50-arcface-full_best.pt`. Ready for evaluation and inference.
+- **Best checkpoint:** `artifacts/macaque-resnet50-arcface_aug2_best.pt`.
+- **Test performance (held-out test split, corrected no-margin eval):** Top-1 ≈ **0.83**, Macro-F1 ≈ **0.82**.
 
-## Dataset Notes (why “min10”)
+> Evaluation note: ArcFace is scored at test time **without** the angular margin (the margin is a training-only device). See `src/training/evaluate.py` (`ArcFaceHead.logits_eval`).
 
-- `annotations_merged_all.txt`: 7,187 images, 102 IDs, includes classes with very few samples.
-- `annotations_merged_min10.txt`: 7,150 images, 87 IDs, every ID has ≥10 images.
-- We train/evaluate on **min10** to avoid extremely low-sample classes, improve class balance, and stabilize ArcFace training/eval. Use `annotations_merged_all.txt` only if you explicitly want the long-tail classes (expect more imbalance and weaker per-ID metrics).
+## Dataset
+
+- **156 individuals**, **6607** train / **1361** val / **1584** test face crops.
+- Crops are produced upstream by YOLO detection, then split per-individual (70/15/15) — see `gorillavision/reid-system/scripts/prepare_macaque_dataset.py` in the wider project.
+- This repo consumes:
+  - the crops under `…/yolo_detection/.../macaque_crops/{train,val,test}/<ID>/`, and
+  - the split manifest `data/macaque_faces/splits.json` (each entry `{"id", "path"}`).
+- Imbalance is mild (Gini ≈ 0.29; median ≈ 40 images/ID).
 
 ---
 
 ## Conceptual Overview
 
-This project involves several key deep learning concepts. For a detailed explanation of the project's architecture and answers to common questions, please read our new guide:
+For an explanation of the architecture and common questions, see:
 
 **➡️ [Conceptual Overview & FAQ](./docs/CONCEPTS.md)**
-
-This guide answers questions such as:
-
-- How does the model "remember" new faces without full retraining?
-- What is the difference between the GPU's role in training vs. the CPU's role in inference?
-- Why is this model a "chimpanzee expert" and what are its limitations?
 
 ---
 
 ## Documentation
 
-This project is organized into a series of detailed guides. Start with setting up your environment and follow the steps in order.
-
-| #   | Guide                                                              | Description                                                         |
+| #   | Guide                                                              | Description                                                          |
 | --- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| 1   | **[Environment Setup](./docs/SETUP.md)**                           | How to configure your Python environment on Windows, WSL, or macOS. |
-| 2   | **[Data Preparation](./docs/DATA_PREPARATION.md)**                 | How to download, validate, and prepare the dataset for training.    |
-| 3   | **[Model Training](./docs/TRAINING.md)**                           | How to run the training script and understand the outputs.          |
-| 4   | **[Evaluation and Inference](./docs/EVALUATION_AND_INFERENCE.md)** | How to evaluate your trained model and predict new images.          |
+| 1   | **[Environment Setup](./docs/SETUP.md)**                           | How to configure your Python environment.                            |
+| 2   | **[Data Preparation](./docs/DATA_PREPARATION.md)**                 | How crops/splits are produced and consumed.                          |
+| 3   | **[Model Training](./docs/TRAINING.md)**                           | How to run the training script and read the outputs.                 |
+| 4   | **[Evaluation and Inference](./docs/EVALUATION_AND_INFERENCE.md)** | How to evaluate the trained model and predict new images.            |
 
 ---
 
-## 🚀 First-Time Setup: Get Started in 5 Steps
-
-**New to this repository?** Follow these steps to set up your environment and run the GUI application:
-
-### Step 1: Create a Virtual Environment
-
-**On Linux/macOS/WSL:**
+## Quick Start: Run the GUI
 
 ```bash
-python3 -m venv .venv
+# 1. Activate the environment (project venv on CSD3)
+source /rds/user/ylj20/hpc-work/venvs/macaque/bin/activate
+# (or: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt)
+
+# 2. Launch the GUI (CPU is fine for single-image inference)
+export GRADIO_ANALYTICS_ENABLED=False
+python tools/macaque_gui_app.py
 ```
 
-**On Windows (Command Prompt or PowerShell):**
+Then open http://127.0.0.1:7860 (on a remote host, forward port 7860 — e.g. the VS Code PORTS panel, or `ssh -L 7860:localhost:7860 <host>`).
 
-```cmd
-python -m venv .venv
-```
-
-### Step 2: Activate the Virtual Environment
-
-**On Linux/macOS/WSL:**
-
-```bash
-source .venv/bin/activate
-```
-
-**On Windows (Command Prompt):**
-
-```cmd
-.venv\Scripts\activate.bat
-```
-
-**On Windows (PowerShell):**
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-### Step 3: Upgrade pip
-
-```bash
-pip install --upgrade pip
-```
-
-### Step 4: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Step 5: Run the GUI Application
-
-```bash
-python tools/chimp_gui_app.py
-```
-
-### Step 6: Open in Browser
-
-Open your browser and navigate to:
-
-```
-http://127.0.0.1:7860
-```
-
-🎉 **You're ready to go!** The GUI allows you to identify chimpanzees and enroll new individuals.
-
-> **Note:** For the GUI to work properly, make sure you have obtained the pre-trained model and dataset (see section below).
-
----
-
-## Quick Start: Using Pre-trained Models and Datasets
-
-**Don't want to train from scratch?** You can get started faster by obtaining pre-prepared resources:
-
-### Option A: Get Pre-trained Model (artifacts/)
-
-- **Contact Jones** to request the trained model artifacts ZIP file
-- Extract and overwrite the `artifacts/` directory
-- This includes the best checkpoint (`chimp-min10-resnet50-arcface-full_best.pt`) and gallery index
-
-### Option B: Get Dataset (data/)
-
-You have two options for the chimpanzee dataset:
-
-1. **Download directly** from the official source: [cvjena/chimpanzee_faces](https://github.com/cvjena/chimpanzee_faces)
-2. **Contact Jones** to request the prepared dataset ZIP file for easier setup
-
-After obtaining either or both, you can skip directly to evaluation/inference steps below.
+The GUI loads `configs/train_macaque_arcface_aug2.yaml` + `artifacts/macaque-resnet50-arcface_aug2_best.pt` by default (editable in the "Load model" tab). Use the **"Model top-k"** (closed-set) result for known individuals.
 
 ---
 
 ## How to Run: The Full Workflow
 
-Here is the complete sequence of commands to go from a fresh clone to making a prediction.
+### 1. Data
+Crops + `splits.json` are produced upstream (YOLO → per-individual split). This repo just reads them via the `raw_root` / `splits_path` in the config.
 
-### 1. Setup and Data Prep
-
-_Ensure you have completed the steps in the [Environment Setup](./docs/SETUP.md) and [Data Preparation](./docs/DATA_PREPARATION.md) guides first._
-
-```bash
-# Activate your virtual environment (e.g., on Linux/WSL/macOS)
-source .venv/bin/activate
-
-# 1. Validate that your dataset is structured correctly
-python validate_dataset.py
-
-# 2. Create the train/validation/test split file (only needs to be run once)
-python scripts/prepare_chimpanzee_splits.py
-```
-
-### 2. Train the Model
-
-_For details, see the [Model Training](./docs/TRAINING.md) guide._
+### 2. Train
 
 ```bash
-# Run a full training using the high-performance configuration
-python -m src.training.train --config configs/train_chimp_min10_resnet50_arc_full.yaml
+python -m src.training.train --config configs/train_macaque_arcface_aug2.yaml
 ```
 
-### 3. Build Gallery and Predict
-
-_For details, see the [Evaluation and Inference](./docs/EVALUATION_AND_INFERENCE.md) guide._
+### 3. Build gallery + predict
 
 ```bash
-# 1. Build the k-NN gallery index from your trained model
-python -m src.inference.build_gallery --config configs/train_chimp_min10_resnet50_arc_full.yaml --device cuda
+# Build the k-NN gallery index from the trained model
+python -m src.inference.build_gallery --config configs/train_macaque_arcface_aug2.yaml --device cuda
 
-# 2. Predict the ID of a new image
- python -m src.inference.predict --image /path/to/your/chimp_face.png --config configs/train_chimp_min10_resnet50_arc_full.yaml --device cpu
+# Predict the ID of a new cropped face
+python -m src.inference.predict --image /path/to/face.png --config configs/train_macaque_arcface_aug2.yaml --device cpu
 ```
 
-### 4. Final Evaluation on Test Split
+### 4. Final evaluation on the test split
 
 ```bash
 python tools/run_final_eval.py \
-  --config configs/train_chimp_min10_resnet50_arc_full.yaml \
-  --ckpt artifacts/chimp-min10-resnet50-arcface-full_best.pt \
+  --config configs/train_macaque_arcface_aug2.yaml \
+  --ckpt artifacts/macaque-resnet50-arcface_aug2_best.pt \
   --device cuda
+# Optional: --logit-adjust-tau 1.0  (post-hoc long-tail logit adjustment)
 ```
 
-Outputs go to `artifacts/final_eval/` and `FINAL_EVAL_REPORT.md`.
+Outputs go to `artifacts/final_eval/`.
 
-### 5. GUI (experimental)
+### 5. GUI
 
 ```bash
-python tools/chimp_gui_app.py
+export GRADIO_ANALYTICS_ENABLED=False
+python tools/macaque_gui_app.py
 ```
 
-Default config/ckpt from above; uses index at `artifacts/index/chimp_index` if present. Identify tab shows model + gallery top-k; Enroll tab adds new individuals to the index.
+Identify tab shows model + gallery top-k; Enroll tab adds new individuals to the index.
 
-### 6. Auto-build gallery index from annotations
-
-```bash
-python tools/build_chimp_index_from_annotations.py \
-  --max-per-id 10 \
-  --device cuda \
-  --prefix artifacts/index/chimp_min10_auto
-```
-
-- Auto-picks the min10 annotation, uses train+val as gallery (test held out), caps per-ID samples, batches embeddings with the full model.
-- Saves index to `artifacts/index/chimp_min10_auto_*` and entries CSV; GUI will auto-load this index if present.
-
-### 7. Open-set hinting in GUI
-- Identify tab shows an “Open-set status” using both model top-1 confidence and gallery top-1 similarity.
-- Default thresholds (adjustable via sliders): model prob 0.5, gallery sim 0.75. If either is below threshold, the GUI warns “possibly a new individual” and you can send the last identified image directly to Enroll without re-upload.
-
+### 6. Open-set hinting in the GUI
+- The Identify tab shows an "Open-set status" using both model top-1 confidence and gallery top-1 similarity.
+- Default thresholds (adjustable via sliders): model prob 0.5, gallery sim 0.75. If either is below threshold, the GUI warns "possibly a new individual" and you can send the last identified image directly to Enroll.
 
 ---
 
@@ -256,23 +147,18 @@ python tools/build_chimp_index_from_annotations.py \
 
 ```
 .
-├── artifacts/              # Output folder for models (.pt) and logs (.csv)
-│                           # 💡 TIP: Contact Jones for pre-trained model ZIP to skip training
-├── configs/                # YAML configuration files for training runs
+├── artifacts/              # Models (.pt), gallery indexes, eval outputs
+├── configs/                # YAML configs (train_macaque_arcface_aug1/aug2/ltr.yaml)
 ├── data/
-│   ├── chimpanzee_faces/
-│   │   ├── annotations/    # Annotation files and generated splits.json
-│   │   └── raw/            # Location for the downloaded image dataset (ignored by Git)
-│   │                       # 💡 TIP: Get from https://github.com/cvjena/chimpanzee_faces
-│   │                       #        or contact Jones for prepared dataset ZIP
-├── docs/                   # Detailed documentation guides
-├── scripts/                # Helper scripts (e.g., for preparing data splits)
+│   └── macaque_faces/
+│       └── splits.json     # Train/val/test split manifest (id + path)
+├── docs/                   # Documentation guides
 ├── src/                    # Main source code
-│   ├── datasets/           # Dataloaders
-│   ├── inference/          # Inference scripts (prediction, gallery building)
-│   ├── models/             # Model definitions (backbones, heads, losses)
-│   └── training/           # Training and evaluation logic
-├── tools/                  # Standalone tools (e.g., final evaluation script)
+│   ├── datasets/           # Dataloaders (macaque_faces, animal_faces)
+│   ├── inference/          # Prediction, gallery building, GUI core
+│   ├── models/             # Backbones, ArcFace head, losses
+│   └── training/           # Training + evaluation logic
+├── tools/                  # Standalone tools (GUI, final eval, analysis)
 └── README.md               # This file
 ```
 
@@ -280,17 +166,13 @@ python tools/build_chimp_index_from_annotations.py \
 
 ## 🧭 Roadmap / Next Steps
 
-### Open-Set Recognition
-
 **Currently Supported:**
+- ✅ Known-individual identification (model top-k)
+- ✅ Gallery nearest-neighbour search (index kNN)
+- ✅ Enrolling new individuals (Enroll tab)
+- ✅ Open-set hinting (warns when model prob < 0.5 or gallery sim < 0.75)
 
-- ✅ **Known individual identification** (model top-k)
-- ✅ **Gallery nearest neighbor search** (index kNN)
-- ✅ **Enrolling new individuals** (Enroll tab)
-- ✅ **Open-set hinting** (Identify tab warns when model prob < 0.5 or gallery sim < 0.75; can send last image to Enroll)
-
-**Not Yet Supported:** Face detection / cropping before ID (current GUI assumes pre-cropped faces).
-
-### 🎯 Next Milestones
-- **Face detection + crop before ID (high priority):** Add a detector stage (e.g., RetinaFace) so the pipeline handles real-world photos (trap cams, zoo CCTV, researcher shots) by auto-finding faces, then reusing the existing embedding + index stack.
-- **Optional:** More advanced open-set (calibration, logging, “ambiguous” buffer/review flows) building on the current M1 open-set hinting.
+**Next milestones:**
+- **Face detection + crop before ID** is handled upstream (YOLO). Tightening the hand-off so the GUI can accept full-frame photos directly is a natural next step.
+- **Long-tail / robustness:** strong-augmentation + class-balanced-loss configs are available (`configs/train_macaque_arcface_ltr.yaml`) if tail performance needs improving on harder data.
+- **More advanced open-set** (confidence calibration, review/ambiguous buffers).

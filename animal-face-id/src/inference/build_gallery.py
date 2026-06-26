@@ -62,7 +62,7 @@ def export_embeddings(
     device = torch.device(device_str)
 
     loader = build_dataloader(
-        name=data_cfg.get("dataset_name", "chimpanzee_faces"),
+        name=data_cfg.get("dataset_name", "macaque_faces"),
         split=split,
         config=data_cfg,
         shuffle=False,
@@ -95,7 +95,7 @@ def export_embeddings(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build gallery index from a trained checkpoint.")
-    parser.add_argument("--config", default="configs/train_chimp_min10.yaml", help="Path to YAML config.")
+    parser.add_argument("--config", default="configs/train_macaque_arcface_aug2.yaml", help="Path to YAML config.")
     parser.add_argument("--checkpoint", default=None, help="Checkpoint to load (default: best checkpoint).")
     parser.add_argument("--split", default="train", help="Dataset split to export embeddings from.")
     parser.add_argument("--output", default=None, help="Optional .npz path to save embeddings + labels.")
@@ -105,7 +105,7 @@ def main() -> None:
 
     cfg = load_config(args.config)
     inference_cfg = cfg.inference or {} if isinstance(cfg, TrainingConfig) else cfg.get("inference", {})
-    default_ckpt = "artifacts/chimp-min10-resnet18_best.pt"
+    default_ckpt = "artifacts/macaque-resnet50-arcface_aug2_best.pt"
     ckpt_path = args.checkpoint or inference_cfg.get("checkpoint", default_ckpt)
     output_npz = args.output or f"artifacts/{args.split}_embeddings.npz"
 

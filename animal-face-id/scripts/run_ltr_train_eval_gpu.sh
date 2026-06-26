@@ -39,7 +39,7 @@ nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
 
 BASELINE_CKPT=artifacts/macaque-resnet50-arcface_aug2_best.pt
 LTR_CFG=configs/train_macaque_arcface_ltr.yaml
-BASE_CFG=configs/train_macaque_arcface_baseline.yaml
+BASE_CFG=configs/train_macaque_arcface_aug2.yaml
 LTR_CKPT=artifacts/macaque-resnet50-arcface_ltr_best.pt
 TAU=1.0
 
