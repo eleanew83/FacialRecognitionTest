@@ -1,9 +1,9 @@
 # Final Evaluation Report — Macaque Faces (ResNet50 + ArcFace)
 
-- Config: `configs/train_macaque_arcface_baseline.yaml`
+- Config: `configs/train_macaque_arcface_aug2.yaml`
 - Checkpoint: `artifacts/macaque-resnet50-arcface_aug2_best.pt`
-- Date: 2026-06-25 15:20:15
-- Device: cpu
+- Date: 2026-06-27 01:42:35
+- Device: cuda
 - Logit-adjust tau: 0.0
 - Test samples: 1584
 - Num classes: 156
@@ -18,8 +18,8 @@
 - Weighted F1: 0.8308
 
 ## 2. Per-class Summary
-- Per-class metrics CSV: `artifacts/final_eval/train_macaque_arcface_baseline_macaque-resnet50-arcface_aug2_best_baseline_per_class_metrics.csv`
-- Confusion matrix: `artifacts/final_eval/train_macaque_arcface_baseline_macaque-resnet50-arcface_aug2_best_baseline_confusion_matrix.png`
+- Per-class metrics CSV: `artifacts/final_eval/train_macaque_arcface_aug2_macaque-resnet50-arcface_aug2_best_baseline_per_class_metrics.csv`
+- Confusion matrix: `artifacts/final_eval/train_macaque_arcface_aug2_macaque-resnet50-arcface_aug2_best_baseline_confusion_matrix.png`
 
 - Hardest IDs by accuracy:
   - Racoon: acc = 0.250
@@ -29,7 +29,7 @@
   - Goblin: acc = 0.467
 
 ## 3. Embedding Space Visualization
-- t-SNE / PCA plot: `artifacts/final_eval/train_macaque_arcface_baseline_macaque-resnet50-arcface_aug2_best_baseline_embeddings_tsne.png`
+- t-SNE / PCA plot: `artifacts/final_eval/train_macaque_arcface_aug2_macaque-resnet50-arcface_aug2_best_baseline_embeddings_tsne.png`
 
 ## 4. Known Limitations / Notes
 - Test set size is modest; per-class variation may influence stability.

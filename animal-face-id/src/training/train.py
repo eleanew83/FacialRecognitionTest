@@ -73,10 +73,20 @@ def _run_phase(
         with torch.cuda.amp.autocast(enabled=use_amp):
             embeddings = model(images)
             if head_type == "arcface":
+                # Margin applied for the LOSS only — this is the ArcFace training objective.
                 logits = head(embeddings, labels)
             else:
                 logits = head(embeddings)
             loss = criterion(logits, labels)
+
+        # Accuracy is measured on margin-free logits, i.e. how the model is actually
+        # scored at inference. Applying the margin here would need the labels and
+        # would penalise the true class, understating accuracy (train and val alike).
+        with torch.no_grad():
+            if head_type == "arcface":
+                metric_logits = head.logits_eval(embeddings)
+            else:
+                metric_logits = logits
 
         if train_mode:
             optimizer.zero_grad(set_to_none=True)
@@ -96,7 +106,7 @@ def _run_phase(
         batch_size = labels.size(0)
         total_samples += batch_size
         total_loss += loss.item() * batch_size
-        topk = _compute_topk(logits, labels, topk=(1, 5))
+        topk = _compute_topk(metric_logits, labels, topk=(1, 5))
         total_top1 += topk[1]
         total_top5 += topk.get(5, 0.0)
 
