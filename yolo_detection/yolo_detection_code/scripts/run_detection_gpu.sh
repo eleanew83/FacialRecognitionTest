@@ -1,11 +1,13 @@
 #!/bin/bash
-# Evaluate the existing detector, or retrain YOLOv8n on the checked annotations.
+# Evaluate the detector, retrain YOLOv8n, or retrain and export fresh crops.
 # From the repository root:
 #   bash yolo_detection/yolo_detection_code/scripts/setup_detection_env.sh
 #   sbatch yolo_detection/yolo_detection_code/scripts/run_detection_gpu.sh eval
 #   sbatch yolo_detection/yolo_detection_code/scripts/run_detection_gpu.sh train
+#   sbatch --time=06:00:00 yolo_detection/yolo_detection_code/scripts/run_detection_gpu.sh both
 # Optional: DETECTION_DATA_DIR=/absolute/path/to/reviewed_detector_dataset
-# This script does not export crops or modify recognition split assignments.
+# Optional for both: DETECTION_SOURCE_SPLITS and DETECTION_CROP_OUTPUT.
+# Crop exports retain source splits; existing recognition inputs are preserved.
 #SBATCH -J macaque_detect
 #SBATCH -A LEMOINE-SL3-GPU
 #SBATCH -p ampere
@@ -23,13 +25,15 @@ set -euo pipefail
 
 MODE="${1:-eval}"
 case "$MODE" in
-    eval|train) ;;
+    eval|train|both) ;;
     -h|--help)
-        printf 'Usage: sbatch %s {eval|train} [checkpoint-for-eval]\n' "$0"
+        printf 'Usage: sbatch %s {eval|train|both} [checkpoint-for-eval]\n' "$0"
         printf 'Set DETECTION_DATA_DIR to select a different reviewed detector dataset.\n'
+        printf 'Mode both trains, then crops DETECTION_SOURCE_SPLITS into a fresh DETECTION_CROP_OUTPUT.\n'
+        printf 'Allow additional time for both stages, e.g. sbatch --time=06:00:00.\n'
         exit 0
         ;;
-    *) printf 'Unknown mode: %s (choose eval or train)\n' "$MODE" >&2; exit 2 ;;
+    *) printf 'Unknown mode: %s (choose eval, train or both)\n' "$MODE" >&2; exit 2 ;;
 esac
 
 REPO_ROOT=/rds/user/ylj20/hpc-work/FacialRecognitionTest
@@ -39,6 +43,8 @@ DATA_DIR="${DETECTION_DATA_DIR:-$REPO_ROOT/yolo_detection/yolo_detection_data}"
 MODEL="${2:-$YOLO_BASE/models/runs/macaque_face_detector_20260120_v1/weights/best.pt}"
 JOB_ID="${SLURM_JOB_ID:?Submit this script with sbatch}"
 RUN_NAME="macaque_face_detector_$(date +%Y%m%d)_job${JOB_ID}"
+SOURCE_SPLITS="${DETECTION_SOURCE_SPLITS:-$REPO_ROOT/macaque_split_data}"
+CROP_OUTPUT="${DETECTION_CROP_OUTPUT:-$YOLO_BASE/output/macaque_crops_${RUN_NAME}}"
 DETECTION_DEPS="$YOLO_BASE/models/python_deps/ultralytics-8.4.14"
 
 [[ -d "$DETECTION_DEPS/ultralytics" ]] || {
@@ -89,8 +95,30 @@ PY
 else
     # The training entrypoint runs the same dataset checks before model loading.
     # Match the existing checkpoint's 100 epochs, batch 4, and 416-pixel images.
+    TRAIN_ARGS=(--data-dir "$DATA_DIR" --mode "$MODE" --device 0
+        --epochs 100 --batch 4 --img-size 416 --run-name "$RUN_NAME")
+    if [[ "$MODE" == both ]]; then
+        # Reject unsafe destinations before spending time on detector training.
+        "$PYTHON" -u -B - "$SOURCE_SPLITS" "$CROP_OUTPUT" <<'PY'
+import sys
+from pathlib import Path
+
+source, output = (Path(value).resolve() for value in sys.argv[1:])
+if not all((source / split).is_dir() for split in ("train", "val", "test")):
+    raise ValueError(f"Source train/val/test folders are missing: {source}")
+if source == output or source in output.parents or output in source.parents:
+    raise ValueError("Source splits and crop output must be separate, non-nested directories")
+if output.exists() and (not output.is_dir() or any(output.iterdir())):
+    raise FileExistsError(f"Crop output is not empty; choose a fresh destination: {output}")
+print(f"New crop destination: {output}")
+PY
+        TRAIN_ARGS+=(--source-split-dir "$SOURCE_SPLITS" --output-dir "$CROP_OUTPUT")
+    fi
     "$PYTHON" -u -B "$YOLO_BASE/scripts/train_yolo_detection.py" \
-        --data-dir "$DATA_DIR" --mode train --device 0 \
-        --epochs 100 --batch 4 --img-size 416 --run-name "$RUN_NAME"
+        "${TRAIN_ARGS[@]}"
     printf 'Detector checkpoint: %s/models/runs/%s/weights/best.pt\n' "$YOLO_BASE" "$RUN_NAME"
+    if [[ "$MODE" == both ]]; then
+        printf 'Verified crop generation: %s\n' "$CROP_OUTPUT"
+        printf 'Use its bundled splits.json for a subsequent recognition training run.\n'
+    fi
 fi

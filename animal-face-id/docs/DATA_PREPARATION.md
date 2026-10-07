@@ -280,3 +280,25 @@ No one-off repair or label-application scripts are needed. The 7 October detecto
 review records and label backups remain as evidence; training reads only the
 configured active image and label folders. Regression coverage is in
 `tests/test_detection_integrity.py`.
+
+For a full detector rerun followed by fresh face crops, submit from the repository
+root:
+
+```bash
+sbatch --time=06:00:00 --job-name=macaque_detect_retrain_crop \
+  yolo_detection/yolo_detection_code/scripts/run_detection_gpu.sh both
+```
+
+The job checks the separate annotated dataset in `yolo_detection_data`, retrains
+YOLOv8n for up to 100 epochs using batch 4 and 416-pixel inputs, and runs the
+training validation. It then uses that run's `best.pt` to crop the repaired
+`macaque_split_data` while retaining its train/validation/test assignments. Crops
+are published only after validation into a new job-specific directory under
+`yolo_detection/yolo_detection_code/output/`, with a bundled `splits.json`.
+Existing crop generations and recognition inputs remain available.
+
+Old-detector reevaluation is an optional comparison baseline; it does not update
+the model for changed detector training data. The source split repair and the
+annotated detector dataset are separate. The combined job stops if either
+dataset fails its applicable checks. After the new crops pass identity review,
+use their directory and bundled manifest together for a new recognition run.
