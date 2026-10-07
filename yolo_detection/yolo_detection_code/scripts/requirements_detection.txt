@@ -1,0 +1,4 @@
+# Version used by the existing SAM3/YOLO comparison; install as an isolated overlay.
+ultralytics==8.4.14
+ultralytics-thop==2.0.18
+polars==0.20.31

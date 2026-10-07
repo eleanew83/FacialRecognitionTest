@@ -52,6 +52,46 @@ identity; that requires visual/reference annotation review. This is an
 crops, or capture sessions. The audit does not use perceptual similarity to remove
 images.
 
+## Full source photo split repair, 7 October 2026
+
+The separate `macaque_split_data` source-photo copy was audited by actual file
+bytes and decoded RGB pixels. Its 9641 original images contained 72 duplicate
+groups with 86 redundant copies. The repair keeps 9555 distinct source images:
+**6715 train / 1324 validation / 1516 test**, with all 156 identities in each split.
+It quarantines the 86 redundant copies outside the active source tree and
+relocates 97 retained photos to match previously reviewed identities and split
+assignments. Existing training content stays in training. Distinct photos sharing
+a filename remain.
+
+Nineteen source label conflicts follow the existing reviewed crop assignments.
+The additional source-only frame
+`100824 MH AF Pia SAF Ilary during follow Sylv2.JPG` was explicitly reviewed as
+**Pia** by the user. It is retained only in
+`macaque_split_data/train/Pia/`; its incorrect `test/Ilary` copy is quarantined.
+The decision applies to this exact frame and does not relabel frames 1, 3 or 4.
+
+The source tree now has its own `splits.json` and `split_summary.json`. Records
+include current identity/path assignments and content hashes. The audit under
+`data/macaque_faces/source_split_repair_2026_10_07/` contains the user's decision,
+`reference_updates.csv` mapping every original source path to its current file
+location and active representative, reversible move records, quarantined copies
+and `verification.json`. Original audit snapshots preserve the pre-repair folder
+labels; they are historical evidence rather than active assignments.
+
+The repair rereads every retained file and requires its bytes to match the full
+RGB audit before publishing the source manifest. No exact duplicates or
+conflicting labels remain on identical active source content. The existing
+recognition crop manifest remains unchanged; this particular frame has no crop
+entry. The detector annotation for the frame uses the identity-free
+`macaque_face` class. Source identity review does not validate its face boxes.
+
+The final alignment check links all **9465 existing recognition crops** to exactly
+one retained source-content group with the same identity and train/validation/test
+assignment. The source tree has **90 photos without an active crop**, explaining
+the different source and crop counts. Current alignment and content verification
+records are saved in the source audit directory, along with results for 48 pipeline
+integrity regression tests and 5 source repair tests.
+
 ## Why duplicates appeared in the earlier pipeline
 
 The original splitter selected disjoint filename slices and cleared its source
