@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Sequence
 from PIL import Image
 from torch.utils.data import Dataset
 
+from .split_integrity import validate_manifest
+
 
 class MacaqueFacesDataset(Dataset):
     """Dataset that reads images referenced in split manifests."""
@@ -26,6 +28,7 @@ class MacaqueFacesDataset(Dataset):
         self.transform = transform
 
         payload = json.loads(self.splits_path.read_text(encoding="utf-8"))
+        validate_manifest(payload, self.raw_root, verify_content=True)
         if self.split not in payload:
             msg = f"Split '{self.split}' not found in {self.splits_path}."
             raise ValueError(msg)

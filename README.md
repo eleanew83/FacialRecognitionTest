@@ -184,6 +184,10 @@ python3 scripts/flatten_macaque_dirs.py
 
 ### 2. Create `macaque_split_data`
 
+Use a fresh output directory for each generation. The splitter and crop exporter
+publish only validated, complete outputs. The crop transfer helper also refuses
+populated destinations; see [Data Preparation safeguards](animal-face-id/docs/DATA_PREPARATION.md).
+
 Prepare the split data using:
 
 ```bash

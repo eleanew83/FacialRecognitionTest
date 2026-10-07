@@ -43,18 +43,20 @@ A result for a new/unknown individual. The model's classification confidence may
 
 - **Model:** `ResNet50` backbone with an `ArcFace` head.
 - **Best checkpoint:** `artifacts/macaque-resnet50-arcface_aug2_best.pt`.
-- **Test performance (held-out test split, corrected no-margin eval):** Top-1 ≈ **0.83**, Macro-F1 ≈ **0.82**.
+- **Historical test performance (before the October split repair; corrected no-margin eval):** Top-1 ≈ **0.83**, Macro-F1 ≈ **0.82**.
 
 > Evaluation note: ArcFace is scored at test time **without** the angular margin (the margin is a training-only device). See `src/training/evaluate.py` (`ArcFaceHead.logits_eval`).
 
 ## Dataset
 
-- **156 individuals**, **6607** train / **1361** val / **1584** test face crops.
-- Crops are produced upstream by YOLO detection, then split per-individual (70/15/15) — see `gorillavision/reid-system/scripts/prepare_macaque_dataset.py` in the wider project.
+**Split integrity:** exact duplicate images were found in the historical evaluation. The active manifest and crop folders include the reviewed label corrections, and dataset loading verifies actual file/pixel hashes, label conflicts, and the complete folder inventory. Distinct crops sharing a filename are retained. The earlier scores are historical; retrain with `configs/train_macaque_arcface_clean.yaml` for results on the repaired data.
+
+- **156 identity labels**, **6665** train / **1302** val / **1498** test face crops after the reviewed corrections on 7 October 2026.
+- Only exact byte or decoded RGB duplicates are consolidated. Previously trained-on exact image content stays out of validation/test; filenames do not determine whether crops are duplicates. See [Data Preparation](./docs/DATA_PREPARATION.md) for the audit and future split commands.
 - This repo consumes:
   - the crops under `…/yolo_detection/.../macaque_crops/{train,val,test}/<ID>/`, and
   - the split manifest `data/macaque_faces/splits.json` (each entry `{"id", "path"}`).
-- Imbalance is mild (Gini ≈ 0.29; median ≈ 40 images/ID).
+- The earlier imbalance statistics refer to the historical split; recompute them for the repaired manifest.
 
 ---
 

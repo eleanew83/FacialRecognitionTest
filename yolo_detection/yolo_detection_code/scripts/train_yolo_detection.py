@@ -3,6 +3,12 @@ import torch
 import os
 import argparse
 import shutil
+import sys
+import json
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "animal-face-id"))
+from src.datasets.split_integrity import file_fingerprint, fresh_output_directory, validate_manifest
 from datetime import datetime
 
 # Define base paths for the new structure
@@ -108,7 +114,7 @@ def train_model(
     print(f"Training completed. Model saved to {os.path.join(RUNS_DIR, run_name)}")
     return results
 
-def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
+def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_folder=None):
     """
     Use the trained detection model to crop macaque faces from images
     
@@ -120,83 +126,109 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3):
     if output_dir is None:
         output_dir = os.path.join(OUTPUT_DIR, "macaque_crops")
         
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Load the trained model
-    model = YOLO(detection_model_path)
-    
-    # Get all macaque images in macaque_split_data
-    source_folder = SOURCE_SPLIT_DIR
-    all_images = []
-    for root, _, files in os.walk(source_folder):
-        for file in files:
-            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
-                all_images.append(os.path.join(root, file))
-    
-    # Process each image
-    print(f"Processing {len(all_images)} images to crop faces...")
-    for img_path in all_images:
-        try:
-            # Preserve split structure: split/macaque_id
-            rel_path = os.path.relpath(img_path, source_folder)
-            parts = rel_path.split(os.sep)
-            if len(parts) < 3:
-                continue
-            split_name = parts[0]
-            macaque_id = parts[1]
-            macaque_output_dir = os.path.join(output_dir, split_name, macaque_id)
-            if not os.path.exists(macaque_output_dir):
-                os.makedirs(macaque_output_dir)
-            
-            # Run the model on the image
-            results = model(img_path, conf=confidence)
-            
-            # Load the image once (needed for crops and label normalization)
-            import cv2
-            img = cv2.imread(img_path)
-            if img is None:
-                continue
-            height, width = img.shape[:2]
+    source_folder = source_folder or SOURCE_SPLIT_DIR
+    source_path = Path(source_folder).resolve()
+    output_path = Path(output_dir).resolve()
+    if not source_path.is_dir():
+        raise FileNotFoundError(source_path)
+    if source_path == output_path or source_path in output_path.parents or output_path in source_path.parents:
+        raise ValueError("Source splits and crop output must be separate directories.")
+    if output_path.exists() and any(output_path.iterdir()):
+        raise FileExistsError(f"Crop output is not empty; choose a fresh --output-dir: {output_path}")
+    all_images = sorted(str(path) for path in source_path.rglob("*")
+                        if path.is_file() and not path.name.startswith(".")
+                        and path.suffix.lower() in {".jpg", ".jpeg", ".png"})
+    source_manifest = {split: [] for split in ("train", "val", "test")}
+    for image_path in all_images:
+        relative = Path(image_path).relative_to(source_path)
+        if len(relative.parts) != 3 or relative.parts[0] not in source_manifest:
+            raise ValueError(f"Unexpected source image layout: {relative}")
+        source_manifest[relative.parts[0]].append({"id": relative.parts[1], "path": str(relative),
+                                                **file_fingerprint(image_path)})
+    validate_manifest(source_manifest, source_path)
+    if not all_images:
+        raise ValueError("No source images found.")
+    with fresh_output_directory(output_path) as staging_path:
+        model = YOLO(detection_model_path)
 
-            # Collect all predicted boxes and track best for cropping
-            all_boxes = []
-            best_box = None
-            best_conf = -1.0
-            for result in results:
-                boxes = result.boxes
-                if len(boxes) == 0:
+        cropped_manifest = {split: [] for split in ("train", "val", "test")}
+        errors = []
+        # Process each image
+        print(f"Processing {len(all_images)} images to crop faces...")
+        for img_path in all_images:
+            try:
+                # Preserve split structure: split/macaque_id
+                rel_path = os.path.relpath(img_path, source_folder)
+                parts = rel_path.split(os.sep)
+                if len(parts) < 3:
                     continue
-                for box in boxes:
-                    conf = float(box.conf.item()) if box.conf is not None else 0.0
-                    all_boxes.append((box, conf))
-                    if conf > best_conf:
-                        best_conf = conf
-                        best_box = box
+                split_name = parts[0]
+                macaque_id = parts[1]
+                macaque_output_dir = os.path.join(staging_path, split_name, macaque_id)
+                if not os.path.exists(macaque_output_dir):
+                    os.makedirs(macaque_output_dir)
+            
+                # Run the model on the image
+                results = model(img_path, conf=confidence)
+            
+                # Load the image once (needed for crops and label normalization)
+                import cv2
+                img = cv2.imread(img_path)
+                if img is None:
+                    raise OSError(f"Could not read source image: {img_path}")
+                height, width = img.shape[:2]
 
-            if not all_boxes:
-                continue
+                # Collect all predicted boxes and track best for cropping
+                all_boxes = []
+                best_box = None
+                best_conf = -1.0
+                for result in results:
+                    boxes = result.boxes
+                    if len(boxes) == 0:
+                        continue
+                    for box in boxes:
+                        conf = float(box.conf.item()) if box.conf is not None else 0.0
+                        all_boxes.append((box, conf))
+                        if conf > best_conf:
+                            best_conf = conf
+                            best_box = box
 
-            # Get image basename
-            base_filename = os.path.basename(img_path)
-            name, ext = os.path.splitext(base_filename)
+                if not all_boxes:
+                    continue
 
-            # Save only the highest-confidence crop
-            if best_box is None:
-                continue
-            x1, y1, x2, y2 = map(int, best_box.xyxy[0].tolist())
-            crop = img[y1:y2, x1:x2]
-            if crop.size == 0:
-                continue
-            crop_filename = f"{name}_crop0{ext}"
-            crop_path = os.path.join(macaque_output_dir, crop_filename)
-            cv2.imwrite(crop_path, crop)
+                # Get image basename
+                base_filename = os.path.basename(img_path)
+                name, ext = os.path.splitext(base_filename)
+
+                # Save only the highest-confidence crop
+                if best_box is None:
+                    continue
+                x1, y1, x2, y2 = map(int, best_box.xyxy[0].tolist())
+                crop = img[y1:y2, x1:x2]
+                if crop.size == 0:
+                    continue
+                crop_filename = f"{name}_crop0{ext}"
+                crop_path = os.path.join(macaque_output_dir, crop_filename)
+                if not cv2.imwrite(crop_path, crop):
+                    raise OSError(f"Failed to write face crop: {crop_path}")
+                cropped_manifest[split_name].append({
+                    "id": macaque_id, "path": str(Path(crop_path).resolve().relative_to(staging_path)),
+                    **file_fingerprint(crop_path),
+                })
         
-        except Exception as e:
-            print(f"Error processing {img_path}: {e}")
+            except Exception as e:
+                errors.append(f"{img_path}: {e}")
+                print(f"Error processing {img_path}: {e}")
     
-    print(f"Face cropping completed. Cropped faces saved to {output_dir}")
-    return output_dir
+        # Different source images can produce an identical highest-confidence face.
+        # Keep failed output available for review, but do not report a clean export.
+        if errors:
+            raise RuntimeError(f"Crop export failed for {len(errors)} images; first error: {errors[0]}")
+        validate_manifest(cropped_manifest, staging_path, verify_content=True,
+                          expected_labels={r["id"] for rows in source_manifest.values() for r in rows})
+        (staging_path / "splits.json").write_text(json.dumps(cropped_manifest, indent=2) + "\n")
+    print(f"Face cropping completed. Cropped faces saved to {output_path}")
+    return str(output_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train YOLOv8 for macaque face detection")
@@ -214,6 +246,8 @@ if __name__ == "__main__":
                         help="Override run name (default: YYYYMMDD_<run-version>)")
     parser.add_argument("--confidence", type=float, default=0.3,
                         help="Confidence threshold for cropping (default: 0.3)")
+    parser.add_argument("--source-split-dir", default=SOURCE_SPLIT_DIR, help="Source train/val/test image folders")
+    parser.add_argument("--output-dir", default=None, help="New or empty crop output directory")
     # Optional YOLO augmentation overrides (defaults = Ultralytics built-ins)
     parser.add_argument("--mosaic", type=float, default=None, help="Override mosaic prob (e.g., 0.5)")
     parser.add_argument("--mixup", type=float, default=None, help="Override mixup prob (e.g., 0.1)")
@@ -260,5 +294,6 @@ if __name__ == "__main__":
             print("Please train the model first or provide a valid model path with --model")
             exit(1)
             
-        output_location = crop_faces(model_path, confidence=args.confidence)
+        output_location = crop_faces(model_path, output_dir=args.output_dir, confidence=args.confidence,
+                                     source_folder=args.source_split_dir)
         print(f"Cropped faces are available at: {output_location}") 
