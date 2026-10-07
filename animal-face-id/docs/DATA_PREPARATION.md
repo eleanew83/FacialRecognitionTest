@@ -190,3 +190,53 @@ Run the regression checks with:
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+
+## Detector dataset safeguards
+
+`src/datasets/detection_integrity.py` is the reusable detector counterpart to
+`split_integrity.py`. It is called by `prepare_yolo_dataset.py`,
+`update_yolo_detection_data.py`, and `train_yolo_detection.py`. It checks the
+actual dataset selected by `dataset.yaml`, every visible image and matching
+label, class-0 normalized boxes, missing/orphan labels, repeated boxes and exact
+byte/RGB duplicates within or across configured train/val/test splits. Different
+crops sharing filenames are allowed. It does not establish semantic annotation
+accuracy or independence of near-duplicate frames.
+
+Detector preparation requires a new output directory, groups exact content before
+seeded splitting, and publishes only a checked generation under the existing
+build lock. Manually reviewed annotations can be supplied with `--labels-dir`,
+mirroring source image paths. Contradictory boxes on identical content stop the
+build. Optional model proposals require a macaque-face checkpoint, keep all
+face boxes and never use a fabricated centre-box fallback. Proposed boxes still
+need visual review.
+
+The permanent TSV updater plans the complete edit before touching the dataset.
+It validates proposed image and label content, refuses filename collisions and
+ambiguous sources/targets, and keeps each target in its existing split. A TSV
+`split` column disambiguates same-named distinct crops in train and validation;
+`source_relative_path` disambiguates source files. When replacement image pixels
+change, supply reviewed labels using `--replacement-labels-dir`; paths in that
+directory are `train/original-stem.txt` or `val/original-stem.txt`. Replacing an
+image while retaining unrelated old box coordinates is rejected.
+
+Run the updater with `--dry-run` to check an edit without changing the data. Actual
+edits stage replacements first, keep backups and an operation journal outside the
+active dataset, invalidate label caches, and roll back if the update fails. Script
+updates share the preparation lock. A forced process termination between file
+replacements can require recovery from the journal; training checks prevent a
+partial image/label inventory or duplicate content from being used silently.
+
+Training runs the detector checks before model loading and invalidates derived
+label caches so reviewed coordinates are reread even when label file lengths
+are unchanged. From the repository root:
+
+```bash
+python yolo_detection/yolo_detection_code/scripts/train_yolo_detection.py \
+  --data-dir yolo_detection/yolo_detection_data --check-data-only
+```
+
+No one-off repair or label-application scripts are needed. The 7 October detector
+review records and label backups remain as evidence; training reads only the
+configured active image and label folders. Regression coverage is in
+`tests/test_detection_integrity.py`.

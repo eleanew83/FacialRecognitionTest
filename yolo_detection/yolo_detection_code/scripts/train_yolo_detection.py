@@ -1,5 +1,3 @@
-from ultralytics import YOLO
-import torch
 import os
 import argparse
 import shutil
@@ -9,17 +7,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "animal-face-id"))
 from src.datasets.split_integrity import file_fingerprint, fresh_output_directory, validate_manifest
+from src.datasets.detection_integrity import validate_detection_dataset
 from datetime import datetime
 
 # Define base paths for the new structure
 YOLO_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get the yolo base directory
-SOURCE_SPLIT_DIR = "/home/ylj20/FacialRecognitionTest/macaque_split_data"
+SOURCE_SPLIT_DIR = str(Path(__file__).resolve().parents[3] / "macaque_split_data")
 MODEL_DIR = os.path.join(YOLO_BASE, "models")
 RUNS_DIR = os.path.join(MODEL_DIR, "runs")
 LEGACY_DIR = os.path.join(MODEL_DIR, "legacy")
 LAST_RUN_FILE = os.path.join(MODEL_DIR, "latest_run.txt")
 OUTPUT_DIR = os.path.join(YOLO_BASE, "output")
-DATASET_DIR = "/home/ylj20/FacialRecognitionTest/yolo_detection/yolo_detection_data"  # Absolute path to dataset
+DATASET_DIR = str(Path(__file__).resolve().parents[2] / "yolo_detection_data")
 
 def default_run_name(version: str) -> str:
     date_str = datetime.now().strftime("%Y%m%d")
@@ -53,6 +52,7 @@ def train_model(
     hsv_s: float | None = None,
     hsv_v: float | None = None,
     fliplr: float | None = None,
+    data_dir: str | Path | None = None,
 ):
     """
     Train a YOLOv8 model for macaque face detection
@@ -63,6 +63,18 @@ def train_model(
         img_size: Input image size for the model
         device: Device to train on (0 for first GPU, cpu for CPU)
     """
+    # Verify the actual configured training inputs before loading or training a model.
+    dataset_root = Path(data_dir or DATASET_DIR).resolve()
+    integrity = validate_detection_dataset(dataset_root)
+    print(f"Detector dataset verified: {integrity['image_counts']}; no exact duplicates")
+    # Reviewed labels can change without changing file lengths. Force the loader
+    # to rebuild its derived annotations instead of reusing an older label cache.
+    for cache in (dataset_root / "labels").rglob("*.cache"):
+        cache.unlink()
+    from ultralytics import YOLO
+    import torch
+    run_name = run_name or default_run_name("v1")
+
     # Check for GPU
     if device != "cpu" and not torch.cuda.is_available():
         print("CUDA not available, using CPU")
@@ -79,7 +91,7 @@ def train_model(
     
     # Train the model
     train_kwargs = {
-        "data": os.path.join(DATASET_DIR, "dataset.yaml"),
+        "data": str(dataset_root / "dataset.yaml"),
         "epochs": epochs,
         "batch": batch_size,
         "imgsz": img_size,
@@ -149,6 +161,7 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_fol
     if not all_images:
         raise ValueError("No source images found.")
     with fresh_output_directory(output_path) as staging_path:
+        from ultralytics import YOLO
         model = YOLO(detection_model_path)
 
         cropped_manifest = {split: [] for split in ("train", "val", "test")}
@@ -232,6 +245,8 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_fol
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train YOLOv8 for macaque face detection")
+    parser.add_argument("--data-dir", default=DATASET_DIR, help="Detector dataset directory with dataset.yaml")
+    parser.add_argument("--check-data-only", action="store_true", help="Validate the detector dataset and exit without loading a model")
     parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
     parser.add_argument("--batch", type=int, default=16, help="Batch size")
     parser.add_argument("--img-size", type=int, default=640, help="Image size")
@@ -257,6 +272,10 @@ if __name__ == "__main__":
     parser.add_argument("--fliplr", type=float, default=None, help="Override horizontal flip prob (e.g., 0.5)")
     
     args = parser.parse_args()
+    if args.check_data_only:
+        integrity = validate_detection_dataset(args.data_dir)
+        print(json.dumps({key: value for key, value in integrity.items() if key != "records"}, indent=2))
+        raise SystemExit(0)
     
     trained_model_path = None
     
@@ -274,6 +293,7 @@ if __name__ == "__main__":
             hsv_s=args.hsv_s,
             hsv_v=args.hsv_v,
             fliplr=args.fliplr,
+            data_dir=args.data_dir,
         )
         trained_model_path = os.path.join(RUNS_DIR, run_name, "weights", "best.pt")
     
@@ -289,7 +309,7 @@ if __name__ == "__main__":
             else:
                 model_path = None
         
-        if not os.path.exists(model_path):
+        if model_path is None or not os.path.exists(model_path):
             print(f"Error: Model not found at {model_path}")
             print("Please train the model first or provide a valid model path with --model")
             exit(1)
