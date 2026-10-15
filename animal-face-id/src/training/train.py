@@ -131,6 +131,7 @@ def _save_checkpoint(
     epoch: int,
     best_metric: float,
     config: dict[str, Any],
+    class_names=None,
 ) -> None:
     payload = {
         "epoch": epoch,
@@ -139,6 +140,7 @@ def _save_checkpoint(
         "head_state": head.state_dict(),
         "optimizer_state": optimizer.state_dict(),
         "config": config,
+        "class_names": list(class_names) if class_names is not None else None,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(payload, path)
@@ -192,6 +194,12 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
         split="val",
         config=data_cfg,
     )
+
+    class_names = list(getattr(train_loader.dataset, "classes", []))
+    if class_names and len(class_names) != data_cfg.get("num_classes"):
+        raise ValueError(f"num_classes={data_cfg.get('num_classes')} disagrees with {len(class_names)} dataset identities")
+    if class_names and class_names != list(val_loader.dataset.classes):
+        raise ValueError("Training and validation classifier label orders disagree")
 
     model = build_backbone(
         model_name=model_cfg.get("backbone", "resnet18"),
@@ -303,8 +311,8 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
         # Save checkpoints
         if val_metrics["top1"] >= best_top1:
             best_top1 = val_metrics["top1"]
-            _save_checkpoint(best_path, model, head, optimizer, epoch, best_top1, config)
-        _save_checkpoint(last_path, model, head, optimizer, epoch, best_top1, config)
+            _save_checkpoint(best_path, model, head, optimizer, epoch, best_top1, config, class_names)
+        _save_checkpoint(last_path, model, head, optimizer, epoch, best_top1, config, class_names)
 
     print(f"Best val top-1: {best_top1:.4f}")
     print(f"Checkpoints saved to: {best_path} (best), {last_path} (last)")

@@ -14,6 +14,7 @@ from src.datasets.dataset_registry import build_dataloader
 from src.inference.knn import EmbeddingIndex
 from src.models.backbones import build_backbone
 from src.inference.index_store import SimpleIndex
+from src.datasets.identity_registry import discover_registry
 
 
 def _load_backbone_from_checkpoint(config: dict[str, Any], checkpoint_path: str, device: torch.device) -> torch.nn.Module:
@@ -88,7 +89,7 @@ def export_embeddings(
     all_embeddings = np.concatenate(embeddings, axis=0)
 
     if output_npz:
-        np.savez(output_npz, embeddings=all_embeddings, labels=np.array(labels))
+        np.savez(output_npz, embeddings=all_embeddings, labels=np.array(labels), paths=np.array(paths))
 
     return all_embeddings, labels, paths
 
@@ -136,6 +137,11 @@ def main() -> None:
             simple_prefix = "artifacts/index/macaque_auto"
     if simple_prefix:
         meta = [{"image_path": p} for p in paths] if paths else None
+        data_cfg = cfg.data if isinstance(cfg, TrainingConfig) else cfg["data"]
+        registry = discover_registry(data_cfg["raw_root"], data_cfg.get("identity_registry")) if data_cfg.get("dataset_name") == "macaque_faces" else None
+        if registry is not None and meta is not None:
+            for label, item in zip(labels, meta):
+                item.update(registry.metadata(label))
         simple_index = SimpleIndex()
         simple_index.add(embeddings, labels, meta=meta)
         simple_index.save(simple_prefix)

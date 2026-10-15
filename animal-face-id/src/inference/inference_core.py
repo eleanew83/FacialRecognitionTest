@@ -15,6 +15,8 @@ from src.datasets.macaque_faces import MacaqueFacesDataset
 from src.datasets.transforms import build_transforms
 from src.models.backbones import build_backbone
 from src.models.losses import ArcFaceHead, build_classifier_head
+from src.models.checkpoint_labels import checkpoint_class_names, output_groups, aggregate_logits
+from src.datasets.identity_registry import discover_registry
 
 
 def _prepare_device(device_str: str) -> torch.device:
@@ -27,6 +29,8 @@ def _load_model_and_head(config: dict[str, Any], checkpoint_path: str, device: t
     model_cfg = config["model"]
     data_cfg = config["data"]
     checkpoint = torch.load(checkpoint_path, map_location=device)
+    model_cfg = checkpoint.get("config", {}).get("model", model_cfg)
+    class_count = checkpoint["head_state"]["weight"].shape[0]
     model = build_backbone(
         model_name=model_cfg.get("backbone", "resnet18"),
         embedding_dim=model_cfg.get("embedding_dim", 256),
@@ -36,7 +40,7 @@ def _load_model_and_head(config: dict[str, Any], checkpoint_path: str, device: t
     head = build_classifier_head(
         head_type=head_type,
         embedding_dim=model_cfg.get("embedding_dim", 256),
-        num_classes=data_cfg.get("num_classes", 1),
+        num_classes=class_count,
         margin=model_cfg.get("margin", 0.5),
         scale=model_cfg.get("scale", 30.0),
     )
@@ -44,6 +48,7 @@ def _load_model_and_head(config: dict[str, Any], checkpoint_path: str, device: t
     head.load_state_dict(checkpoint["head_state"], strict=True)
     model.to(device).eval()
     head.to(device).eval()
+    head.output_class_names = checkpoint_class_names(checkpoint, checkpoint_path, class_count)
     return model, head, head_type
 
 
@@ -64,7 +69,8 @@ def load_model_from_config(config_path: str, ckpt_path: str, device: str = "cpu"
     device_t = _prepare_device(device)
     model, head, head_type = _load_model_and_head(config, ckpt_path, device_t)
     transform = build_transforms(stage="val", config=config["data"])
-    class_names = _load_class_names(config["data"])
+    registry = discover_registry(config["data"]["raw_root"], config["data"].get("identity_registry"))
+    class_names, groups = output_groups(head.output_class_names, registry)
     return {
         "model": model,
         "head": head,
@@ -73,6 +79,9 @@ def load_model_from_config(config_path: str, ckpt_path: str, device: str = "cpu"
         "device": device_t,
         "class_names": class_names,
         "config": config,
+        "output_groups": groups,
+        "original_class_names": head.output_class_names,
+        "identity_registry": registry,
     }
 
 
@@ -100,6 +109,8 @@ def infer_single_image(model_bundle: Dict[str, Any], image_path: str, topk: int 
     with torch.no_grad():
         embeddings = model(tensor)
         logits = _compute_logits_from_head(embeddings, head, head_type)
+        if "output_groups" in model_bundle:
+            logits = aggregate_logits(logits, model_bundle["output_groups"])
         probs = torch.softmax(logits, dim=1)
 
     topk = min(topk, probs.shape[1])

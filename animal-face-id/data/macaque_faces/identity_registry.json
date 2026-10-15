@@ -1,0 +1,910 @@
+{
+  "version": "2026-10-14",
+  "source_root": "/rds/user/ylj20/hpc-work/Gibraltar_Macaques_Photos_Cleaned_Updated",
+  "group_policy": "Current group comes from the master folder; filenames retain capture history.",
+  "identities": {
+    "Abby": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Abby"
+    },
+    "Athena": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Athena"
+    },
+    "Cactus": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Cactus"
+    },
+    "Cerise": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Cerise"
+    },
+    "Diana": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Diana"
+    },
+    "Eliane": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Eliane"
+    },
+    "Faustine": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Faustine"
+    },
+    "Josie": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Josie"
+    },
+    "Koral": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Koral"
+    },
+    "Lola": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Lola"
+    },
+    "Madison": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Madison"
+    },
+    "Mathilde": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Mathilde"
+    },
+    "Pauline": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Pauline"
+    },
+    "Peach": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Peach"
+    },
+    "Rachida": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Rachida"
+    },
+    "Renee": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Renee"
+    },
+    "Sonia": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Sonia"
+    },
+    "Theresa": {
+      "current_group": "Apes Den",
+      "gender": "females",
+      "source_directory": "Apes Den/females/Theresa"
+    },
+    "Etienne": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Etienne"
+    },
+    "Ghost": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Ghost"
+    },
+    "Harry": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Harry"
+    },
+    "Hercule": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Hercule"
+    },
+    "Jason": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Jason"
+    },
+    "Mickey": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Mickey"
+    },
+    "Richard": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Richard"
+    },
+    "Roland": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Roland"
+    },
+    "Simon": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Simon"
+    },
+    "Warty": {
+      "current_group": "Apes Den",
+      "gender": "males",
+      "source_directory": "Apes Den/males/Warty"
+    },
+    "Adele": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Adele"
+    },
+    "Agathe": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Agathe"
+    },
+    "Bernie": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Bernie"
+    },
+    "Bobby": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Bobby"
+    },
+    "Caro": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Caro"
+    },
+    "Christina": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Christina"
+    },
+    "Elise": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Elise"
+    },
+    "Fanta": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Fanta"
+    },
+    "Fleur": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Fleur"
+    },
+    "Georgina": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Georgina"
+    },
+    "Ksenia": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Ksenia"
+    },
+    "Magda": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Magda"
+    },
+    "Marge": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Marge"
+    },
+    "Moutarde": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Moutarde"
+    },
+    "Nathalie": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Nathalie"
+    },
+    "Paulette": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Paulette"
+    },
+    "Roselyne": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Roselyne"
+    },
+    "Sophie": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Sophie"
+    },
+    "Tatiana": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Tatiana"
+    },
+    "Thief": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Thief"
+    },
+    "Trinity": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Trinity"
+    },
+    "Yolande": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Yolande"
+    },
+    "Yvonne": {
+      "current_group": "Cable Car",
+      "gender": "females",
+      "source_directory": "Cable Car/females/Yvonne"
+    },
+    "Batman": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Batman"
+    },
+    "Charly": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Charly"
+    },
+    "Claude": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Claude"
+    },
+    "Crassus": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Crassus"
+    },
+    "Fred": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Fred"
+    },
+    "Jamie": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Jamie"
+    },
+    "Lona": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Lona"
+    },
+    "Noname": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Noname"
+    },
+    "Plato": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Plato"
+    },
+    "Sage": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Sage"
+    },
+    "Stich": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Stich"
+    },
+    "Tack": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Tack"
+    },
+    "Taurus": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Taurus"
+    },
+    "Thales": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Thales"
+    },
+    "Triton": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Triton"
+    },
+    "Wolfy": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Wolfy"
+    },
+    "Zorro": {
+      "current_group": "Cable Car",
+      "gender": "males",
+      "source_directory": "Cable Car/males/Zorro"
+    },
+    "Behar": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Behar"
+    },
+    "Goblin": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Goblin"
+    },
+    "Ilary": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Ilary"
+    },
+    "Kasha": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Kasha"
+    },
+    "Lata": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Lata"
+    },
+    "Leigh": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Leigh"
+    },
+    "Minka": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Minka"
+    },
+    "Nadia": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Nadia"
+    },
+    "Olga": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Olga"
+    },
+    "Pernille": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Pernille"
+    },
+    "Pia": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Pia"
+    },
+    "Tonka": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Tonka"
+    },
+    "Ursa": {
+      "current_group": "Middle Hill",
+      "gender": "females",
+      "source_directory": "Middle Hill/females/Ursa"
+    },
+    "Chips": {
+      "current_group": "Middle Hill",
+      "gender": "males",
+      "source_directory": "Middle Hill/males/Chips"
+    },
+    "Gustave": {
+      "current_group": "Middle Hill",
+      "gender": "males",
+      "source_directory": "Middle Hill/males/Gustave"
+    },
+    "Pachtoune": {
+      "current_group": "Middle Hill",
+      "gender": "males",
+      "source_directory": "Middle Hill/males/Pachtoune"
+    },
+    "Spinoza": {
+      "current_group": "Middle Hill",
+      "gender": "males",
+      "source_directory": "Middle Hill/males/Spinoza"
+    },
+    "Virgil": {
+      "current_group": "Middle Hill",
+      "gender": "males",
+      "source_directory": "Middle Hill/males/Virgil"
+    },
+    "Alexa": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Alexa"
+    },
+    "Brookes": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Brookes"
+    },
+    "Celine": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Celine"
+    },
+    "Kim": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Kim"
+    },
+    "Layla": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Layla"
+    },
+    "Rihana": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Rihana"
+    },
+    "Vanessa": {
+      "current_group": "O'Hara",
+      "gender": "females",
+      "source_directory": "O'Hara/females/Vanessa"
+    },
+    "Bank": {
+      "current_group": "O'Hara",
+      "gender": "males",
+      "source_directory": "O'Hara/males/Bank"
+    },
+    "Flick": {
+      "current_group": "O'Hara",
+      "gender": "males",
+      "source_directory": "O'Hara/males/Flick"
+    },
+    "Cher": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Cher"
+    },
+    "Cheryl": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Cheryl"
+    },
+    "Dorothee": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Dorothee"
+    },
+    "Jordi": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Jordi"
+    },
+    "Leny": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Leny"
+    },
+    "Mel": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Mel"
+    },
+    "Oulan": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Oulan"
+    },
+    "Pasha": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Pasha"
+    },
+    "Pom": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Pom"
+    },
+    "Quartz": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Quartz"
+    },
+    "Ruby": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Ruby"
+    },
+    "Scarlet": {
+      "current_group": "Prince Philip Arch",
+      "gender": "females",
+      "source_directory": "Prince Philip Arch/females/Scarlet"
+    },
+    "Alex": {
+      "current_group": "Prince Philip Arch",
+      "gender": "males",
+      "source_directory": "Prince Philip Arch/males/Alex"
+    },
+    "Cyril": {
+      "current_group": "Prince Philip Arch",
+      "gender": "males",
+      "source_directory": "Prince Philip Arch/males/Cyril"
+    },
+    "Foxy": {
+      "current_group": "Prince Philip Arch",
+      "gender": "males",
+      "source_directory": "Prince Philip Arch/males/Foxy"
+    },
+    "Jock": {
+      "current_group": "Prince Philip Arch",
+      "gender": "males",
+      "source_directory": "Prince Philip Arch/males/Jock"
+    },
+    "Wally": {
+      "current_group": "Prince Philip Arch",
+      "gender": "males",
+      "source_directory": "Prince Philip Arch/males/Wally"
+    },
+    "Anara": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Anara"
+    },
+    "Beate": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Beate"
+    },
+    "Carole": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Carole"
+    },
+    "Castaf": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Castaf"
+    },
+    "Limbo": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Limbo"
+    },
+    "Mason": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Mason"
+    },
+    "Racoon": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Racoon"
+    },
+    "Tanger": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Tanger"
+    },
+    "Tripatte": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Tripatte"
+    },
+    "Venus": {
+      "current_group": "Rock Gun",
+      "gender": "females",
+      "source_directory": "Rock Gun/females/Venus"
+    },
+    "Dylan": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/Dylan"
+    },
+    "Gregory": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/Gregory"
+    },
+    "Lucien": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/Lucien"
+    },
+    "Michel": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/Michel"
+    },
+    "Rachid": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/Rachid"
+    },
+    "SAM to be named": {
+      "current_group": "Rock Gun",
+      "gender": "males",
+      "source_directory": "Rock Gun/males/SAM to be named"
+    },
+    "Alice": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Alice"
+    },
+    "Bijou": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Bijou"
+    },
+    "Charline": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Charline"
+    },
+    "Cleo": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Cleo"
+    },
+    "Cynthia": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Cynthia"
+    },
+    "Drew": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Drew"
+    },
+    "Fanfan": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Fanfan"
+    },
+    "Gina": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Gina"
+    },
+    "Julia": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Julia"
+    },
+    "Kate": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Kate"
+    },
+    "Kyky": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Kyky"
+    },
+    "Lucy": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Lucy"
+    },
+    "Tata": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Tata"
+    },
+    "Taylor": {
+      "current_group": "Royal Anglian Way",
+      "gender": "females",
+      "source_directory": "Royal Anglian Way/females/Taylor"
+    },
+    "Billy": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Billy"
+    },
+    "Coco": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Coco"
+    },
+    "Jack": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Jack"
+    },
+    "Philip": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Philip"
+    },
+    "Poxy": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Poxy"
+    },
+    "Rocky": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Rocky"
+    },
+    "Victor": {
+      "current_group": "Royal Anglian Way",
+      "gender": "males",
+      "source_directory": "Royal Anglian Way/males/Victor"
+    }
+  },
+  "aliases": {
+    "Abby": "Abby",
+    "Adele": "Adele",
+    "Agathe": "Agathe",
+    "Alex": "Alex",
+    "Alexa": "Alexa",
+    "Alice": "Alice",
+    "Anara": "Anara",
+    "Athena": "Athena",
+    "Bank": "Bank",
+    "Batman": "Batman",
+    "Beate": "Beate",
+    "Behar": "Behar",
+    "Bernie": "Bernie",
+    "Bijou": "Bijou",
+    "Billy": "Billy",
+    "Bobby": "Bobby",
+    "Brookes": "Brookes",
+    "Cactus": "Cactus",
+    "Caro": "Caro",
+    "Carole": "Carole",
+    "Castaf": "Castaf",
+    "Celine": "Celine",
+    "Cerise": "Cerise",
+    "Charline": "Charline",
+    "Charly": "Charly",
+    "Cher": "Cher",
+    "Cheryl": "Cheryl",
+    "Chips": "Chips",
+    "Christina": "Christina",
+    "Claude W22-23": "Claude",
+    "Cleo": "Cleo",
+    "Coco": "Coco",
+    "Crassus": "Crassus",
+    "Cynthia": "Cynthia",
+    "Cyril": "Cyril",
+    "Diana": "Diana",
+    "Dorothee": "Dorothee",
+    "Drew": "Drew",
+    "Dylan": "Dylan",
+    "Eliane": "Eliane",
+    "Elise": "Elise",
+    "Etienne": "Etienne",
+    "Fanfan": "Fanfan",
+    "Fanta": "Fanta",
+    "Faustine": "Faustine",
+    "Fleur": "Fleur",
+    "Flick": "Flick",
+    "Foxy": "Foxy",
+    "Fred": "Fred",
+    "Georgina": "Georgina",
+    "Ghost": "Ghost",
+    "Gina": "Gina",
+    "Goblin": "Goblin",
+    "Gregory": "Gregory",
+    "Gustave": "Gustave",
+    "Harry": "Harry",
+    "Hercule": "Hercule",
+    "Ilary": "Ilary",
+    "Jack": "Jack",
+    "Jamie after move to CC": "Jamie",
+    "Jamie before emigrating": "Jamie",
+    "Jamie temporary": "Jamie",
+    "Jason": "Jason",
+    "Jock": "Jock",
+    "Jordi": "Jordi",
+    "Josie": "Josie",
+    "Julia": "Julia",
+    "Kasha": "Kasha",
+    "Kate": "Kate",
+    "Kim": "Kim",
+    "Koral": "Koral",
+    "Ksenia": "Ksenia",
+    "Kyky": "Kyky",
+    "Lata": "Lata",
+    "Layla": "Layla",
+    "Leigh": "Leigh",
+    "Leny": "Leny",
+    "Limbo": "Limbo",
+    "Lola": "Lola",
+    "Lona": "Lona",
+    "Lucien": "Lucien",
+    "Lucy": "Lucy",
+    "Madison": "Madison",
+    "Magda": "Magda",
+    "Marge": "Marge",
+    "Mason": "Mason",
+    "Mathilde": "Mathilde",
+    "Mel": "Mel",
+    "Michel": "Michel",
+    "Mickey after move to AD": "Mickey",
+    "Mickey before emigrating": "Mickey",
+    "Minka": "Minka",
+    "Moutarde": "Moutarde",
+    "Nadia": "Nadia",
+    "Nathalie": "Nathalie",
+    "Noname": "Noname",
+    "Olga": "Olga",
+    "Oulan": "Oulan",
+    "Pachtoune": "Pachtoune",
+    "Pachtoune after emigrating": "Pachtoune",
+    "Pasha": "Pasha",
+    "Paulette": "Paulette",
+    "Pauline": "Pauline",
+    "Peach": "Peach",
+    "Pernille": "Pernille",
+    "Philip": "Philip",
+    "Pia": "Pia",
+    "Plato W22-23": "Plato",
+    "Pom": "Pom",
+    "Poxy": "Poxy",
+    "Quartz": "Quartz",
+    "Rachid": "Rachid",
+    "Rachida": "Rachida",
+    "Racoon": "Racoon",
+    "Renee": "Renee",
+    "Richard": "Richard",
+    "Rihana": "Rihana",
+    "Rocky": "Rocky",
+    "Roland": "Roland",
+    "Roselyne": "Roselyne",
+    "Ruby": "Ruby",
+    "SAM to be named": "SAM to be named",
+    "Sage": "Sage",
+    "Scarlet": "Scarlet",
+    "Simon": "Simon",
+    "Sonia": "Sonia",
+    "Sophie": "Sophie",
+    "Spinoza": "Spinoza",
+    "Stich": "Stich",
+    "Tack after move to CC": "Tack",
+    "Tack before emigrating": "Tack",
+    "Tack temporary": "Tack",
+    "Tanger": "Tanger",
+    "Tata": "Tata",
+    "Tatiana": "Tatiana",
+    "Taurus W22-23": "Taurus",
+    "Taylor": "Taylor",
+    "Thales W22-23": "Thales",
+    "Theresa": "Theresa",
+    "Thief": "Thief",
+    "Tonka": "Tonka",
+    "Trinity": "Trinity",
+    "Tripatte": "Tripatte",
+    "Triton": "Triton",
+    "Ursa": "Ursa",
+    "Vanessa": "Vanessa",
+    "Venus": "Venus",
+    "Victor": "Victor",
+    "Virgil": "Virgil",
+    "Wally": "Wally",
+    "Warty": "Warty",
+    "Wolfy W22-23": "Wolfy",
+    "Yolande": "Yolande",
+    "Yvonne": "Yvonne",
+    "Zorro after move to CC": "Zorro",
+    "Zorro before emigrating": "Zorro"
+  }
+}

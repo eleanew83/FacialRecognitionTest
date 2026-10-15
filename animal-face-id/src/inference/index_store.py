@@ -82,10 +82,13 @@ def build_index_from_folder(model_bundle: Dict[str, Any], root_dir: str, glob_pa
     meta: List[Dict[str, Any]] = []
     for path in paths:
         label = path.parent.name
+        registry = model_bundle.get("identity_registry")
+        identity = registry.metadata(label) if registry is not None else {"id": label}
+        label = identity["id"]
         result = infer_single_image(model_bundle, str(path), topk=5)
         embeddings.append(result["embedding"])
         labels.append(label)
-        meta.append({"image_path": str(path)})
+        meta.append({"image_path": str(path), **identity})
     index = SimpleIndex()
     if embeddings:
         index.add(np.stack(embeddings, axis=0), labels, meta)
@@ -96,17 +99,20 @@ def add_individual(model_bundle: Dict[str, Any], index: SimpleIndex, name: str, 
     """Add a new individual by embedding provided images."""
     embeddings: List[np.ndarray] = []
     meta: List[Dict[str, Any]] = []
+    registry = model_bundle.get("identity_registry")
+    identity = registry.metadata(name) if registry is not None else {"id": name}
+    name = identity["id"]
     for path in image_paths:
         result = infer_single_image(model_bundle, str(path), topk=5)
         embeddings.append(result["embedding"])
-        meta.append({"image_path": str(path)})
+        meta.append({"image_path": str(path), **identity})
 
     if not embeddings:
         return
 
     if aggregate:
         mean_emb = np.mean(np.stack(embeddings, axis=0), axis=0, keepdims=True)
-        index.add(mean_emb, [name], [{"image_paths": list(image_paths)}])
+        index.add(mean_emb, [name], [{"image_paths": list(image_paths), **identity}])
     else:
         labels = [name] * len(embeddings)
         index.add(np.stack(embeddings, axis=0), labels, meta)

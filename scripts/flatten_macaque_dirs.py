@@ -1,76 +1,49 @@
 #!/usr/bin/env python3
-import os
-import shutil
+"""Flatten the authoritative master into one folder per canonical individual."""
+from __future__ import annotations
+import argparse
+import json
 from pathlib import Path
+import shutil
+import sys
 
-def flatten_directory_structure(source_dir, target_dir):
-    """
-    Flatten the nested directory structure to individual macaque directories.
-    
-    Args:
-        source_dir: Path to the source directory with nested structure
-        target_dir: Path to create the flattened directory structure
-    """
-    # Remove target directory if it exists, then recreate it
-    if os.path.exists(target_dir):
-        print(f"Removing existing target directory: {target_dir}")
-        shutil.rmtree(target_dir)
-    
-    # Create target directory
-    os.makedirs(target_dir, exist_ok=True)
-    print(f"Created fresh target directory: {target_dir}")
-    
-    # Walk through the directory structure
-    for location in os.listdir(source_dir):
-        location_path = os.path.join(source_dir, location)
-        
-        # Skip if not a directory or hidden files
-        if not os.path.isdir(location_path) or location.startswith('.'):
-            continue
-        
-        # Process gender directories (males/females)
-        for gender in os.listdir(location_path):
-            gender_path = os.path.join(location_path, gender)
-            
-            # Skip if not a directory or hidden files
-            if not os.path.isdir(gender_path) or gender.startswith('.'):
-                continue
-            
-            # Process individual macaque directories
-            for individual in os.listdir(gender_path):
-                individual_path = os.path.join(gender_path, individual)
-                
-                # Skip if not a directory or hidden files
-                if not os.path.isdir(individual_path) or individual.startswith('.'):
-                    continue
-                
-                # Use just the individual name instead of the full path structure
-                unique_name = individual
-                target_individual_path = os.path.join(target_dir, unique_name)
-                
-                # Create target directory
-                os.makedirs(target_individual_path, exist_ok=True)
-                
-                # Copy all image files
-                for filename in os.listdir(individual_path):
-                    if filename.startswith('.'):  # Skip hidden files
-                        continue
-                    
-                    ext = os.path.splitext(filename)[1].lower()
-                    if ext in ['.jpg', '.jpeg', '.png']:
-                        source_file = os.path.join(individual_path, filename)
-                        target_file = os.path.join(target_individual_path, filename)
-                        shutil.copy2(source_file, target_file)
-                
-                print(f"Processed {unique_name}")
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / 'animal-face-id'))
+from src.datasets.identity_registry import IdentityRegistry, unique_destination
+from src.datasets.split_integrity import file_fingerprint, fresh_output_directory, group_photos, image_inventory
+
+
+def flatten_directory_structure(source_dir, target_dir, identity_registry=None):
+    source, target = Path(source_dir).resolve(), Path(target_dir).resolve()
+    if source == target or source.is_relative_to(target) or target.is_relative_to(source):
+        raise ValueError('Source and output must be separate directories')
+    registry = IdentityRegistry(identity_registry or REPO / 'animal-face-id/data/macaque_faces/identity_registry.json')
+    records = []
+    for relative in sorted(image_inventory(source)):
+        parts = Path(relative).parts
+        if len(parts) != 4:
+            raise ValueError(f'Expected group/gender/individual/photo: {relative}')
+        records.append({'path': relative, **registry.metadata(parts[2]), **file_fingerprint(source / relative)})
+    with fresh_output_directory(target) as stage:
+        occupied, references = set(), {}
+        for group in group_photos(records):
+            record = group[0]
+            relative = unique_destination(Path(record['id']) / Path(record['path']).name, record['sha256'], occupied)
+            destination = stage / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source / record['path'], destination)
+            references[str(relative)] = {key: record[key] for key in ('id', 'current_group', 'gender', 'source_directory', 'identity_registry_version')}
+            references[str(relative)]['master_source_path'] = record['path']
+        (stage / 'identity_registry.json').write_text(json.dumps(registry.payload, indent=2))
+        (stage / 'image_references.json').write_text(json.dumps(references, indent=2))
+        assert len(image_inventory(stage)) == len(references)
+    return references
+
 
 if __name__ == '__main__':
-    # Choose the corresponding local or remote home directories
-    local_home_dir = '/Users/eleanew83/Documents/OneDrive - University of Cambridge/Cambridge'
-    remote_home_dir = '/home/ylj20'
-    home_dir = local_home_dir if os.path.exists(local_home_dir) else remote_home_dir
-    source_dir = home_dir + '/Gibraltar_Macaques_Photos_Cleaned'
-    target_dir = home_dir + '/macaque_flattened'
-    
-    flatten_directory_structure(source_dir, target_dir)
-    print("Flattening complete. Now you can run prepare_macaque_dataset.py on the flattened directory.")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source', type=Path, default=REPO.parent / 'Gibraltar_Macaques_Photos_Cleaned_Updated')
+    parser.add_argument('--target', type=Path, required=True, help='Fresh output directory')
+    parser.add_argument('--identity-registry', type=Path)
+    args = parser.parse_args()
+    flatten_directory_structure(args.source, args.target, args.identity_registry)

@@ -34,6 +34,7 @@ def _instantiate_dataset(name: str, split: str, config: dict[str, Any]) -> Any:
             splits_path=config["splits_path"],
             split=split,
             transform=transforms,
+            identity_registry=config.get("identity_registry"),
         )
 
     msg = f"Unknown dataset '{name}'. Supported: animal_faces, macaque_faces."

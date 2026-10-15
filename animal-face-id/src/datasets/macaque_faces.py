@@ -10,6 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from .split_integrity import validate_manifest
+from .identity_registry import discover_registry
 
 
 class MacaqueFacesDataset(Dataset):
@@ -21,6 +22,7 @@ class MacaqueFacesDataset(Dataset):
         splits_path: str | Path,
         split: str,
         transform: Any | None = None,
+        identity_registry: str | Path | None = None,
     ) -> None:
         self.raw_root = Path(raw_root)
         self.splits_path = Path(splits_path)
@@ -28,6 +30,9 @@ class MacaqueFacesDataset(Dataset):
         self.transform = transform
 
         payload = json.loads(self.splits_path.read_text(encoding="utf-8"))
+        registry = discover_registry(self.raw_root, identity_registry)
+        if registry is not None:
+            registry.validate(payload)
         validate_manifest(payload, self.raw_root, verify_content=True)
         if self.split not in payload:
             msg = f"Split '{self.split}' not found in {self.splits_path}."
@@ -61,12 +66,16 @@ class MacaqueFacesDataset(Dataset):
         image = Image.open(image_path).convert("RGB")
         if self.transform:
             image = self.transform(image)
-        return {
+        result = {
             "image": image,
             "label": label_idx,
             "id": label_name,
             "path": str(image_path),
         }
+        for field in ("current_group", "gender", "master_source_path"):
+            if field in sample:
+                result[field] = sample[field]
+        return result
 
     @property
     def classes(self) -> Sequence[str]:

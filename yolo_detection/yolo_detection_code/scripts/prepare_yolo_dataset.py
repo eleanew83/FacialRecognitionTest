@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'animal-face-id'))
 from src.datasets.detection_integrity import parse_labels, validate_detection_dataset
 from src.datasets.split_integrity import file_fingerprint, fresh_output_directory, group_photos, image_inventory
+from src.datasets.identity_registry import discover_registry
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SOURCE_DIR = REPO_ROOT / 'macaque_split_data' / 'train'
@@ -37,7 +38,7 @@ def detection_labels(model, image_path: Path, confidence: float) -> bytes:
 
 
 def prepare_dataset(source_dir, output_dir, *, labels_dir=None, model=None,
-                    train_ratio=0.8, seed=42, confidence=0.3):
+                    train_ratio=0.8, seed=42, confidence=0.3, identity_registry=None):
     """Preserve original image bytes; collapse only exact content before splitting.
 
     Manual labels mirror the source image directory. Conflicting annotations for
@@ -49,6 +50,14 @@ def prepare_dataset(source_dir, output_dir, *, labels_dir=None, model=None,
 
     source, output = Path(source_dir).resolve(), Path(output_dir).resolve()
     labels = Path(labels_dir).resolve() if labels_dir is not None else None
+    registry = discover_registry(source, identity_registry)
+    references = {}
+    manifest = source / "splits.json"
+    if not manifest.is_file():
+        manifest = source.parent / "splits.json"
+    if manifest.is_file():
+        refs = json.loads(manifest.read_text())
+        references = {str((manifest.parent / r['path']).resolve()): r for rs in refs.values() for r in rs}
     if source == output or source.is_relative_to(output) or output.is_relative_to(source):
         raise ValueError('Source and output directories must be disjoint')
     if labels is not None and (labels == output or labels.is_relative_to(output) or output.is_relative_to(labels)):
@@ -64,6 +73,12 @@ def prepare_dataset(source_dir, output_dir, *, labels_dir=None, model=None,
         for relative in sorted(image_inventory(source)):
             path = source / relative
             record = {'path': relative, **file_fingerprint(path)}
+            if registry is not None:
+                record.update(registry.metadata(path.parent.name))
+                source_ref = references.get(str(path.resolve()), {})
+                for field in ('master_source_path', 'master_match_method'):
+                    if field in source_ref:
+                        record[field] = source_ref[field]
             if labels is not None:
                 label_path = labels / Path(relative).with_suffix('.txt')
                 record['label_content'] = label_path.read_bytes()
@@ -101,6 +116,9 @@ def prepare_dataset(source_dir, output_dir, *, labels_dir=None, model=None,
             label_path.write_bytes(content)
             provenance.append({'source': record['path'], 'image': str(image_relative), 'label': str(label_relative),
                                'sha256': record['sha256'], 'pixels_sha256': record['pixels_sha256']})
+            for field in ('id', 'current_group', 'gender', 'source_directory', 'identity_registry_version', 'master_source_path', 'master_match_method'):
+                if field in record:
+                    provenance[-1][field] = record[field]
         for split in ('train', 'val'):
             (stage / 'labels' / split / 'classes.txt').write_text('macaque_face\n')
         config = {'path': str(output), 'train': 'images/train', 'val': 'images/val', 'names': {0: 'macaque_face'}}
@@ -111,7 +129,10 @@ def prepare_dataset(source_dir, output_dir, *, labels_dir=None, model=None,
             'exact_copies_omitted': len(records) - len(groups), 'image_counts': result['image_counts'],
             'annotation_source': 'reviewed_labels' if labels is not None else 'model_proposals_require_visual_review',
             'records': provenance,
+            'source_root': str(source),
         }, indent=2) + '\n')
+        if registry is not None:
+            (stage / 'identity_registry.json').write_text(json.dumps(registry.payload, indent=2) + '\n')
     return result
 
 
@@ -125,6 +146,8 @@ def main():
     parser.add_argument('--train-ratio', type=float, default=0.8)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--confidence', type=float, default=0.3)
+    parser.add_argument('--identity-registry', type=Path,
+                        default=REPO_ROOT / 'animal-face-id/data/macaque_faces/identity_registry.json')
     args = parser.parse_args()
     model = None
     if args.model is not None:
@@ -133,7 +156,8 @@ def main():
         from ultralytics import YOLO
         model = YOLO(str(args.model))
     result = prepare_dataset(args.source_dir, args.output_dir, labels_dir=args.labels_dir, model=model,
-                             train_ratio=args.train_ratio, seed=args.seed, confidence=args.confidence)
+                             train_ratio=args.train_ratio, seed=args.seed, confidence=args.confidence,
+                             identity_registry=args.identity_registry)
     print(json.dumps({key: value for key, value in result.items() if key != 'records'}, indent=2))
     if model is not None:
         print('Review every proposed face box, especially validation labels, before training.')

@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT))
 from src.config.base import load_config
 from src.datasets.dataset_registry import build_dataloader
 from src.models.backbones import build_backbone
+from src.datasets.identity_registry import discover_registry
+from src.models.checkpoint_labels import checkpoint_class_names, output_groups, aggregate_logits
 
 CKPT = "artifacts/macaque-resnet50-arcface_aug2_best.pt"
 CFG = "configs/train_macaque_arcface_aug2.yaml"
@@ -39,9 +41,14 @@ def main():
     gemb, glab = g["embeddings"], np.array([str(x) for x in g["labels"]])
     # class order = sorted unique ids (matches dataset.class_to_idx)
     classes = sorted(set(glab))
+    registry = discover_registry(cfg["data"]["raw_root"], cfg["data"].get("identity_registry"))
+    original_classes = checkpoint_class_names(ckpt, CKPT, proto.shape[0])
+    _, groups = output_groups(original_classes, registry, classes)
+    scale = ckpt.get("config", {}).get("model", {}).get("scale", 30.)
     cidx = {c: i for i, c in enumerate(classes)}
     # sanity: closed-set train top1 using prototypes (should be high if same ckpt)
     sim_train = l2n(gemb) @ l2n(proto).T
+    sim_train = aggregate_logits(torch.from_numpy(sim_train * scale), groups).numpy()
     train_top1 = (sim_train.argmax(1) == np.array([cidx[l] for l in glab])).mean()
     print(f"[check] gallery train closed-set top1 = {train_top1:.3f} (high => npz matches checkpoint)")
 
@@ -58,6 +65,7 @@ def main():
 
     # Method A: closed-set classifier (prototypes)
     simA = l2n(temb) @ l2n(proto).T
+    simA = aggregate_logits(torch.from_numpy(simA * scale), groups).numpy()
     topA = (simA.argmax(1) == y).mean()
     print(f"\nMethod A  closed-set classifier (prototypes): top1 = {topA:.3f}")
 

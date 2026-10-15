@@ -12,6 +12,11 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import datetime
 from pathlib import Path
 import argparse
+import sys
+
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / 'animal-face-id'))
+from src.datasets.identity_registry import IdentityRegistry
 
 def parse_filename(filename):
     """
@@ -254,11 +259,12 @@ def get_file_stats(file_path):
             'file_created': ''
         }
 
-def process_directory(base_path, group_name):
+def process_directory(base_path, group_name, identity_registry=None):
     """
     Process all images in the given directory structure.
     """
     all_data = []
+    registry = IdentityRegistry(identity_registry or REPO / 'animal-face-id/data/macaque_faces/identity_registry.json')
     
     # Process both males and females
     for sex_dir in ['females', 'males']:
@@ -275,6 +281,7 @@ def process_directory(base_path, group_name):
                           if os.path.isdir(os.path.join(sex_path, d)) and not d.startswith('.')]
         
         for individual_dir in individual_dirs:
+            identity = registry.metadata(individual_dir)
             individual_path = os.path.join(sex_path, individual_dir)
             print(f"  Processing individual: {individual_dir}")
             
@@ -303,9 +310,9 @@ def process_directory(base_path, group_name):
                 # Combine all data
                 row_data = {
                     'filename': filename_info['filename'],
-                    'individual_name': individual_dir,  # Use directory name as the true individual name
-                    'group': group_name,
-                    'sex': sex_dir.rstrip('s'),  # 'females' -> 'female', 'males' -> 'male'
+                    'individual_name': identity['id'],
+                    'group': identity['current_group'],
+                    'sex': identity['gender'].rstrip('s'),
                     'date_from_filename': filename_info['parsed_date'],
                     'location_code': filename_info['location_code'],
                     'sex_code': filename_info['sex_code'],
@@ -352,7 +359,7 @@ def process_directory(base_path, group_name):
 def main():
     parser = argparse.ArgumentParser(description='Extract metadata from Gibraltar Macaque photos')
     parser.add_argument('--base-path', 
-                       default='/home/ylj20/Gibraltar_Macaques_Photos_Cleaned',
+                       default=str(REPO.parent / 'Gibraltar_Macaques_Photos_Cleaned_Updated'),
                        help='Base path to the directory containing macaque photos')
     parser.add_argument('--group',
                        default='Middle Hill',
@@ -481,4 +488,4 @@ def main():
         print(f"Waypoint range: {waypoint_images['waypoint_number'].min()} to {waypoint_images['waypoint_number'].max()}")
 
 if __name__ == "__main__":
-    main() 
+    main()

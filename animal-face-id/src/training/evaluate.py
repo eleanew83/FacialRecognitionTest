@@ -26,6 +26,8 @@ from src.config.base import TrainingConfig, load_config
 from src.datasets.dataset_registry import build_dataloader
 from src.models.backbones import build_backbone
 from src.models.losses import build_classifier_head
+from src.models.checkpoint_labels import checkpoint_class_names, output_groups, aggregate_logits, canonical_evaluation_tag
+from src.datasets.identity_registry import discover_registry
 from src.utils.metrics import compute_basic_metrics, compute_confusion, per_class_report, topk_accuracies
 from src.utils.plotting import plot_confusion_matrix, plot_per_class_accuracy, plot_topk
 
@@ -47,6 +49,8 @@ def _load_checkpoint(
     model_cfg = config["model"]
     data_cfg = config["data"]
     checkpoint = torch.load(checkpoint_path, map_location=device)
+    model_cfg = checkpoint.get("config", {}).get("model", model_cfg)
+    class_count = checkpoint["head_state"]["weight"].shape[0]
 
     model = build_backbone(
         model_name=model_cfg.get("backbone", "resnet18"),
@@ -56,7 +60,7 @@ def _load_checkpoint(
     head = build_classifier_head(
         head_type=model_cfg.get("head", "linear"),
         embedding_dim=model_cfg.get("embedding_dim", 256),
-        num_classes=data_cfg.get("num_classes", 1),
+        num_classes=class_count,
         margin=model_cfg.get("margin", 0.5),
         scale=model_cfg.get("scale", 30.0),
     )
@@ -66,6 +70,7 @@ def _load_checkpoint(
     head.to(device)
     model.eval()
     head.eval()
+    head.output_class_names = checkpoint_class_names(checkpoint, checkpoint_path, class_count)
     return model, head
 
 
@@ -103,6 +108,7 @@ def _collect_outputs(
     device: torch.device,
     head_type: str,
     logit_adjust: torch.Tensor | None = None,
+    class_groups=None,
 ) -> Dict[str, Any]:
     all_labels: List[int] = []
     all_logits: List[np.ndarray] = []
@@ -118,6 +124,8 @@ def _collect_outputs(
                 logits = head.logits_eval(embeddings)
             else:
                 logits = head(embeddings)
+            if class_groups is not None:
+                logits = aggregate_logits(logits, class_groups)
             if logit_adjust is not None:
                 logits = logits - logit_adjust
             probs = torch.softmax(logits, dim=1)
@@ -305,6 +313,10 @@ def run_final_evaluation(
                                [str(i) for i in range(data_cfg.get("num_classes", 0))]))
 
     model, head = _load_checkpoint(config, ckpt, dev)
+    registry = discover_registry(data_cfg["raw_root"], data_cfg.get("identity_registry")) if data_cfg.get("dataset_name") == "macaque_faces" else None
+    _, class_groups = output_groups(head.output_class_names, registry, class_names)
+    if registry is not None:
+        tag = canonical_evaluation_tag(tag, registry.payload["version"])
     logit_adjust = build_logit_adjustment(data_cfg, logit_adjust_tau, len(class_names), dev)
     if logit_adjust is not None:
         print(f"[logit-adjust] tau={logit_adjust_tau} over {len(class_names)} classes")
@@ -312,6 +324,7 @@ def run_final_evaluation(
     outputs = _collect_outputs(
         model=model, head=head, dataloader=test_loader, device=dev,
         head_type=config["model"].get("head", "linear"), logit_adjust=logit_adjust,
+        class_groups=class_groups,
     )
     labels, logits = outputs["labels"], outputs["logits"]
     embeddings, paths = outputs["embeddings"], outputs["paths"]
@@ -336,6 +349,10 @@ def run_final_evaluation(
         "logit_adjust_tau": float(logit_adjust_tau),
         "num_samples": int(len(labels)),
         "num_classes": int(logits.shape[1]),
+        "checkpoint_num_classes": len(head.output_class_names),
+        "identity_registry_version": registry.payload["version"] if registry else None,
+        "classifier_scoring": "Alias probabilities summed into canonical identities" if len(head.output_class_names) != len(class_names) else "Original classifier outputs",
+        "evaluation_tag": tag,
         "top1": basic["top1"],
         "topk": topk,
         "f1_macro": basic["f1_macro"],

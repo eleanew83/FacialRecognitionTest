@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "animal-face-id"))
 from src.datasets.split_integrity import file_fingerprint, fresh_output_directory, validate_manifest
 from src.datasets.detection_integrity import validate_detection_dataset
+from src.datasets.identity_registry import discover_registry
 from datetime import datetime
 
 # Define base paths for the new structure
@@ -126,7 +127,7 @@ def train_model(
     print(f"Training completed. Model saved to {os.path.join(RUNS_DIR, run_name)}")
     return results
 
-def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_folder=None):
+def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_folder=None, identity_registry=None):
     """
     Use the trained detection model to crop macaque faces from images
     
@@ -151,12 +152,21 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_fol
                         if path.is_file() and not path.name.startswith(".")
                         and path.suffix.lower() in {".jpg", ".jpeg", ".png"})
     source_manifest = {split: [] for split in ("train", "val", "test")}
+    registry = discover_registry(source_path, identity_registry)
+    references = {}
+    if (source_path / "splits.json").is_file():
+        original_manifest = json.loads((source_path / "splits.json").read_text())
+        references = {r["path"]: r for rows in original_manifest.values() for r in rows}
     for image_path in all_images:
         relative = Path(image_path).relative_to(source_path)
         if len(relative.parts) != 3 or relative.parts[0] not in source_manifest:
             raise ValueError(f"Unexpected source image layout: {relative}")
         source_manifest[relative.parts[0]].append({"id": relative.parts[1], "path": str(relative),
                                                 **file_fingerprint(image_path)})
+        if registry is not None:
+            if registry.resolve(relative.parts[1]) != relative.parts[1]:
+                raise ValueError(f"Canonicalize the source splits before cropping: {relative}")
+            source_manifest[relative.parts[0]][-1].update(registry.metadata(relative.parts[1]))
     validate_manifest(source_manifest, source_path)
     if not all_images:
         raise ValueError("No source images found.")
@@ -228,6 +238,13 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_fol
                     "id": macaque_id, "path": str(Path(crop_path).resolve().relative_to(staging_path)),
                     **file_fingerprint(crop_path),
                 })
+                cropped_manifest[split_name][-1]["source_path"] = rel_path
+                source_ref = references.get(rel_path, {})
+                for field in ("master_source_path", "master_match_method"):
+                    if field in source_ref:
+                        cropped_manifest[split_name][-1][field] = source_ref[field]
+                if registry is not None:
+                    cropped_manifest[split_name][-1].update(registry.metadata(macaque_id))
         
             except Exception as e:
                 errors.append(f"{img_path}: {e}")
@@ -240,6 +257,9 @@ def crop_faces(detection_model_path, output_dir=None, confidence=0.3, source_fol
         validate_manifest(cropped_manifest, staging_path, verify_content=True,
                           expected_labels={r["id"] for rows in source_manifest.values() for r in rows})
         (staging_path / "splits.json").write_text(json.dumps(cropped_manifest, indent=2) + "\n")
+        if registry is not None:
+            registry.validate(cropped_manifest)
+            (staging_path / "identity_registry.json").write_text(json.dumps(registry.payload, indent=2) + "\n")
     print(f"Face cropping completed. Cropped faces saved to {output_path}")
     return str(output_path)
 
@@ -262,6 +282,8 @@ if __name__ == "__main__":
     parser.add_argument("--confidence", type=float, default=0.3,
                         help="Confidence threshold for cropping (default: 0.3)")
     parser.add_argument("--source-split-dir", default=SOURCE_SPLIT_DIR, help="Source train/val/test image folders")
+    parser.add_argument("--identity-registry", type=Path,
+                        default=Path(__file__).resolve().parents[3] / "animal-face-id/data/macaque_faces/identity_registry.json")
     parser.add_argument("--output-dir", default=None, help="New or empty crop output directory")
     # Optional YOLO augmentation overrides (defaults = Ultralytics built-ins)
     parser.add_argument("--mosaic", type=float, default=None, help="Override mosaic prob (e.g., 0.5)")
@@ -315,5 +337,5 @@ if __name__ == "__main__":
             exit(1)
             
         output_location = crop_faces(model_path, output_dir=args.output_dir, confidence=args.confidence,
-                                     source_folder=args.source_split_dir)
-        print(f"Cropped faces are available at: {output_location}") 
+                                     source_folder=args.source_split_dir, identity_registry=args.identity_registry)
+        print(f"Cropped faces are available at: {output_location}")
