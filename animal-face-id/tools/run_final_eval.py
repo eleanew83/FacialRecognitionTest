@@ -33,6 +33,12 @@ def main() -> None:
                         help="Post-hoc logit adjustment strength (0 = off; 1.0 typical). "
                              "Subtracts tau*log(train prior) from logits to boost rare IDs.")
     parser.add_argument("--tag", default=None, help="Optional suffix for output filenames (e.g. 'logitadj').")
+    parser.add_argument("--split", choices=("val", "test"), default="test")
+    parser.add_argument("--tta", choices=("none", "mean", "max"), default="none",
+                        help="Pool probabilities across seven rotations from -30 to +30 degrees.")
+    parser.add_argument("--tta-angles", nargs="+", type=float, default=None,
+                        help="Override rotation angles when --tta is mean or max.")
+    parser.add_argument("--no-plots", action="store_true", help="Skip plotting for faster comparisons.")
     args = parser.parse_args()
 
     summary = run_final_evaluation(
@@ -42,6 +48,10 @@ def main() -> None:
         batch_size=args.batch_size,
         logit_adjust_tau=args.logit_adjust_tau,
         tag=args.tag,
+        split=args.split,
+        tta_mode=args.tta,
+        tta_angles=args.tta_angles,
+        make_plots=not args.no_plots,
     )
 
     print(f"Top-1={summary['top1']:.4f}  Macro-F1={summary['f1_macro']:.4f}  "

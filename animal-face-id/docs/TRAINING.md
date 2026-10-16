@@ -85,3 +85,81 @@ The current `train.py` script does not automatically resume from a checkpoint. I
 ---
 
 **After training is complete, you will have a trained model file (`.pt`) ready for evaluation and inference.**
+
+## Aggressive augmentation comparison (October 2026)
+
+Submit three independent training tasks and a dependent fourth evaluation task:
+
+```bash
+cd /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id
+bash scripts/submit_aggressive_suite.sh
+```
+
+The submitter creates a Slurm array with three GPU tasks, then submits the
+rotation-TTA job with `afterok` on the entire array. Each training task uses one
+GPU, eight CPUs, 32 GB RAM, and a 12-hour wall-time limit. Evaluation requests one
+GPU for up to two hours. This command submits work; it does not wait for completion.
+
+| Config suffix | Rotation | Affine scale | Translation | Noise sigma / probability | Blur sigma / probability | Erasing probability / area |
+| --- | --- | --- | --- | --- | --- | --- |
+| `aggressive_rot30` | ±30° | 0.80–1.25 | ±10% | 0.03 / 35% | 0.2–2.0 / 40% | 20% / 2–10% |
+| `aggressive_rot100` | ±100° | 0.70–1.35 | ±12% | 0.05 / 45% | 0.2–2.5 / 50% | 25% / 2–12% |
+| `aggressive_rot150` | ±150° | 0.60–1.50 | ±15% | 0.08 / 50% | 0.3–3.0 / 60% | 30% / 2–15% |
+
+All three use the current repaired split and 149 canonical identities from
+`train_macaque_arcface_aug3_clean.yaml`. Images resize to 224×224 before a single
+bilinear affine transform, with mean-colour fill. All add mild colour jitter,
+7×7 Gaussian blur, Gaussian noise before normalization, and random erasing.
+There is no mirroring or extra RandAugment rotation. The ±100° and ±150° settings
+are deliberate stress tests; stronger augmentation may reduce accuracy.
+
+The model/loss stays ResNet50 + ArcFace with cross-entropy. Each fit starts from
+ImageNet weights with a fresh classifier and optimizer. All use seed 42 to help
+compare the augmentation policies; these are separate fits, not three seed
+repeats of one policy. Class-balanced loss already exists in the LTR configs and
+can be compared separately after choosing augmentation.
+
+Training runs for 150 epochs with no early stopping. AdamW starts at 3e-4 with
+cosine decay to 3e-6; both validation-best and final checkpoints are retained.
+The scheduler wall-time limit can still terminate a job. There is no automatic
+resume; monitor the initial epoch timings and request more wall time before
+submitting if needed. Longer training does not guarantee validation improvement.
+
+The installed torchvision 0.17.2 lacks `v2.GaussianNoise`. The pipeline uses a
+compatible `randn_like` implementation with clipping on float [0,1] images; it
+uses native `v2.GaussianNoise` when available. See the
+[torchvision API](https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.GaussianNoise.html).
+No package upgrade is required.
+
+The fourth job evaluates **each model separately** with single-image prediction,
+seven-angle probability averaging, and probability max pooling. Angles are
+`[-30, -20, -10, 0, 10, 20, 30]` degrees. Each view uses margin-free ArcFace logits,
+then softmax. Mean pools class probabilities; max takes the maximum probability
+per class and renormalizes. Summing and averaging rank classes identically for
+seven views. Views run sequentially within each batch to limit GPU memory use.
+
+Validation picks the model and pooling method by top-1 (macro F1 breaks ties)
+before any test evaluation. The best checkpoint for each model was already chosen
+using ordinary, unaugmented validation during training. All test comparisons are
+reported, while `selection.json` records the choice made on validation.
+
+Each submission prints a unique directory under `artifacts/augmentation_sweeps/`:
+
+- `configs/`: snapshots with separate checkpoint paths, plus `data_inputs.json`
+  at the suite root recording split/identity-registry hashes.
+- `checkpoints/`: validation-best and final model weights, plus epoch metrics.
+- `logs/` and `jobs.txt`: Slurm logs and IDs.
+- `eval/comparison.csv`: top-1/3/5 and macro F1 for all models, splits and methods.
+- `eval/selection.json`: validation-selected model/method.
+- `eval/*_view_probabilities.npz`: all seven probabilities per image, pooled
+  probabilities, labels, paths, angle order and class names. Per-class metrics,
+  confusion matrices and prediction CSVs are also saved. Plotting is skipped in
+  the comparison job.
+
+To evaluate another compatible checkpoint with rotation averaging directly:
+
+```bash
+python tools/run_final_eval.py --config <config.yaml> --ckpt <checkpoint.pt> \
+  --device cuda --tta mean --tag rotation_mean
+# Use --tta max for the max comparison; --split val for validation.
+```

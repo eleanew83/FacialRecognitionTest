@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import random
 from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import torch
+import numpy as np
 from torch import optim
 
 from src.config.base import TrainingConfig, load_config
@@ -26,6 +28,8 @@ def _prepare_device(device_str: str) -> torch.device:
 def _set_seed(seed: int | None) -> None:
     if seed is None:
         return
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -70,7 +74,7 @@ def _run_phase(
         images = batch["image"].to(device, non_blocking=True)
         labels = batch["label"].to(device, non_blocking=True)
 
-        with torch.cuda.amp.autocast(enabled=use_amp):
+        with torch.set_grad_enabled(train_mode), torch.cuda.amp.autocast(enabled=use_amp):
             embeddings = model(images)
             if head_type == "arcface":
                 # Margin applied for the LOSS only — this is the ArcFace training objective.
@@ -251,7 +255,9 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
     scheduler = None
     scheduler_name = trainer_cfg.get("scheduler", None)
     if scheduler_name == "cosine":
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max_epochs)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=max_epochs, eta_min=trainer_cfg.get("min_lr", 0.0),
+        )
     elif scheduler_name == "step":
         scheduler = optim.lr_scheduler.StepLR(
             optimizer,
@@ -298,7 +304,7 @@ def train_closed_set(config: dict[str, Any] | TrainingConfig) -> None:
         lr_current = optimizer.param_groups[0]["lr"]
         print(
             f"[Epoch {epoch}/{max_epochs}] "
-            f"lr={lr_current:.5f} | "
+            f"lr={lr_current:.6g} | "
             f"train_loss={train_metrics['loss']:.4f} top1={train_metrics['top1']:.4f} | "
             f"val_loss={val_metrics['loss']:.4f} top1={val_metrics['top1']:.4f}"
         )

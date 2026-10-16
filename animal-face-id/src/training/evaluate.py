@@ -30,6 +30,7 @@ from src.models.checkpoint_labels import checkpoint_class_names, output_groups, 
 from src.datasets.identity_registry import discover_registry
 from src.utils.metrics import compute_basic_metrics, compute_confusion, per_class_report, topk_accuracies
 from src.utils.plotting import plot_confusion_matrix, plot_per_class_accuracy, plot_topk
+from src.training.tta import ROTATION_ANGLES, pool_view_probabilities
 
 
 # ----------------------------------------------------------------------
@@ -109,26 +110,39 @@ def _collect_outputs(
     head_type: str,
     logit_adjust: torch.Tensor | None = None,
     class_groups=None,
+    tta_mode: str = "none",
 ) -> Dict[str, Any]:
     all_labels: List[int] = []
     all_logits: List[np.ndarray] = []
     all_embeddings: List[np.ndarray] = []
     all_paths: List[str] = []
+    all_view_probs: List[np.ndarray] = []
     with torch.no_grad():
         for batch in dataloader:
             images = batch["image"].to(device, non_blocking=True)
             labels = batch["label"].to(device, non_blocking=True)
-            embeddings = model(images)
-            if head_type == "arcface":
-                # No margin at eval (margin needs labels and penalises the truth).
-                logits = head.logits_eval(embeddings)
+            if (tta_mode == "none" and images.ndim != 4) or (tta_mode != "none" and images.ndim != 5):
+                raise ValueError("Image tensor dimensions disagree with the TTA mode")
+            views = [images] if tta_mode == "none" else images.unbind(dim=1)
+            view_probs, view_embeddings = [], []
+            # Forward one view batch at a time: seven views do not multiply GPU
+            # activation memory, and ArcFace never receives the ground-truth label.
+            for view in views:
+                embedding = model(view)
+                logits = head.logits_eval(embedding) if head_type == "arcface" else head(embedding)
+                if class_groups is not None:
+                    logits = aggregate_logits(logits, class_groups)
+                if logit_adjust is not None:
+                    logits = logits - logit_adjust
+                view_probs.append(torch.softmax(logits, dim=1))
+                view_embeddings.append(embedding)
+            if tta_mode == "none":
+                probs, embeddings = view_probs[0], view_embeddings[0]
             else:
-                logits = head(embeddings)
-            if class_groups is not None:
-                logits = aggregate_logits(logits, class_groups)
-            if logit_adjust is not None:
-                logits = logits - logit_adjust
-            probs = torch.softmax(logits, dim=1)
+                stacked = torch.stack(view_probs, dim=1)
+                probs = pool_view_probabilities(stacked, tta_mode)
+                embeddings = torch.nn.functional.normalize(torch.stack(view_embeddings).mean(dim=0), dim=1)
+                all_view_probs.append(stacked.cpu().numpy())
 
             all_labels.extend(labels.cpu().numpy().tolist())
             all_logits.append(probs.cpu().numpy())
@@ -142,6 +156,7 @@ def _collect_outputs(
         "logits": np.concatenate(all_logits, axis=0),
         "embeddings": np.concatenate(all_embeddings, axis=0),
         "paths": all_paths,
+        "view_probabilities": np.concatenate(all_view_probs, axis=0) if all_view_probs else None,
     }
 
 
@@ -243,7 +258,9 @@ def _write_summary_report(
         f"- Date: {summary['timestamp']}",
         f"- Device: {summary['device']}",
         f"- Logit-adjust tau: {summary.get('logit_adjust_tau', 0.0)}",
-        f"- Test samples: {summary['num_samples']}",
+        f"- Split: {summary.get('split', 'test')}",
+        f"- TTA: {summary.get('tta_mode', 'none')}; angles: {summary.get('tta_angles', [])}",
+        f"- Samples: {summary['num_samples']}",
         f"- Num classes: {summary['num_classes']}",
         "",
         "## 1. Overall Metrics",
@@ -291,8 +308,17 @@ def run_final_evaluation(
     tag: str | None = None,
     out_dir: str | Path = "artifacts/final_eval",
     write_report: bool = True,
+    split: str = "test",
+    tta_mode: str = "none",
+    tta_angles=None,
+    make_plots: bool = True,
 ) -> Dict[str, Any]:
-    """Evaluate *ckpt* on the test split and write metrics/plots. Returns the summary dict."""
+    """Evaluate *ckpt* on val/test with optional rotation TTA; write metrics."""
+    if split not in {"val", "test"}:
+        raise ValueError("Evaluation split must be val or test")
+    if tta_mode not in {"none", "mean", "max"}:
+        raise ValueError("TTA mode must be none, mean, or max")
+    angles = list(ROTATION_ANGLES if tta_angles is None else tta_angles) if tta_mode != "none" else []
     config_path = config if isinstance(config, str) else "<dict>"
     if isinstance(config, str):
         config = load_config(config)
@@ -300,6 +326,9 @@ def run_final_evaluation(
         config = config.as_dict()
 
     data_cfg = dict(config["data"])
+    data_cfg.pop("tta_angles", None)
+    if tta_mode != "none":
+        data_cfg["tta_angles"] = angles
     if batch_size is not None:
         data_cfg["batch_size"] = batch_size
 
@@ -307,7 +336,7 @@ def run_final_evaluation(
 
     test_loader = build_dataloader(
         name=data_cfg.get("dataset_name", "macaque_faces"),
-        split="test", config=data_cfg, shuffle=False, drop_last=False,
+        split=split, config=data_cfg, shuffle=False, drop_last=False,
     )
     class_names = list(getattr(test_loader.dataset, "classes",
                                [str(i) for i in range(data_cfg.get("num_classes", 0))]))
@@ -325,6 +354,7 @@ def run_final_evaluation(
         model=model, head=head, dataloader=test_loader, device=dev,
         head_type=config["model"].get("head", "linear"), logit_adjust=logit_adjust,
         class_groups=class_groups,
+        tta_mode=tta_mode,
     )
     labels, logits = outputs["labels"], outputs["logits"]
     embeddings, paths = outputs["embeddings"], outputs["paths"]
@@ -340,12 +370,17 @@ def run_final_evaluation(
     stem = f"{cfg_stem}_{Path(ckpt).stem.replace('.pt', '')}"
     if tag:
         stem += f"_{tag}"
+    if split != "test" or tta_mode != "none":
+        stem += f"_{split}_tta_{tta_mode}"
 
     summary = {
         "config": str(config_path),
         "checkpoint": ckpt,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "device": str(dev),
+        "split": split,
+        "tta_mode": tta_mode,
+        "tta_angles": angles,
         "logit_adjust_tau": float(logit_adjust_tau),
         "num_samples": int(len(labels)),
         "num_classes": int(logits.shape[1]),
@@ -363,6 +398,13 @@ def run_final_evaluation(
         "recall_weighted": basic["recall_weighted"],
     }
     (out_dir / f"{stem}_metrics_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    if outputs["view_probabilities"] is not None:
+        np.savez_compressed(
+            out_dir / f"{stem}_view_probabilities.npz",
+            probabilities=outputs["view_probabilities"], pooled_probabilities=logits,
+            labels=labels, paths=np.asarray(paths), angles=np.asarray(angles),
+            class_names=np.asarray(class_names),
+        )
 
     per_class_csv = out_dir / f"{stem}_per_class_metrics.csv"
     _write_per_class_csv(per_class, per_class_csv)
@@ -370,25 +412,33 @@ def run_final_evaluation(
     _write_hard_examples(labels, logits, paths, class_names, out_dir / f"{stem}_hard_examples.csv")
 
     conf_png = out_dir / f"{stem}_confusion_matrix.png"
-    plot_confusion_matrix(cm, class_labels=class_names, out_path=str(conf_png))
-    plot_topk(topk, out_path=str(out_dir / f"{stem}_topk_accuracy.png"))
+    if make_plots:
+        plot_confusion_matrix(cm, class_labels=class_names, out_path=str(conf_png))
+        plot_topk(topk, out_path=str(out_dir / f"{stem}_topk_accuracy.png"))
     class_acc_sorted = sorted(
         [(cid, stats.get("recall", 0.0)) for cid, stats in per_class.items()], key=lambda x: x[1],
     )
-    plot_per_class_accuracy(class_acc_sorted, out_path=str(out_dir / f"{stem}_per_class_accuracy_bar.png"))
+    if make_plots:
+        plot_per_class_accuracy(class_acc_sorted, out_path=str(out_dir / f"{stem}_per_class_accuracy_bar.png"))
 
-    tsne_png: Path | None = out_dir / f"{stem}_embeddings_tsne.png"
-    try:
-        emb2d, emb_labels = _tsne_or_pca(embeddings, labels)
-        _plot_embeddings_2d(emb2d, emb_labels, out_path=str(tsne_png))
-    except Exception:
-        tsne_png = None
+    tsne_png: Path | None = None
+    if make_plots:
+        tsne_png = out_dir / f"{stem}_embeddings_tsne.png"
+        try:
+            emb2d, emb_labels = _tsne_or_pca(embeddings, labels)
+            _plot_embeddings_2d(emb2d, emb_labels, out_path=str(tsne_png))
+        except Exception:
+            tsne_png = None
 
     if write_report:
         report_name = "FINAL_EVAL_REPORT.md" if not tag else f"FINAL_EVAL_REPORT_{tag}.md"
+        if split != "test" or tta_mode != "none":
+            report_name = f"{Path(report_name).stem}_{split}_tta_{tta_mode}.md"
         _write_summary_report(
             summary,
-            {"per_class_csv": per_class_csv, "conf_png": conf_png, "tsne_png": tsne_png or ""},
+            {"per_class_csv": per_class_csv,
+             "conf_png": conf_png if make_plots else "not generated",
+             "tsne_png": tsne_png or "not generated"},
             class_acc_sorted,
             Path(report_name),
         )
