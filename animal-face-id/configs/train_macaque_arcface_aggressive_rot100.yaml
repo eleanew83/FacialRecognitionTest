@@ -44,7 +44,7 @@ model:
   scale: 30.0
   pretrained: true
 trainer:
-  max_epochs: 150
+  max_epochs: 30
   lr: 0.0003
   weight_decay: 0.01
   scheduler: cosine
@@ -54,7 +54,6 @@ trainer:
   loss: cross_entropy
   checkpoint_dir: artifacts
   seed: 42
-  min_lr: 3.0e-06
 inference:
   checkpoint: artifacts/macaque-resnet50-arcface_aggressive_rot100_canonical_20261014_best.pt
   gallery_path: artifacts/macaque-resnet50-arcface_aggressive_rot100_canonical_20261014_gallery.pkl

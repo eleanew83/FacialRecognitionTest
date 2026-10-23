@@ -97,7 +97,7 @@ bash scripts/submit_aggressive_suite.sh
 
 The submitter creates a Slurm array with three GPU tasks, then submits the
 rotation-TTA job with `afterok` on the entire array. Each training task uses one
-GPU, eight CPUs, 32 GB RAM, and a 12-hour wall-time limit. Evaluation requests one
+GPU, eight CPUs, 32 GB RAM, and a two-hour wall-time limit. Evaluation requests one
 GPU for up to two hours. This command submits work; it does not wait for completion.
 
 | Config suffix | Rotation | Affine scale | Translation | Noise sigma / probability | Blur sigma / probability | Erasing probability / area |
@@ -119,8 +119,11 @@ compare the augmentation policies; these are separate fits, not three seed
 repeats of one policy. Class-balanced loss already exists in the LTR configs and
 can be compared separately after choosing augmentation.
 
-Training runs for 150 epochs with no early stopping. AdamW starts at 3e-4 with
-cosine decay to 3e-6; both validation-best and final checkpoints are retained.
+Training runs for 30 epochs with no early stopping, matching the previous baseline
+budget so the comparison focuses on augmentation. AdamW starts at 3e-4 with the
+original cosine schedule (minimum LR 0); both validation-best and final checkpoints
+are retained. Review the new validation curves before deciding whether to extend
+any run; stronger augmentation alone does not establish a need for more epochs.
 The scheduler wall-time limit can still terminate a job. There is no automatic
 resume; monitor the initial epoch timings and request more wall time before
 submitting if needed. Longer training does not guarantee validation improvement.

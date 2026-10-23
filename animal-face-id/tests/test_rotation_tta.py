@@ -85,7 +85,7 @@ class RotationTTATests(unittest.TestCase):
                 self.assertTrue(torch.isfinite(tensor).all())
             # Ordinary training validation stays a single, unaugmented image.
             self.assertEqual(build_transforms("val", cfg.data)(image).ndim, 3)
-            self.assertEqual(cfg.trainer["max_epochs"], 150)
+            self.assertEqual(cfg.trainer["max_epochs"], 30)
 
     def test_noise_fallback_is_stochastic_clipped_and_zero_noise_is_identity(self):
         image = torch.full((3, 32, 32), 0.5)
