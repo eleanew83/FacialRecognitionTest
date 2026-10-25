@@ -21,7 +21,7 @@ export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export HF_HOME=/rds/user/ylj20/hpc-work/.cache/huggingface
-source "$BASE/scripts/setup_job_tmp.sh"
+export TMPDIR=/rds/user/ylj20/hpc-work/tmp
 cd "$BASE"
 PROFILES=(rot30 rot100 rot150)
 PROFILE="${PROFILES[$SLURM_ARRAY_TASK_ID]}"

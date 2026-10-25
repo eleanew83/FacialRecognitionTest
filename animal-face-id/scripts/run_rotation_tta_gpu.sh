@@ -18,7 +18,7 @@ unset PYTHONPATH
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
-source "$BASE/scripts/setup_job_tmp.sh"
+export TMPDIR=/rds/user/ylj20/hpc-work/tmp
 cd "$BASE"
 python -c 'import torch; assert torch.cuda.is_available(), "CUDA is required for this job"'
 python tools/compare_rotation_tta.py \
