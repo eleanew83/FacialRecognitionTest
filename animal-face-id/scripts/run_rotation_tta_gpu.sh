@@ -18,8 +18,7 @@ unset PYTHONPATH
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
-export TMPDIR="${SLURM_TMPDIR:-$RUN_DIR/tmp/tta}"
-mkdir -p "$TMPDIR"
+source "$BASE/scripts/setup_job_tmp.sh"
 cd "$BASE"
 python -c 'import torch; assert torch.cuda.is_available(), "CUDA is required for this job"'
 python tools/compare_rotation_tta.py \

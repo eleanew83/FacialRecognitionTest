@@ -100,6 +100,15 @@ rotation-TTA job with `afterok` on the entire array. Each training task uses one
 GPU, eight CPUs, 32 GB RAM, and a two-hour wall-time limit. Evaluation requests one
 GPU for up to two hours. This command submits work; it does not wait for completion.
 
+Both GPU launchers use a short, unique node-local `/tmp/mq.*` directory and check
+Python multiprocessing descriptor sharing before training/evaluation. This avoids
+the `AF_UNIX path too long` error caused by putting `TMPDIR` inside a long suite
+directory. The temporary directory is cleaned up when the batch script exits.
+The original array `38544155` timed out on 23 October before completing an epoch
+because of this launcher error; its dependent evaluation `38544156` did not run.
+The launcher fix is in place for subsequent submissions; no augmentation results
+were produced by that original array.
+
 | Config suffix | Rotation | Affine scale | Translation | Noise sigma / probability | Blur sigma / probability | Erasing probability / area |
 | --- | --- | --- | --- | --- | --- | --- |
 | `aggressive_rot30` | ±30° | 0.80–1.25 | ±10% | 0.03 / 35% | 0.2–2.0 / 40% | 20% / 2–10% |
