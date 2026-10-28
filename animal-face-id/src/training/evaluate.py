@@ -293,6 +293,7 @@ def _write_summary_report(
             "",
         ],
     )
+    report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text("\n".join(content), encoding="utf-8")
 
 
@@ -440,7 +441,7 @@ def run_final_evaluation(
              "conf_png": conf_png if make_plots else "not generated",
              "tsne_png": tsne_png or "not generated"},
             class_acc_sorted,
-            Path(report_name),
+            Path("reports") / "markdown" / report_name,
         )
 
     summary["_per_class_csv"] = str(per_class_csv)

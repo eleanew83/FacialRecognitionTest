@@ -70,6 +70,9 @@ For an explanation of the architecture and common questions, see:
 
 ## Documentation
 
+Dated evaluation and experiment reports are collected in the [report index](reports/README.md),
+with separate [Markdown](reports/markdown/) and [Word](reports/word/) folders.
+
 | #   | Guide                                                              | Description                                                          |
 | --- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | 1   | **[Environment Setup](./docs/SETUP.md)**                           | How to configure your Python environment.                            |

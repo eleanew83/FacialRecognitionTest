@@ -1,0 +1,37 @@
+{
+  "job_id": 37799534,
+  "completed_date": "2026-10-10",
+  "run": "macaque-resnet50-arcface_aug3_clean_photo_split_20261007",
+  "metrics_source": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/macaque-resnet50-arcface_aug3_clean_photo_split_20261007_metrics.csv",
+  "metrics_sha256": "c6427c30819bf73ee0f2b0f5719db38504c9d184ef4d4a001ef3500f08980a39",
+  "test_source": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/FINAL_EVAL_REPORT_aug3_clean_20261007.md",
+  "epochs": 30,
+  "best_epoch": 29,
+  "best_epoch_metrics": {
+    "epoch": 29.0,
+    "lr": 3.2778598899291474e-06,
+    "train_loss": 0.07745111169348019,
+    "train_top1": 0.9986496624156039,
+    "train_top5": 1.0,
+    "val_loss": 6.02398845493885,
+    "val_top1": 0.794162826420891,
+    "val_top5": 0.8678955453149002
+  },
+  "final_epoch_metrics": {
+    "epoch": 30.0,
+    "lr": 8.2171569475899e-07,
+    "train_loss": 0.07221614606546613,
+    "train_top1": 0.9981995498874718,
+    "train_top5": 1.0,
+    "val_loss": 6.041127749119303,
+    "val_top1": 0.7903225806451613,
+    "val_top5": 0.868663594470046
+  },
+  "test_top1_from_rounded_report": 0.8304,
+  "loss_definition": "Cross-entropy computed with the ArcFace target-class margin.",
+  "accuracy_definition": "Top-1 accuracy computed from margin-free logits.",
+  "plots": [
+    "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/reports/figures/aug3_clean_job37799534_training_curves.png",
+    "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/reports/figures/aug3_clean_job37799534_training_curves.pdf"
+  ]
+}

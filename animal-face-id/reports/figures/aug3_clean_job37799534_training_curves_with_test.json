@@ -1,0 +1,56 @@
+{
+  "job_id": 37799534,
+  "completed_date": "2026-10-10",
+  "metrics_source": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/macaque-resnet50-arcface_aug3_clean_photo_split_20261007_metrics.csv",
+  "metrics_sha256": "c6427c30819bf73ee0f2b0f5719db38504c9d184ef4d4a001ef3500f08980a39",
+  "test_source": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/final_eval/train_macaque_arcface_aug3_clean_macaque-resnet50-arcface_aug3_clean_photo_split_20261007_best_aug3_clean_20261007_metrics_summary.json",
+  "test_source_sha256": "da7aeae9532448a7f9c0d201761db31e13b85925c5fdeacf995dba6d404281fb",
+  "epochs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "best_epoch": 29,
+  "validation_top1": 0.794162826420891,
+  "test_observations": [
+    {
+      "checkpoint_epoch": 29,
+      "top1": 0.8304405874499332,
+      "samples": 1498
+    }
+  ],
+  "per_epoch_test_curve_available": false,
+  "test_loss_available": false,
+  "test_plot_style": "Single diamond; no interpolated line or invented epoch results.",
+  "plots": [
+    "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/reports/figures/aug3_clean_job37799534_training_curves_with_test.png",
+    "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/reports/figures/aug3_clean_job37799534_training_curves_with_test.pdf"
+  ]
+}

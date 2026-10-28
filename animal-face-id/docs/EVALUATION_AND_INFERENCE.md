@@ -103,7 +103,7 @@ python tools/run_final_eval.py \
 ```
 
 **Outputs:**
-This script generates a comprehensive set of reports in `artifacts/final_eval/` and updates `FINAL_EVAL_REPORT.md`, including confusion matrices, per-class metrics, and embedding visualizations. Analyzing these outputs provides a deep understanding of your model's strengths and weaknesses.
+This script saves evaluation metrics, confusion matrices, per-class metrics, and embedding visualizations in `artifacts/final_eval/`. Its Markdown summary is written under `reports/markdown/` (`FINAL_EVAL_REPORT.md`, or a tagged filename). Word reports are kept in `reports/word/`; see the [report index](../reports/README.md) for the dated reports.
 
 ---
 

@@ -42,7 +42,7 @@ i.e. we miss some true matches more than we make false ones.
 
 ## 2. ID distribution (the long-tail curve)
 
-![ID distribution](artifacts/longtail_baseline_corrected/id_distribution_rank.png)
+![ID distribution](../../artifacts/longtail_baseline_corrected/id_distribution_rank.png)
 
 - 156 IDs, 6607 training images. Images/ID: min **4**, median **40**, max **98**.
 - Imbalance ratio (max/min) = **24.5×**; **Gini = 0.29** (0 = balanced).
@@ -53,7 +53,7 @@ i.e. we miss some true matches more than we make false ones.
 
 ## 3. Does the head dominate performance? (corrected eval)
 
-![Head vs tail](artifacts/longtail_baseline_corrected/head_vs_tail_bars.png)
+![Head vs tail](../../artifacts/longtail_baseline_corrected/head_vs_tail_bars.png)
 
 | Group | #IDs | mean train imgs | accuracy | precision | recall | f1 |
 |-------|-----:|----------------:|---------:|----------:|-------:|---:|
@@ -66,8 +66,8 @@ i.e. we miss some true matches more than we make false ones.
   rare IDs are occasionally missed, but when predicted they're *more* precise (0.90).
 - **0 individuals at 0% accuracy.**
 
-![Precision/Recall/F1 vs support](artifacts/longtail_baseline_corrected/support_vs_prf.png)
-![Per-class accuracy head→tail](artifacts/longtail_baseline_corrected/per_class_accuracy_by_support.png)
+![Precision/Recall/F1 vs support](../../artifacts/longtail_baseline_corrected/support_vs_prf.png)
+![Per-class accuracy head→tail](../../artifacts/longtail_baseline_corrected/per_class_accuracy_by_support.png)
 
 ---
 
