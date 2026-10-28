@@ -100,6 +100,25 @@ rotation-TTA job with `afterok` on the entire array. Each training task uses one
 GPU, eight CPUs, 32 GB RAM, and a two-hour wall-time limit. Evaluation requests one
 GPU for up to two hours. This command submits work; it does not wait for completion.
 
+For the controlled rotation-only follow-up, submit just the ±45° and ±60° policies
+and their dependent single-view/mean/max evaluation:
+
+```bash
+bash scripts/submit_aggressive_suite.sh rot45 rot60
+```
+
+These two configs copy the ±30° policy and change only the affine rotation range
+and output names. The remaining augmentation settings, model, loss, seed 42,
+learning-rate schedule and 30-epoch budget stay fixed. The submitter saves the
+selected profile order in `profiles.json` and maps it to array tasks from zero.
+
+Both GPU launchers send Slurm email notifications to `ylj20@cam.ac.uk` on start,
+completion, failure and time-limit termination. Training enables `ARRAY_TASKS`,
+so each array task generates its own notifications. The dependent evaluation job
+also requests notification if its training dependency becomes invalid. Email
+settings are part of the submitted Slurm job record; this does not send a separate
+test email.
+
 Both GPU launchers set `TMPDIR=/rds/user/ylj20/hpc-work/tmp` directly, matching the
 successful baseline launcher. Python manages its temporary worker files within
 this existing shared directory. The short path avoids the `AF_UNIX path too long`

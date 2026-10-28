@@ -1,5 +1,5 @@
 #!/bin/bash
-# Fourth job: compare all trained checkpoints with seven-angle probability pooling.
+# Compare selected trained checkpoints with seven-angle probability pooling.
 #SBATCH --job-name=macaque_rotation_tta
 #SBATCH --account=LEMOINE-SL3-GPU
 #SBATCH --partition=ampere
@@ -9,6 +9,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
+#SBATCH --mail-type=ALL,TIME_LIMIT
+#SBATCH --mail-user=ylj20@cam.ac.uk
 
 set -euo pipefail
 BASE="${2:?Pass the suite directory and project base}"

@@ -18,7 +18,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=04:00:00
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=ALL,TIME_LIMIT
 #SBATCH --mail-user=ylj20@cam.ac.uk
 #SBATCH -o /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/ltr_logs/%j.out
 #SBATCH -e /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/ltr_logs/%j.err

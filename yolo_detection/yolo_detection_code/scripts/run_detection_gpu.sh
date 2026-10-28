@@ -17,6 +17,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
+#SBATCH --mail-type=ALL,TIME_LIMIT
+#SBATCH --mail-user=ylj20@cam.ac.uk
 #SBATCH --chdir=/rds/user/ylj20/hpc-work/FacialRecognitionTest
 #SBATCH -o /rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/models/slurm_logs/%j.out
 #SBATCH -e /rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/models/slurm_logs/%j.err

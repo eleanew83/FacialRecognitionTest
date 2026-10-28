@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare three trained models with single-view, mean, and max rotation TTA."""
+"""Compare trained models with single-view, mean, and max rotation TTA."""
 
 from __future__ import annotations
 

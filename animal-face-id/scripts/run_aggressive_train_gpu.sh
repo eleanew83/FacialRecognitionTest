@@ -1,5 +1,5 @@
 #!/bin/bash
-# Array of three independent model fits. Submit through submit_aggressive_suite.sh.
+# Array of independent model fits. Submit through submit_aggressive_suite.sh.
 #SBATCH --job-name=macaque_aggressive
 #SBATCH --account=LEMOINE-SL3-GPU
 #SBATCH --partition=ampere
@@ -10,6 +10,8 @@
 #SBATCH --mem=32G
 #SBATCH --time=02:00:00
 #SBATCH --array=0-2
+#SBATCH --mail-type=ALL,ARRAY_TASKS,TIME_LIMIT
+#SBATCH --mail-user=ylj20@cam.ac.uk
 
 set -euo pipefail
 # Slurm copies batch scripts into its spool; the submitter passes the real base.
@@ -23,7 +25,11 @@ export MKL_NUM_THREADS=1
 export HF_HOME=/rds/user/ylj20/hpc-work/.cache/huggingface
 export TMPDIR=/rds/user/ylj20/hpc-work/tmp
 cd "$BASE"
-PROFILES=(rot30 rot100 rot150)
+if (( $# > 2 )); then
+    PROFILES=("${@:3}")
+else
+    PROFILES=(rot30 rot100 rot150)
+fi
 PROFILE="${PROFILES[$SLURM_ARRAY_TASK_ID]}"
 CONFIG="$RUN_DIR/configs/train_macaque_arcface_aggressive_${PROFILE}.yaml"
 echo "Job ${SLURM_JOB_ID}: $PROFILE on ${SLURMD_NODENAME} | config=$CONFIG"
