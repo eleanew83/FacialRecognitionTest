@@ -1,6 +1,7 @@
 # Final Evaluation Report — Augmentation and Rotation Averaging — 28 October 2026
 
 - Report date: 2026-10-28
+- Revision: 2026-10-28; dedicated averaging-job results and figure added
 - Word version: [formatted report matching the earlier progress report](../word/Macaque_ReID_Report_2026-10-28_Augmentation_Comparison.docx)
 - Training date: 2026-10-26; all three policies completed 30 epochs
 - Evaluation date: 2026-10-28 00:14:16 (selected test result, timestamp as logged)
@@ -37,6 +38,42 @@ percentage points** in macro F1. The selected model correctly identifies
 for the baseline: a net gain of 30 images. Comparing predictions image by image,
 it fixes 67 baseline errors and introduces 37 errors on images
 the baseline got right.
+
+### Averaging run results — job 39152253
+
+The averaging evaluation **completed successfully on 28 October 2026 at 00:14:34**
+(job start: 27 October at 23:56:39; elapsed **17m 55s**, exit code `0:0`). It scored
+the saved ±30°, ±100° and ±150° models using a single image, probability averaging
+and max pooling, on validation and test: **18 completed comparisons** in total.
+Here, **Mean TTA means seven-angle probability averaging** and **Max TTA means
+seven-angle maximum pooling**.
+
+The table below isolates inference for the **same ±30° checkpoint**, selected at
+training epoch 29. All seven views use −30°, −20°, −10°, 0°, +10°, +20° and +30°.
+
+| Scoring method | Validation top-1 | Test top-1 | Test top-3 | Test top-5 | Test macro F1 | Correct test images |
+| --- | --- | --- | --- | --- | --- | --- |
+| Single image | 82.49% | 83.51% | 88.45% | 89.99% | 81.89% | 1251/1,498 |
+| Seven-angle mean (selected) | 83.56% | 84.51% | 89.65% | 90.72% | 82.84% | 1266/1,498 |
+| Seven-angle max | 83.26% | 84.31% | 89.45% | 90.65% | 82.51% | 1263/1,498 |
+
+For this model, averaging adds **1.00 percentage point** over single-image
+prediction: **84.51% versus 83.51%**, or **15 additional correct test images**.
+Its macro F1 rises from **81.89% to 82.84%**. Max pooling reaches **84.31%**;
+mean is higher by three test images. Mean was selected on validation (83.56%),
+not by choosing the highest test score.
+
+![Completed averaging run: baseline and the same ±30° model with single, mean and max scoring](../figures/augmentation_comparison_2026-10-28/averaging_run_39152253.png)
+
+[PDF of the averaging-results figure](../figures/augmentation_comparison_2026-10-28/averaging_run_39152253.pdf).
+The baseline bar uses ordinary inference; baseline TTA was not evaluated.
+
+The averaging job evaluates existing weights. The loss-versus-epoch graphs later
+in this report belong to the training runs; averaging does not produce a separate
+training-loss curve. Its [job log](../../artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/logs/39152253_tta.out)
+and [full comparison CSV](../../artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/eval/comparison.csv)
+provide the source results. The newer follow-up averaging job `39484294` is a
+separate submission for the ±45°/±60° models; it has no results in this report yet.
 
 ### Test results for every policy and pooling method
 

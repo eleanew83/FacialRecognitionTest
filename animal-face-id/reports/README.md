@@ -11,6 +11,8 @@ The current comparison reports measured test top-1 accuracy of 82.51% for the
 baseline, 83.51% for the ±30° policy with single-image prediction, and 84.51% for
 that policy with seven-angle probability averaging. One training fit was run per
 policy; these measurements do not establish repeated-seed reliability.
+The latest report includes a dedicated section and figure for completed averaging
+job `39152253`, distinguishing it from the newer ±45°/±60° evaluation submission.
 
 ## Folder layout
 
