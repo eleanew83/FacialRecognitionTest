@@ -7,12 +7,17 @@
 | 28 October 2026 | Augmentation and seven-angle averaging comparison | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-28_augmentation_comparison.md) | [Open Word](word/Macaque_ReID_Report_2026-10-28_Augmentation_Comparison.docx) |
 | 23 October 2026 | Current 149-identity baseline | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-23_baseline.md) | [Open Word](word/Macaque_ReID_Report_2026-10-23_Baseline.docx) |
 
-The current comparison reports measured test top-1 accuracy of 82.51% for the
-baseline, 83.51% for the ±30° policy with single-image prediction, and 84.51% for
-that policy with seven-angle probability averaging. One training fit was run per
-policy; these measurements do not establish repeated-seed reliability.
-The latest report includes a dedicated section and figure for completed averaging
-job `39152253`, distinguishing it from the newer ±45°/±60° evaluation submission.
+The 28 October comparison was revised on 29 October to include the completed
+±45°/±60° follow-up. Test top-1 is 82.51% for the original baseline, 84.51% for
+±30° + seven-angle mean, and 85.11% for the validation-selected ±45° + mean.
+±30° leads on single-image validation accuracy; ±30° and ±45° tie at 83.51% on
+single-image test accuracy. Jobs `39152253` and `39484294` produced 30 total
+validation/test comparisons. One fit was run per policy; these measurements do
+not establish repeated-seed reliability. Both Markdown and Word include the
+follow-up section, comparison figure, selection explanation and evidence links. The reports also include
+original/augmented training-image examples and the seven inference views requested
+for the meeting. [Full-size meeting sheets and individual images](figures/augmentation_comparison_2026-10-28/meeting_examples/)
+are available as PNG/PDF with source provenance.
 
 ## Folder layout
 
@@ -22,7 +27,7 @@ job `39152253`, distinguishing it from the newer ±45°/±60° evaluation submis
 - [word/](word/): Word reports, including the original
   [Macaque_ReID_Report.docx](word/Macaque_ReID_Report.docx) used as the formatting
   reference and [Model_Results_Updated.docx](word/Model_Results_Updated.docx).
-- [word/backups/](word/backups/): the two preserved historical Word snapshots.
+- [word/backups/](word/backups/): preserved historical report snapshots.
 - [figures/](figures/): shared PNG/PDF charts and their source data. The latest
   figures are in [augmentation_comparison_2026-10-28/](figures/augmentation_comparison_2026-10-28/).
 

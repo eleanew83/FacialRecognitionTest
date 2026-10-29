@@ -1,0 +1,223 @@
+{
+  "revision_date": "2026-10-29",
+  "evaluation_jobs": [
+    "39152253",
+    "39484294"
+  ],
+  "angles": [
+    -30,
+    -20,
+    -10,
+    0,
+    10,
+    20,
+    30
+  ],
+  "comparisons": [
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "val",
+      "tta_mode": "none",
+      "top1": "0.8248847926267281",
+      "top3": "0.8725038402457758",
+      "top5": "0.8863287250384024",
+      "f1_macro": "0.7890529553518582",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "val",
+      "tta_mode": "mean",
+      "top1": "0.8356374807987711",
+      "top3": "0.8832565284178188",
+      "top5": "0.8986175115207373",
+      "f1_macro": "0.7982489586118161",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "val",
+      "tta_mode": "max",
+      "top1": "0.8325652841781874",
+      "top3": "0.8809523809523809",
+      "top5": "0.9001536098310292",
+      "f1_macro": "0.7941310373848028",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "test",
+      "tta_mode": "none",
+      "top1": "0.835113484646195",
+      "top3": "0.8845126835781041",
+      "top5": "0.8998664886515354",
+      "f1_macro": "0.8189399098486284",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "test",
+      "tta_mode": "mean",
+      "top1": "0.8451268357810414",
+      "top3": "0.8965287049399199",
+      "top5": "0.9072096128170895",
+      "f1_macro": "0.8284015046931233",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot30_canonical_20261014",
+      "split": "test",
+      "tta_mode": "max",
+      "top1": "0.8431241655540721",
+      "top3": "0.8945260347129506",
+      "top5": "0.9065420560747663",
+      "f1_macro": "0.8251145659319336",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/checkpoints/macaque-resnet50-arcface_aggressive_rot30_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "val",
+      "tta_mode": "none",
+      "top1": "0.8210445468509985",
+      "top3": "0.8717357910906298",
+      "top5": "0.8870967741935484",
+      "f1_macro": "0.7845686639761391",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "val",
+      "tta_mode": "mean",
+      "top1": "0.8356374807987711",
+      "top3": "0.8886328725038403",
+      "top5": "0.9086021505376344",
+      "f1_macro": "0.8010583376610201",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "val",
+      "tta_mode": "max",
+      "top1": "0.8348694316436251",
+      "top3": "0.8870967741935484",
+      "top5": "0.9055299539170507",
+      "f1_macro": "0.8038671808910598",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "val",
+      "tta_mode": "none",
+      "top1": "0.8218125960061444",
+      "top3": "0.8771121351766513",
+      "top5": "0.890937019969278",
+      "f1_macro": "0.7875091969957396",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "val",
+      "tta_mode": "mean",
+      "top1": "0.8341013824884793",
+      "top3": "0.8917050691244239",
+      "top5": "0.9101382488479263",
+      "f1_macro": "0.801708627601463",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "val",
+      "tta_mode": "max",
+      "top1": "0.8302611367127496",
+      "top3": "0.8917050691244239",
+      "top5": "0.9116743471582182",
+      "f1_macro": "0.7980030509759718",
+      "num_samples": "1302",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "test",
+      "tta_mode": "none",
+      "top1": "0.835113484646195",
+      "top3": "0.8891855807743658",
+      "top5": "0.9052069425901201",
+      "f1_macro": "0.8167081626029127",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "test",
+      "tta_mode": "mean",
+      "top1": "0.8511348464619493",
+      "top3": "0.8991989319092123",
+      "top5": "0.9132176234979973",
+      "f1_macro": "0.8373843691069103",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+      "split": "test",
+      "tta_mode": "max",
+      "top1": "0.8477970627503337",
+      "top3": "0.8985313751668892",
+      "top5": "0.9138851802403204",
+      "f1_macro": "0.8348828412383664",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "test",
+      "tta_mode": "none",
+      "top1": "0.8311081441922563",
+      "top3": "0.8965287049399199",
+      "top5": "0.9072096128170895",
+      "f1_macro": "0.8119647673414954",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "test",
+      "tta_mode": "mean",
+      "top1": "0.849799732977303",
+      "top3": "0.8978638184245661",
+      "top5": "0.9192256341789052",
+      "f1_macro": "0.8337185989389552",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    },
+    {
+      "run": "macaque-resnet50-arcface_aggressive_rot60_canonical_20261014",
+      "split": "test",
+      "tta_mode": "max",
+      "top1": "0.849799732977303",
+      "top3": "0.9005340453938585",
+      "top5": "0.9198931909212283",
+      "f1_macro": "0.8378331199163657",
+      "num_samples": "1498",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot60_canonical_20261014_best.pt"
+    }
+  ],
+  "source_sha256": {
+    "artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/eval/comparison.csv": "43f79d011b5d030cfeff5e6519f8c6ceaa9870b571eedadc2b27d710463a2779",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/comparison.csv": "2e8e52676e636b3be0a1a54b5703779518feb6d46ad1c6ff51068e412f188314"
+  },
+  "selected_correct": 1275,
+  "baseline_errors_fixed": 72,
+  "baseline_errors_introduced": 33
+}

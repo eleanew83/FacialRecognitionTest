@@ -1,0 +1,556 @@
+{
+  "created": "2026-10-29",
+  "purpose": "Meeting illustrations, regenerated from actual training transforms; not cached training batches or new evaluation results.",
+  "display": "Originals are existing detection crops, resized to 224\u00d7224 without augmentation. Augmented tensors are de-normalized and clipped to [0,1] for display, including random erasing.",
+  "selection": "Training-manifest entries 0 for Abby, 3 for Harry, and 0 for Warty (zero-based per identity). Harry was chosen from a visual contact sheet to show a visible face rather than an ear-only crop; no model-performance selection.",
+  "torch_version": "2.2.2+cu121",
+  "torchvision_version": "0.17.2+cu121",
+  "split_manifest_sha256": "cde1bf461484250013f8acbedbc7a7edd4999d4c77ead87ad3a6ee66ff14c7ed",
+  "transform_source_sha256": "33e20aa6b5cc00d7efcd2b5dbaf3a62779f0d3b74cee653d30e34609099cba55",
+  "configs": {
+    "30": {
+      "path": "artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/configs/train_macaque_arcface_aggressive_rot30.yaml",
+      "sha256": "6c32e472d8d69aae788e81908469353996bb8614101122cf79cc9146dab34c81",
+      "data": {
+        "dataset_name": "macaque_faces",
+        "raw_root": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops",
+        "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json",
+        "batch_size": 32,
+        "num_workers": 8,
+        "image_size": 224,
+        "num_classes": 149,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "augment": "aggressive",
+        "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json",
+        "aggressive": {
+          "degrees": 30,
+          "scale": [
+            0.8,
+            1.25
+          ],
+          "translate": [
+            0.1,
+            0.1
+          ],
+          "noise_sigma": 0.03,
+          "noise_p": 0.35,
+          "blur_sigma": [
+            0.2,
+            2.0
+          ],
+          "blur_p": 0.4,
+          "erase_p": 0.2,
+          "erase_scale": [
+            0.02,
+            0.1
+          ]
+        }
+      }
+    },
+    "45": {
+      "path": "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/configs/train_macaque_arcface_aggressive_rot45.yaml",
+      "sha256": "ae96f84ab508abc0c6d938449df28081e0df3a618292be8ad8e080256c904e6d",
+      "data": {
+        "dataset_name": "macaque_faces",
+        "raw_root": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops",
+        "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json",
+        "batch_size": 32,
+        "num_workers": 8,
+        "image_size": 224,
+        "num_classes": 149,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "augment": "aggressive",
+        "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json",
+        "aggressive": {
+          "degrees": 45,
+          "scale": [
+            0.8,
+            1.25
+          ],
+          "translate": [
+            0.1,
+            0.1
+          ],
+          "noise_sigma": 0.03,
+          "noise_p": 0.35,
+          "blur_sigma": [
+            0.2,
+            2.0
+          ],
+          "blur_p": 0.4,
+          "erase_p": 0.2,
+          "erase_scale": [
+            0.02,
+            0.1
+          ]
+        }
+      }
+    },
+    "60": {
+      "path": "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/configs/train_macaque_arcface_aggressive_rot60.yaml",
+      "sha256": "42c240f45250e8be482443afe5d1002ef3c5f192125664494b65e0b9e5ea3656",
+      "data": {
+        "dataset_name": "macaque_faces",
+        "raw_root": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops",
+        "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json",
+        "batch_size": 32,
+        "num_workers": 8,
+        "image_size": 224,
+        "num_classes": 149,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "augment": "aggressive",
+        "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json",
+        "aggressive": {
+          "degrees": 60,
+          "scale": [
+            0.8,
+            1.25
+          ],
+          "translate": [
+            0.1,
+            0.1
+          ],
+          "noise_sigma": 0.03,
+          "noise_p": 0.35,
+          "blur_sigma": [
+            0.2,
+            2.0
+          ],
+          "blur_p": 0.4,
+          "erase_p": 0.2,
+          "erase_scale": [
+            0.02,
+            0.1
+          ]
+        }
+      }
+    },
+    "100": {
+      "path": "artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/configs/train_macaque_arcface_aggressive_rot100.yaml",
+      "sha256": "5910f50969dd478019c541500e4657123304193e187a2fd79b6d4b40ec29ccc6",
+      "data": {
+        "dataset_name": "macaque_faces",
+        "raw_root": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops",
+        "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json",
+        "batch_size": 32,
+        "num_workers": 8,
+        "image_size": 224,
+        "num_classes": 149,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "augment": "aggressive",
+        "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json",
+        "aggressive": {
+          "degrees": 100,
+          "scale": [
+            0.7,
+            1.35
+          ],
+          "translate": [
+            0.12,
+            0.12
+          ],
+          "noise_sigma": 0.05,
+          "noise_p": 0.45,
+          "blur_sigma": [
+            0.2,
+            2.5
+          ],
+          "blur_p": 0.5,
+          "erase_p": 0.25,
+          "erase_scale": [
+            0.02,
+            0.12
+          ]
+        }
+      }
+    },
+    "150": {
+      "path": "artifacts/augmentation_sweeps/20261025T023752Z_jyY1BT/configs/train_macaque_arcface_aggressive_rot150.yaml",
+      "sha256": "dab0173c9ba7d95d6c7ffaf9719c757772982e9cc1f1be69373b9da5a5dde79c",
+      "data": {
+        "dataset_name": "macaque_faces",
+        "raw_root": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops",
+        "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json",
+        "batch_size": 32,
+        "num_workers": 8,
+        "image_size": 224,
+        "num_classes": 149,
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "augment": "aggressive",
+        "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json",
+        "aggressive": {
+          "degrees": 150,
+          "scale": [
+            0.6,
+            1.5
+          ],
+          "translate": [
+            0.15,
+            0.15
+          ],
+          "noise_sigma": 0.08,
+          "noise_p": 0.5,
+          "blur_sigma": [
+            0.3,
+            3.0
+          ],
+          "blur_p": 0.6,
+          "erase_p": 0.3,
+          "erase_scale": [
+            0.02,
+            0.15
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "identity": "Abby",
+      "split": "train",
+      "path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops/train/Abby/020123 AD floater AM 1442 + AF V-A77 Sylv_3_crop0.jpg",
+      "sha256": "5971a8ae81144468b3663be9c90f677688b5c074753968f60f66988f051bd958",
+      "original_size": [
+        737,
+        715
+      ],
+      "seed": 42,
+      "augmentations": [
+        {
+          "policy_degrees": 30,
+          "sampled_angle": 22.936155319213867,
+          "translation_pixels": [
+            19,
+            -5
+          ],
+          "scale": 1.2316875457763672,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Abby_training_rot30.png"
+        },
+        {
+          "policy_degrees": 45,
+          "sampled_angle": 34.404232025146484,
+          "translation_pixels": [
+            19,
+            -5
+          ],
+          "scale": 1.2316875457763672,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Abby_training_rot45.png"
+        },
+        {
+          "policy_degrees": 60,
+          "sampled_angle": 45.872310638427734,
+          "translation_pixels": [
+            19,
+            -5
+          ],
+          "scale": 1.2316875457763672,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Abby_training_rot60.png"
+        },
+        {
+          "policy_degrees": 100,
+          "sampled_angle": 76.45384979248047,
+          "translation_pixels": [
+            22,
+            -6
+          ],
+          "scale": 1.323548674583435,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Abby_training_rot100.png"
+        },
+        {
+          "policy_degrees": 150,
+          "sampled_angle": 114.68077850341797,
+          "translation_pixels": [
+            28,
+            -8
+          ],
+          "scale": 1.4633750915527344,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Abby_training_rot150.png"
+        }
+      ]
+    },
+    {
+      "identity": "Harry",
+      "split": "train",
+      "path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops/train/Harry/061224 AD AM Harry 11h29 Sylv5_crop0.JPG",
+      "sha256": "8be8a77982b9b6d26b4673dec9f02ce83deef3caa4abd87916b1ac6f08c348aa",
+      "original_size": [
+        1041,
+        990
+      ],
+      "seed": 43,
+      "augmentations": [
+        {
+          "policy_degrees": 30,
+          "sampled_angle": -2.7619028091430664,
+          "translation_pixels": [
+            -14,
+            19
+          ],
+          "scale": 0.955780565738678,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Harry_training_rot30.png"
+        },
+        {
+          "policy_degrees": 45,
+          "sampled_angle": -4.1428542137146,
+          "translation_pixels": [
+            -14,
+            19
+          ],
+          "scale": 0.955780565738678,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Harry_training_rot45.png"
+        },
+        {
+          "policy_degrees": 60,
+          "sampled_angle": -5.523805618286133,
+          "translation_pixels": [
+            -14,
+            19
+          ],
+          "scale": 0.955780565738678,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Harry_training_rot60.png"
+        },
+        {
+          "policy_degrees": 100,
+          "sampled_angle": -9.206342697143555,
+          "translation_pixels": [
+            -16,
+            23
+          ],
+          "scale": 0.9250164031982422,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Harry_training_rot100.png"
+        },
+        {
+          "policy_degrees": 150,
+          "sampled_angle": -13.809514045715332,
+          "translation_pixels": [
+            -20,
+            28
+          ],
+          "scale": 0.9115611910820007,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Harry_training_rot150.png"
+        }
+      ]
+    },
+    {
+      "identity": "Warty",
+      "split": "train",
+      "path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops/train/Warty/010923 AD AM Jason 16h07 Sylv_3_crop0.JPG",
+      "sha256": "0cd77fc81a8261db10df47a15a919df902a20e44a82d92bead8210641334600d",
+      "original_size": [
+        255,
+        317
+      ],
+      "seed": 44,
+      "augmentations": [
+        {
+          "policy_degrees": 30,
+          "sampled_angle": 13.17542552947998,
+          "translation_pixels": [
+            10,
+            15
+          ],
+          "scale": 0.8604569435119629,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Warty_training_rot30.png"
+        },
+        {
+          "policy_degrees": 45,
+          "sampled_angle": 19.763137817382812,
+          "translation_pixels": [
+            10,
+            15
+          ],
+          "scale": 0.8604569435119629,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Warty_training_rot45.png"
+        },
+        {
+          "policy_degrees": 60,
+          "sampled_angle": 26.35085105895996,
+          "translation_pixels": [
+            10,
+            15
+          ],
+          "scale": 0.8604569435119629,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Warty_training_rot60.png"
+        },
+        {
+          "policy_degrees": 100,
+          "sampled_angle": 43.91808319091797,
+          "translation_pixels": [
+            12,
+            18
+          ],
+          "scale": 0.7873266339302063,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Warty_training_rot100.png"
+        },
+        {
+          "policy_degrees": 150,
+          "sampled_angle": 65.87712860107422,
+          "translation_pixels": [
+            16,
+            22
+          ],
+          "scale": 0.720913827419281,
+          "shear": [
+            0.0,
+            0.0
+          ],
+          "output": "Warty_training_rot150.png"
+        }
+      ]
+    }
+  ],
+  "tta": {
+    "source_identity": "Abby",
+    "source_split": "train, used only to illustrate the inference transform",
+    "angles": [
+      -30,
+      -20,
+      -10,
+      0,
+      10,
+      20,
+      30
+    ],
+    "view_shape": [
+      7,
+      3,
+      224,
+      224
+    ],
+    "reference_is_extra_view": false,
+    "explanation": "Original crop is a display reference. The seven inference views include 0\u00b0 exactly once. Class probabilities, not image pixels or model weights, are averaged."
+  },
+  "output_sha256": {
+    "Abby_original_crop.png": "d6175be3a31d8538b153bc3c71f67ed26583f9358fac4d167ac13bc0f78ff4ba",
+    "Abby_original_display.png": "c2d7813db20206b420c11f9b06a54112c760dc65f81da971717956e148815665",
+    "Abby_training_rot100.png": "c56ca80286edc9db998c0d6a543f411517ac0fdaebf93e204ce3c272aebcc498",
+    "Abby_training_rot150.png": "ac88e1d2b17efaae3ed6a464d20961ea9bfc400b6c5cf4df912234c12a99f112",
+    "Abby_training_rot30.png": "276b670f3367ec593db7b998e3120a993ce61211ee413d269984ecbfea3bf063",
+    "Abby_training_rot45.png": "a5746e94a1807037acc55075c58ecdafdabd8fe380eca9dd7e4334b2c46b132f",
+    "Abby_training_rot60.png": "2b973be1966d0819d04f375c8ef7d9aaae55496fc3ddd335b6e2a73baf74d6f5",
+    "Abby_tta_+0.png": "dd283ae63028331d34d9a70d12efe5451cc9aa8a7abc439edb396c857447e1b3",
+    "Abby_tta_+10.png": "4dd78d1fac3055e4c8c167d0941715ed8b1f43e4cfe081f77338f5c263f5e80a",
+    "Abby_tta_+20.png": "174c03f46e459b0410d9d64282f5618fa0aa8a6fa4b298840d39bd8ed4cc5664",
+    "Abby_tta_+30.png": "f62f1261934b5982155187d035e96227f0ebd5ab8c8b39ae877294b13553ce3a",
+    "Abby_tta_-10.png": "ce6e46260bd93c5edc6c43f886e97646fe8dff45a71c1eba4a7479e78763e859",
+    "Abby_tta_-20.png": "ede7d70f66cbd447d39105973e3bec8d57f1d08d7dab3d7016766c2f9bcb9637",
+    "Abby_tta_-30.png": "5b983d20aacba5524d40a9496011f94da056ef131e27f1a111e21a4e9cabc43e",
+    "Harry_original_crop.png": "b0fe60e07419868a86513c8eee7dd1d526f49f806e7f0223b36f8b179ab98282",
+    "Harry_original_display.png": "e3ffd09dc252a769494a975ebf0f2747957fbcd6eefc26a6d77451ea527bc8e7",
+    "Harry_training_rot100.png": "1570ef6734a0bd20bb731e36499412c435d254f5bcb8af713cd044118e4ec276",
+    "Harry_training_rot150.png": "303cb3db2d83e272cb5c2518b1ed0c13baddcc8473a734dafdb653c68a465328",
+    "Harry_training_rot30.png": "ce9fb695bf94c8d911d024077bc56d0ca62f2a8014561977e1200b9efbc5c112",
+    "Harry_training_rot45.png": "ac32b1d6a8f394e7ead0e0edb3955fb9894aa047742c3f6257d50a77ea5eb282",
+    "Harry_training_rot60.png": "13cd39f9106a63b654e4d6b346da1d2d59d760c31705064cf99d23caca7d57c2",
+    "Warty_original_crop.png": "4b3223912ef21a7c953f1e286b35fc52aada7f63c8eae53d6ad984da5c3ab9c0",
+    "Warty_original_display.png": "b8be4f49d56576e8836d210413ef8c3f9f4e4c0a25ea49718e412bc3d137b7d1",
+    "Warty_training_rot100.png": "006ee7c1f999d9a737c830b84336f71f6872de41a01ad889e9c6e1feda0e1ada",
+    "Warty_training_rot150.png": "71e8487703d014ec86aad94385252b3dd864a9e74d878ac640797398259adb7d",
+    "Warty_training_rot30.png": "33d1fc5cd65eabd667742769d8595dc14e03b0f163790caf9b7ad4250034f41c",
+    "Warty_training_rot45.png": "6d6d2a7403b2119d7b269f3e9462576402ffb1d4c8bf0745a17fa6fceb5c32ca",
+    "Warty_training_rot60.png": "2de687258d07d8e8a85a8bfc764c7d800b455b09b18a5abdaee03f8e1f0b0262",
+    "original_and_training_augmentations.png": "f648bfc861eb635271d60f62d884e9d8dc1627d00bffbd59b1ef58a06b8e36b7",
+    "seven_angle_inference_views.png": "5a1d17106813583bd909d14a1073b291735d92409deaf0240e8ca73ec8b9631a"
+  }
+}
