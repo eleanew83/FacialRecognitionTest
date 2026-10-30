@@ -7,17 +7,23 @@
 | 28 October 2026 | Augmentation and seven-angle averaging comparison | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-28_augmentation_comparison.md) | [Open Word](word/Macaque_ReID_Report_2026-10-28_Augmentation_Comparison.docx) |
 | 23 October 2026 | Current 149-identity baseline | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-23_baseline.md) | [Open Word](word/Macaque_ReID_Report_2026-10-23_Baseline.docx) |
 
-The 28 October comparison was revised on 29 October to include the completed
-±45°/±60° follow-up. Test top-1 is 82.51% for the original baseline, 84.51% for
-±30° + seven-angle mean, and 85.11% for the validation-selected ±45° + mean.
-±30° leads on single-image validation accuracy; ±30° and ±45° tie at 83.51% on
-single-image test accuracy. Jobs `39152253` and `39484294` produced 30 total
-validation/test comparisons. One fit was run per policy; these measurements do
-not establish repeated-seed reliability. Both Markdown and Word include the
-follow-up section, comparison figure, selection explanation and evidence links. The reports also include
-original/augmented training-image examples and the seven inference views requested
-for the meeting. [Full-size meeting sheets and individual images](figures/augmentation_comparison_2026-10-28/meeting_examples/)
-are available as PNG/PDF with source provenance.
+The 28 October report was consolidated on 30 October for supervisor review.
+The main figures compare the baseline and all five augmentation policies together:
+shared training/validation loss curves and final held-out test accuracy plus cross-entropy.
+Final test NLL is derived from saved probability arrays for the five augmented
+models; baseline test NLL was not recorded. Test NLL is margin-free and is shown
+separately from the margin-adjusted training/validation loss.
+
+The validation-based choice remains ±45° + seven-angle mean: 85.11% test top-1
+versus 84.51% for ±30° mean and 82.51% for the original baseline without TTA.
+All-policy diagnostic/accuracy plots, source hashes and meeting-image examples
+are included. One fit per policy does not establish repeated-seed reliability.
+[Consolidated comparison figures and data](figures/augmentation_comparison_2026-10-28/supervisor_comparison/)
+and [full-size meeting image sheets](figures/augmentation_comparison_2026-10-28/meeting_examples/)
+are available as PNG/PDF exports.
+
+[Full report PDF for sharing](pdf/Macaque_ReID_Report_2026-10-28_Augmentation_Comparison.pdf)
+· [One-page comparison sheet](figures/augmentation_comparison_2026-10-28/supervisor_comparison/one_page_overview.pdf).
 
 ## Folder layout
 
