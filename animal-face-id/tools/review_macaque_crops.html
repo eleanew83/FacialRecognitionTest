@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Macaque crop review</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#162638;background:#f1f4f7}*{box-sizing:border-box}body{margin:0}main{max-width:1600px;margin:auto;padding:20px}h1{font-size:26px;margin:0 0 8px}p{line-height:1.5}button,input,select,textarea{font:inherit;border:1px solid #a7b6c5;border-radius:5px;padding:7px;background:white;color:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}button.primary{background:#12598b;color:white;border-color:#12598b}button.good{background:#e1f3e8;border-color:#31825b}a{color:#145e93}label{display:flex;flex-direction:column;gap:4px;font-size:13px}.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.panel{padding:14px;border:1px solid #cdd7e0;border-radius:8px;background:white;margin:12px 0}.sticky{position:sticky;top:0;z-index:2;box-shadow:0 3px 9px #152b4010}.muted,small{color:#566777}.save{padding:8px 10px;border-radius:5px;background:#e2efe9}.warning{background:#fff0c5;color:#6d4800}.error{background:#ffe1e1;color:#8b1c1c}.progress{display:flex;gap:16px;flex-wrap:wrap;font-variant-numeric:tabular-nums;margin:10px 0}progress{width:220px;height:14px}.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.card{background:white;border:2px solid #ced8e1;border-radius:8px;overflow:hidden;min-width:0}.card.ok{border-color:#32805b}.card.flagged{border-color:#c07818}.card .photo{display:block;width:100%;height:210px;padding:0;background:#e7ecf0;border:0;border-radius:0}.photo img{width:100%;height:100%;object-fit:contain}.card .body{padding:9px}.card .filename{font-size:12px;overflow-wrap:anywhere;line-height:1.35;min-height:48px;margin:7px 0}.card select,.card input,.card textarea{width:100%;font-size:12px;margin:4px 0;padding:6px}.card textarea{resize:vertical;min-height:48px}.badge{font-size:11px;border-radius:3px;background:#e5edf4;padding:2px 5px}.card button.detail{font-size:12px;width:100%;padding:5px}.nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}dialog{width:min(1450px,96vw);max-height:94vh;border:1px solid #b7c6d2;border-radius:10px;padding:18px}dialog::backdrop{background:#0b192bbd}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px}.comparison img{width:100%;height:52vh;object-fit:contain;background:#e6ebf0}.comparison a{display:block;font-size:13px;overflow-wrap:anywhere}.modal-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.modal-controls label{flex:1;min-width:180px}#detailNotes{width:100%;height:75px}#comparePhotos{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}#comparePhotos img{width:100%;height:130px;object-fit:contain;background:#e6ebf0}#comparePhotos small{font-size:11px;overflow-wrap:anywhere}.fatal{color:#941d1d;font-weight:600}@media(max-width:1250px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.comparison{grid-template-columns:1fr}.comparison img{height:36vh}.sticky{position:static}main{padding:10px}#comparePhotos{grid-template-columns:repeat(3,1fr)}}
+.assigned-identity{margin:0 0 12px;font-size:22px;font-weight:700;color:#143f63}.card .assigned-label{margin:0;padding:9px 10px;background:#e7f0f8;border-bottom:1px solid #cbd9e5;font-size:13px;overflow-wrap:anywhere}.card .assigned-label strong{display:block;font-size:19px;color:#143f63}
+.card.source-only .assigned-label{background:#fff0d2}.record-kind{font-weight:600;font-size:12px;margin:0 0 8px;color:#754a08}.comparison.single{grid-template-columns:1fr}.comparison [hidden]{display:none}
+</style>
+<main>
+<h1>Macaque crop and photo review</h1>
+<p class="muted">Check each image against its assigned identity. Existing crops and original photos without crops are labelled separately. For uncropped photos, review the folder identity and note why no usable face can be cropped. Leave identity questions for Sylvain.</p>
+<div class="toolbar">
+<button id="downloadBackup">Download backup JSON</button><button id="downloadAll">Export all reviews CSV</button><button id="downloadFlags">Export flagged CSV</button>
+<label>Restore / merge backup<input id="importBackup" type="file" accept=".json,application/json"></label>
+</div>
+<p id="saveMessage" class="save" role="status">Loading saved progress…</p>
+<div class="panel sticky">
+<p id="assignedIdentity" class="assigned-identity"></p>
+<p class="muted" style="margin:0 0 12px">Check each face against its assigned label. Filenames can mention other animals; the assigned label comes from the dataset.</p>
+<div class="toolbar">
+<label>Individual<select id="identity"></select></label>
+<label>Images<select id="recordKind"><option value="all">All images</option><option value="crop">Existing crops</option><option value="source_only">Originals without crops</option></select></label>
+<label>Split<select id="split"><option value="all">All splits</option><option value="train">Training</option><option value="val">Validation</option><option value="test">Test</option></select></label>
+<label>Show<select id="statusFilter"><option value="all">All decisions</option><option value="unreviewed">Unreviewed</option><option value="flagged">Flagged</option><option value="uncertain_identity">Ask Sylvain</option><option value="ok">OK</option></select></label>
+<label>Filename contains<input id="search" type="search" placeholder="Optional filename search"></label>
+<label>Page size<select id="pageSize"><option>24</option><option>12</option><option>48</option></select></label>
+<button id="resume" class="primary">Next individual with unreviewed images</button>
+<button id="reviewOriginals">Review originals without crops</button>
+</div>
+<div id="progress" class="progress"></div>
+<div class="toolbar"><button id="prev">← Previous page</button><strong id="pageLabel"></strong><button id="next">Next page →</button><button id="markPage" class="good">Mark unreviewed images on this page OK</button><button id="undo" disabled>Undo last review action</button></div>
+<small>Pages keep the same crops while you mark them. Use Next after finishing the page. Arrow keys change pages when you are not editing text.</small>
+</div>
+<div id="grid" class="grid"></div>
+<div class="nav"><button id="prevBottom">← Previous page</button><span id="pageLabelBottom"></span><button id="nextBottom">Next page →</button></div>
+<details class="panel"><summary>How to review and save</summary><p>Click a photo to compare the full crop with the original photograph. Select a problem category and add a suggested identity or note when useful. “OK” means no obvious issue on visual review; it does not certify the identity. Reference grids are also unverified.</p><p>With the local server running, decisions save into <code>review_state.json</code> in this review folder. A browser copy protects pending changes. Download a backup at the end of each session. Export flagged CSV for corrections and questions for Sylvain. This tool records decisions; it does not move, delete, crop or relabel images.</p><p>If opened directly as a file, progress saves only in this browser. Start the server for full source-photo access and disk autosave. Restore a backup only for this exact dataset.</p></details>
+<noscript>JavaScript is required for the review controls.</noscript>
+</main>
+<dialog id="detail"><div class="toolbar"><h2 id="detailTitle"></h2><button id="closeDetail">Close</button><button id="detailPrevious">← Previous crop</button><button id="detailNext">Next crop →</button></div>
+<div class="comparison" id="comparison"><div><h3 id="cropHeading">Current crop</h3><a id="cropLink" target="_blank" rel="noopener">Open full crop in a new tab</a><img id="cropImage" alt="Review image"></div><div id="sourcePanel"><h3>Original source photograph</h3><a id="sourceLink" target="_blank" rel="noopener">Open full source in a new tab to zoom</a><img id="sourceImage" alt="Original source photograph"><p id="sourceMessage"></p></div></div>
+<p id="detailPath" class="muted"></p><div class="modal-controls"><label>Decision<select id="detailStatus"></select></label><label>Suggested identity (optional)<input id="detailIdentity" list="identityNames" maxlength="150"></label></div>
+<label>Notes<textarea id="detailNotes" maxlength="5000" placeholder="What looks wrong? Which animal is intended? What should Sylvain check?"></textarea></label>
+<div class="panel"><div class="toolbar"><label>Compare another individual's training crops<select id="compareIdentity"></select></label><button id="showCompare">Show comparison</button></div><p class="muted">Up to eight training crops, spread through filename order. These are unverified examples, not trusted identity references.</p><div id="comparePhotos"></div></div>
+</dialog>
+<datalist id="identityNames"></datalist>
+<script id="inventory" type="application/json">__INVENTORY__</script>
+<script>
+'use strict';
+const D=JSON.parse(document.getElementById('inventory').textContent), $=id=>document.getElementById(id);
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const names=[...new Set(D.records.map(r=>r.identity))].sort((a,b)=>a.localeCompare(b)), byKey=Object.fromEntries(D.records.map(r=>[r.key,r]));
+const byIdentity=Object.fromEntries(names.map(name=>[name,D.records.filter(r=>r.identity===name)]));
+byIdentity.__all__=D.records;
+const storageKey='macaque-crop-review:'+D.dataset_id, isHTTP=location.protocol==='http:'||location.protocol==='https:';
+let annotations={},pending={},revision=0,server=false,ready=false,conflict=false,page=0,view=[],pageRows=[],history=[],current=null,flushing=false,filterTimer=null,saveTimer=null;
+let storageOK=true;
+const annotation=key=>annotations[key]||{status:'unreviewed',suggested_identity:'',notes:''};
+const flag=status=>status!=='ok'&&status!=='unreviewed';
+const sourceOnly=r=>r.record_type==='source_only',imagePath=r=>r.crop_path||r.source_path;
+const matchesKind=r=>$('recordKind').value==='all'||(r.record_type||'crop')===$('recordKind').value;
+function options(r){return Object.entries(D.statuses).filter(([v])=>sourceOnly(r)?!['wrong_animal','bad_crop'].includes(v):v!=='not_croppable').map(([v,t])=>`<option value="${v}">${esc(sourceOnly(r)&&v==='ok'?'Reviewed — no obvious identity issue':t)}</option>`).join('');}
+function message(text,kind=''){ $('saveMessage').textContent=text;$('saveMessage').className='save '+kind; }
+function cache(){try{localStorage.setItem(storageKey,JSON.stringify({dataset_id:D.dataset_id,annotations,pending,identity:$('identity').value,kind:$('recordKind').value,page}));storageOK=true;}catch(e){storageOK=false;message('Browser storage is unavailable. Download a backup before closing.','error');}}
+function saveNotice(){if(conflict)return;if(!storageOK){message('Browser storage is unavailable. Download a backup before closing.','error');return;}if(server&&!Object.keys(pending).length)message('Saved to review_state.json · '+new Date().toLocaleTimeString());else if(server)message('Saving changes…');else message('Saved in this browser only. Start the local server for disk autosave; download a backup before closing.','warning');}
+async function flush(){
+ if(!ready||!server||flushing||conflict||!Object.keys(pending).length)return;
+ flushing=true;
+ try{
+  while(Object.keys(pending).length){
+   const changes=structuredClone(pending);
+   const response=await fetch('/api/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dataset_id:D.dataset_id,base_revision:revision,changes})});
+   const result=await response.json();
+   if(!response.ok){if(response.status===409)conflict=true;throw new Error(result.error||'Save failed');}
+   revision=result.revision;
+   for(const [key,value] of Object.entries(changes))if(JSON.stringify(pending[key])===JSON.stringify(value))delete pending[key];
+   cache();
+  }
+  saveNotice();
+ }catch(e){message(e.message+' Changes remain in this browser; download a backup.','error');}
+ finally{flushing=false;}
+}
+function setChanges(changes,remember=true,repaint=true){
+ if(!ready||conflict)return;
+ if(remember){history.push(Object.fromEntries(Object.keys(changes).map(key=>[key,structuredClone(annotation(key))])));if(history.length>30)history.shift();}
+ for(const [key,value] of Object.entries(changes)){annotations[key]={...value,updated_at:new Date().toISOString()};pending[key]=annotations[key];}
+ cache();saveNotice();clearTimeout(saveTimer);saveTimer=setTimeout(flush,300);if(repaint){updateProgress();paintGrid();}$('undo').disabled=!history.length;
+}
+function decision(key,status){setChanges({[key]:{...annotation(key),status}});}
+function asset(r,kind){return isHTTP?`/${kind}/${r.key}`:r[kind==='crop'?'crop_file':'source_file'];}
+function selectedRows(){const identity=$('identity').value,split=$('split').value,status=$('statusFilter').value,q=$('search').value.toLowerCase();return D.records.filter(r=>(identity==='__all__'||r.identity===identity)&&matchesKind(r)&&(split==='all'||r.split===split)&&(!q||imagePath(r).toLowerCase().includes(q))&&(status==='all'||(status==='flagged'?flag(annotation(r.key).status):annotation(r.key).status===status)));}
+function updateProgress(){
+ $('assignedIdentity').textContent=$('identity').value==='__all__'?'Assigned identity is shown above each image':'Assigned identity: '+$('identity').value;
+ const total=D.records.length,done=D.records.filter(r=>annotation(r.key).status!=='unreviewed').length,flagged=D.records.filter(r=>flag(annotation(r.key).status)).length;
+ const rows=byIdentity[$('identity').value].filter(matchesKind),count=rows.filter(r=>annotation(r.key).status!=='unreviewed').length;
+ const originals=D.records.filter(sourceOnly),originalsDone=originals.filter(r=>annotation(r.key).status!=='unreviewed').length;
+ $('progress').innerHTML=`<strong>All images: ${done.toLocaleString()} / ${total.toLocaleString()} reviewed (${(100*done/total).toFixed(1)}%)</strong><progress value="${done}" max="${total}"></progress><span>${flagged} flagged</span><span>Crops: ${(done-originalsDone).toLocaleString()} / ${(total-originals.length).toLocaleString()}</span><span>No crop: ${originalsDone} / ${originals.length}</span><span>Selected individual(s): ${count} / ${rows.length} reviewed</span>`;
+ for(const option of $('identity').options){const items=byIdentity[option.value].filter(matchesKind);const n=items.filter(r=>annotation(r.key).status!=='unreviewed').length;option.textContent=`${option.value==='__all__'?'All individuals':option.value} (${n}/${items.length})`;}
+ $('reviewOriginals').textContent=`Review ${originals.length} originals without crops`;$('reviewOriginals').disabled=!originals.length;
+}
+function refresh(reset=false,recalculate=true){if(reset)page=0;if(recalculate)view=selectedRows();const size=Number($('pageSize').value);page=Math.max(0,Math.min(page,Math.ceil(view.length/size)-1));pageRows=view.slice(page*size,(page+1)*size);paintGrid();updateProgress();cache();}
+function paintGrid(){
+ const pages=Math.ceil(view.length/Number($('pageSize').value)),label=view.length?`Page ${page+1} of ${pages} · ${view.length} matching images`:'No matching images';
+ $('pageLabel').textContent=label;$('pageLabelBottom').textContent=label;
+ for(const id of ['prev','prevBottom'])$(id).disabled=page===0;
+ for(const id of ['next','nextBottom'])$(id).disabled=page+1>=pages;
+ $('markPage').disabled=!ready||!pageRows.some(r=>annotation(r.key).status==='unreviewed');
+ $('grid').innerHTML=pageRows.map(r=>{const a=annotation(r.key);return `<article class="card ${sourceOnly(r)?'source-only ':''}${a.status==='ok'?'ok':flag(a.status)?'flagged':''}" data-key="${r.key}"><p class="assigned-label">Assigned ${sourceOnly(r)?'folder identity':'label'}<strong>${esc(r.identity)}</strong></p><button class="photo" data-open="${r.key}" title="Enlarge image"><img loading="lazy" src="${esc(r.thumbnail)}" alt="${esc(r.identity)} ${sourceOnly(r)?'original photograph':'crop'}"></button><div class="body">${sourceOnly(r)?'<p class="record-kind">No active crop · original photo</p>':''}<span class="badge">${r.split}</span> <small>${r.width} × ${r.height}px</small><p class="filename">${esc(imagePath(r).split('/').pop())}</p>${r.load_error?`<p class="fatal">Image could not be read: ${esc(r.load_error)}</p>`:''}<select class="decision" aria-label="Decision for ${esc(imagePath(r))}" ${!ready||conflict?'disabled':''}>${options(r)}</select>${flag(a.status)?`<input class="suggestion" list="identityNames" placeholder="Suggested identity (optional)" maxlength="150" value="${esc(a.suggested_identity)}" aria-label="Suggested identity"><textarea class="notes" maxlength="5000" placeholder="Notes / question for Sylvain" aria-label="Review notes">${esc(a.notes)}</textarea>`:''}<button class="detail" data-open="${r.key}">${sourceOnly(r)?'Enlarge original photo':'Enlarge / inspect source'}</button></div></article>`}).join('');
+ for(const card of $('grid').querySelectorAll('.card'))card.querySelector('select').value=annotation(card.dataset.key).status;
+}
+function movePage(delta){page+=delta;refresh(false,false);window.scrollTo({top:0});}
+function nextIndividual(){const start=names.indexOf($('identity').value);for(let offset=1;offset<=names.length;offset++){const name=names[(start+offset)%names.length];if(byIdentity[name].some(r=>matchesKind(r)&&annotation(r.key).status==='unreviewed')){$('identity').value=name;$('statusFilter').value='all';$('split').value='all';$('search').value='';refresh(true);const first=view.findIndex(r=>annotation(r.key).status==='unreviewed');page=Math.floor(first/Number($('pageSize').value));refresh();return;}}message('Every image in this image category has a review decision. Export all reviews and the flagged queue.');}
+function openDetail(key){current=key;const r=byKey[key],a=annotation(key),original=sourceOnly(r),kind=original?'source':'crop';$('detailTitle').textContent='Assigned '+(original?'folder identity: ':'label: ')+r.identity+' · '+r.split;$('cropHeading').textContent=original?'Original photograph — no active crop':'Crop assigned to '+r.identity;$('detailPath').textContent=imagePath(r);$('cropImage').src=asset(r,kind);$('cropLink').href=asset(r,kind);$('cropLink').textContent=original?'Open full original in a new tab to zoom':'Open full crop in a new tab';$('sourcePanel').hidden=original;$('comparison').classList.toggle('single',original);$('sourceImage').hidden=!r.source_exists;$('sourceLink').hidden=!r.source_exists;$('sourceMessage').textContent=r.source_exists?'':'No linked source photograph is available. Record the problem in your notes.';if(!original&&r.source_exists){$('sourceImage').src=asset(r,'source');$('sourceLink').href=asset(r,'source');}$('detailStatus').innerHTML=options(r);$('detailStatus').value=a.status;$('detailIdentity').value=a.suggested_identity||'';$('detailNotes').value=a.notes||'';$('compareIdentity').value=r.identity;$('comparePhotos').innerHTML='';if(!$('detail').open)$('detail').showModal();}
+function editDetail(remember=true){if(!current)return;setChanges({[current]:{...annotation(current),status:$('detailStatus').value,suggested_identity:$('detailIdentity').value,notes:$('detailNotes').value}},remember);}
+function moveDetail(delta){const i=view.findIndex(r=>r.key===current),r=view[i+delta];if(r)openDetail(r.key);}
+function download(name,content,mime){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([content],{type:mime}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function backup(){download('crop_review_backup.json',JSON.stringify({schema_version:1,dataset_id:D.dataset_id,revision,annotations},null,2),'application/json');}
+function csv(flagged){const fields=['identity','split','record_type','crop_path','source_path','sha256','source_photo','width','height','status','suggested_identity','notes','updated_at','load_error'];const quote=value=>{let text=String(value??'');if(/^[=+\-@\t\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};const rows=D.records.filter(r=>!flagged||flag(annotation(r.key).status));const output=[fields.map(quote).join(','),...rows.map(r=>{const a={...r,record_type:r.record_type||'crop',...annotation(r.key)};return fields.map(f=>quote(a[f])).join(',');})].join('\r\n');download(flagged?'flagged_crops.csv':'all_crop_reviews.csv','\ufeff'+output,'text/csv;charset=utf-8');}
+async function importBackup(file){try{if(!file)return;const data=JSON.parse(await file.text());if(data.dataset_id!==D.dataset_id||!data.annotations||typeof data.annotations!=='object'||Array.isArray(data.annotations))throw new Error('This backup does not match the current dataset.');const changes={};for(const [key,a] of Object.entries(data.annotations)){if(!byKey[key]||!a||typeof a!=='object'||!Object.hasOwn(D.statuses,a.status)||typeof(a.notes??'')!=='string'||(a.notes||'').length>5000||typeof(a.suggested_identity??'')!=='string'||(a.suggested_identity||'').length>150)throw new Error('Invalid annotation in backup.');changes[key]={status:a.status,notes:a.notes||'',suggested_identity:a.suggested_identity||''};}if(!confirm(`Merge ${Object.keys(changes).length} saved decisions? Imported decisions replace existing decisions for those crops. Download a backup first if needed.`))return;setChanges(changes);refresh();}catch(e){message(e.message,'error');}finally{$('importBackup').value='';}}
+async function start(){
+ for(const id of ['identity','compareIdentity'])$(id).innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+ $('identity').insertAdjacentHTML('beforeend','<option value="__all__">All individuals</option>');
+ $('identityNames').innerHTML=names.map(n=>`<option value="${esc(n)}"></option>`).join('');
+ let saved={};try{saved=JSON.parse(localStorage.getItem(storageKey)||'{}');annotations=saved.annotations||{};pending=saved.pending||{};}catch(e){message('Could not read browser progress; restore a backup if needed.','warning');}
+ if(names.includes(saved.identity)||saved.identity==='__all__')$('identity').value=saved.identity;if(['all','crop','source_only'].includes(saved.kind))$('recordKind').value=saved.kind;page=Number.isInteger(saved.page)?saved.page:0;
+ if(isHTTP){try{const response=await fetch('/api/review');if(!response.ok)throw new Error('Server did not provide review data.');const state=await response.json();if(state.dataset_id!==D.dataset_id)throw new Error('Server dataset mismatch.');annotations={...state.annotations,...pending};revision=state.revision;server=true;}catch(e){message(e.message+' Using browser progress.','warning');}}
+ ready=true;refresh();saveNotice();flush();
+}
+for(const id of ['identity','recordKind','split','statusFilter','pageSize'])$(id).addEventListener('change',()=>refresh(true));
+$('search').addEventListener('input',()=>{clearTimeout(filterTimer);filterTimer=setTimeout(()=>refresh(true),150);});
+for(const id of ['prev','prevBottom'])$(id).onclick=()=>movePage(-1);for(const id of ['next','nextBottom'])$(id).onclick=()=>movePage(1);
+$('resume').onclick=nextIndividual;
+$('reviewOriginals').onclick=()=>{$('recordKind').value='source_only';$('identity').value='__all__';$('split').value='all';$('statusFilter').value='all';$('search').value='';refresh(true);};
+$('markPage').onclick=()=>{const changes={};for(const r of pageRows)if(annotation(r.key).status==='unreviewed')changes[r.key]={...annotation(r.key),status:'ok'};if(Object.keys(changes).length)setChanges(changes);};
+$('undo').onclick=()=>{if(history.length){setChanges(history.pop(),false);$('undo').disabled=!history.length;if(current&&$('detail').open)openDetail(current);}};
+$('grid').addEventListener('click',event=>{const target=event.target.closest('[data-open]');if(target)openDetail(target.dataset.open);});
+$('grid').addEventListener('change',event=>{const card=event.target.closest('.card');if(card&&event.target.matches('.decision'))decision(card.dataset.key,event.target.value);});
+$('grid').addEventListener('input',event=>{const card=event.target.closest('.card');if(card&&event.target.matches('.notes,.suggestion')){const key=card.dataset.key;setChanges({[key]:{...annotation(key),notes:card.querySelector('.notes').value,suggested_identity:card.querySelector('.suggestion').value}},false,false);}});
+$('grid').addEventListener('focusin',event=>{const card=event.target.closest('.card');if(card&&event.target.matches('.notes,.suggestion')){history.push({[card.dataset.key]:structuredClone(annotation(card.dataset.key))});if(history.length>30)history.shift();}});
+$('closeDetail').onclick=()=>$('detail').close();$('detailPrevious').onclick=()=>moveDetail(-1);$('detailNext').onclick=()=>moveDetail(1);
+$('detailStatus').addEventListener('change',()=>editDetail());
+for(const id of ['detailIdentity','detailNotes']){$(id).addEventListener('input',()=>editDetail(false));$(id).addEventListener('focus',()=>{if(current){history.push({[current]:structuredClone(annotation(current))});if(history.length>30)history.shift();}});}
+$('sourceImage').onerror=()=>{$('sourceMessage').textContent='Source could not be loaded. Use the local server and check the source path.';};
+$('cropImage').onerror=()=>{$('cropLink').textContent='Crop could not be loaded. Record it as unreadable if needed.';};
+$('showCompare').onclick=()=>{const rows=D.records.filter(r=>!sourceOnly(r)&&r.identity===$('compareIdentity').value&&r.split==='train'),n=Math.min(8,rows.length),selected=Array.from({length:n},(_,i)=>rows[Math.round(i*(rows.length-1)/Math.max(1,n-1))]);$('comparePhotos').innerHTML=selected.map(r=>`<div><a href="${esc(asset(r,'crop'))}" target="_blank" rel="noopener"><img src="${esc(r.thumbnail)}" alt="${esc(r.identity)} comparison"></a><small>${esc(r.crop_path.split('/').pop())}</small></div>`).join('');};
+$('downloadBackup').onclick=backup;$('downloadAll').onclick=()=>csv(false);$('downloadFlags').onclick=()=>csv(true);$('importBackup').onchange=event=>importBackup(event.target.files[0]);
+document.addEventListener('keydown',event=>{if(event.target.matches('input,textarea,select')||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='ArrowRight'){event.preventDefault();$('detail').open?moveDetail(1):movePage(1);}if(event.key==='ArrowLeft'){event.preventDefault();$('detail').open?moveDetail(-1):movePage(-1);}});
+window.addEventListener('beforeunload',event=>{if(Object.keys(pending).length&&server){event.preventDefault();event.returnValue='Changes have not reached the server.';}});
+window.addEventListener('online',()=>flush());setInterval(()=>flush(),15000);
+start().catch(e=>message('Could not start review: '+e.message,'error'));
+</script>
+</html>

@@ -1,0 +1,306 @@
+{
+  "analysis_date": "2026-10-31",
+  "selected_model": {
+    "run": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014",
+    "split": "val",
+    "tta_mode": "mean",
+    "top1": 0.8356374807987711,
+    "top3": 0.8886328725038403,
+    "top5": 0.9086021505376344,
+    "f1_macro": 0.8010583376610201,
+    "num_samples": 1302,
+    "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt"
+  },
+  "summaries": {
+    "val": {
+      "config": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/configs/train_macaque_arcface_aggressive_rot45.yaml",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt",
+      "timestamp": "2026-10-29 13:51:26",
+      "device": "cuda",
+      "split": "val",
+      "tta_mode": "mean",
+      "tta_angles": [
+        -30,
+        -20,
+        -10,
+        0,
+        10,
+        20,
+        30
+      ],
+      "logit_adjust_tau": 0.0,
+      "num_samples": 1302,
+      "num_classes": 149,
+      "checkpoint_num_classes": 149,
+      "identity_registry_version": "2026-10-14",
+      "classifier_scoring": "Original classifier outputs",
+      "evaluation_tag": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean",
+      "top1": 0.8356374807987711,
+      "topk": {
+        "1": 0.8356374807987711,
+        "3": 0.8886328725038403,
+        "5": 0.9086021505376344
+      },
+      "f1_macro": 0.8010583376610201,
+      "f1_weighted": 0.8349520322977516,
+      "precision_macro": 0.8235316414981788,
+      "recall_macro": 0.8000346400170824,
+      "precision_weighted": 0.8493909706944641,
+      "recall_weighted": 0.8356374807987711,
+      "small_crop_images": 36,
+      "small_crop_correct": 17,
+      "small_crop_accuracy": 0.4722222222222222,
+      "correct": 1088,
+      "errors": 214,
+      "cross_sex_errors": 45,
+      "same_sex_errors": 169,
+      "cross_group_errors": 137,
+      "errors_true_in_top3": 69,
+      "errors_true_in_top5": 95,
+      "errors_confidence_ge_90": 42,
+      "distinct_directed_pairs": 209,
+      "max_directed_pair_count": 2,
+      "identities_with_errors": 109,
+      "identities_below_50": 6
+    },
+    "test": {
+      "config": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/configs/train_macaque_arcface_aggressive_rot45.yaml",
+      "checkpoint": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/checkpoints/macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best.pt",
+      "timestamp": "2026-10-29 13:52:23",
+      "device": "cuda",
+      "split": "test",
+      "tta_mode": "mean",
+      "tta_angles": [
+        -30,
+        -20,
+        -10,
+        0,
+        10,
+        20,
+        30
+      ],
+      "logit_adjust_tau": 0.0,
+      "num_samples": 1498,
+      "num_classes": 149,
+      "checkpoint_num_classes": 149,
+      "identity_registry_version": "2026-10-14",
+      "classifier_scoring": "Original classifier outputs",
+      "evaluation_tag": "macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean",
+      "top1": 0.8511348464619493,
+      "topk": {
+        "1": 0.8511348464619493,
+        "3": 0.8991989319092123,
+        "5": 0.9132176234979973
+      },
+      "f1_macro": 0.8373843691069103,
+      "f1_weighted": 0.8497350785329616,
+      "precision_macro": 0.8515124764948149,
+      "recall_macro": 0.8409459187553672,
+      "precision_weighted": 0.8614334493504657,
+      "recall_weighted": 0.8511348464619493,
+      "small_crop_images": 24,
+      "small_crop_correct": 11,
+      "small_crop_accuracy": 0.4583333333333333,
+      "correct": 1275,
+      "errors": 223,
+      "cross_sex_errors": 49,
+      "same_sex_errors": 174,
+      "cross_group_errors": 144,
+      "errors_true_in_top3": 72,
+      "errors_true_in_top5": 93,
+      "errors_confidence_ge_90": 44,
+      "distinct_directed_pairs": 216,
+      "max_directed_pair_count": 2,
+      "identities_with_errors": 108,
+      "identities_below_50": 3
+    }
+  },
+  "transitions": {
+    "val_single_to_mean": {
+      "both_correct": 1057,
+      "both_wrong": 202,
+      "fixed": 31,
+      "introduced": 12
+    },
+    "test_single_to_mean": {
+      "introduced": 8,
+      "both_correct": 1243,
+      "both_wrong": 215,
+      "fixed": 32
+    },
+    "test_baseline_to_selected": {
+      "both_wrong": 190,
+      "both_correct": 1203,
+      "fixed": 72,
+      "introduced": 33
+    }
+  },
+  "source_sha256": {
+    "data/macaque_faces/splits.json": "cde1bf461484250013f8acbedbc7a7edd4999d4c77ead87ad3a6ee66ff14c7ed",
+    "data/macaque_faces/identity_registry.json": "9b698c3dd339eac1f408579b74dafe97a9320b8b9bc89bb2a70fe4a415ddbe3f",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/data_inputs.json": "fbd21cf2f5bb9d237917e8ef3f278b4146c314b7753389f0fa3bba3c7348bde8",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/selection.json": "4e01880a2e94eb1cefe86497699d0185a090885562bd472fe47788ad083f23e1",
+    "tools/analyze_identification_errors.py": "b936bc2ab9b26b4a82373733f81c938189687c0902a67a23437f7d7b65784746",
+    "tools/analyze_identification_errors.html": "a16b6b36e38b322761a1988808f992f0e75e65074d1d81d67142a90c0b03f177",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_val_tta_mean_metrics_summary.json": "6d8a199efb20af15865ca4177d9fd9d94c6f611205e63575bf00acfcafa52be4",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_val_tta_mean_hard_examples.csv": "8589e68ebf6602f56678af441024fb092481da628395ed9a4a266ae5f58a8d18",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_val_tta_mean_view_probabilities.npz": "5afe663612afe8c490574ed79f3994c711380a39a780e39895b6e4dbd34700f9",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_val_tta_mean_confusion_matrix.npy": "9b428d4b012fb215e225ac5275bd2afc925cc70e40487153b0d9eddb4c10ba8b",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_val_tta_mean_per_class_metrics.csv": "e3943fd5e88366a0d4ee1bb691a0c3c212a339b40f2af13bc67db2c988ae493c",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_none_val_tta_none_hard_examples.csv": "cf1588fbfdaaa785e051f50402acae18b579c46279aa1ef1e573bf81c6fc4d7f",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_test_tta_mean_metrics_summary.json": "6622c82f495943378b6d343da6a2da79507cc523b06333a48d0b61b0bf818441",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_test_tta_mean_hard_examples.csv": "62ad63e9f246f10a59807b52a70df2bd3b7a4df6b8ab3956755ee29d3c276679",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_test_tta_mean_view_probabilities.npz": "4a91b1a99eba290cdeb70c2ad7987b5066c39125061a2a3935646de62819d72d",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_test_tta_mean_confusion_matrix.npy": "7dcba43a5ff09852f2d0e205ec247556a254c7feafc305d7ffbd79a4d08ffcc5",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_mean_test_tta_mean_per_class_metrics.csv": "6ed137f01429abb6036b8ee7502e88bfd8102b42481023b180957e82196e34b4",
+    "artifacts/augmentation_sweeps/20261028T164412Z_JmVXbV/eval/train_macaque_arcface_aggressive_rot45_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_best_macaque-resnet50-arcface_aggressive_rot45_canonical_20261014_none_hard_examples.csv": "7ac3a2d34e36726d4187ce621a9e1f85b0b2b5730aabe815fb0131d68eaa2f29",
+    "artifacts/final_eval/train_macaque_arcface_aug3_clean_macaque-resnet50-arcface_aug3_clean_photo_split_20261007_canonical_20261014_best_aug3_canonical_20261014_hard_examples.csv": "ae29d43ff930198cab5f9ea9657406675568778214e952e000de656a55f3694b",
+    "reports/figures/error_analysis_2026-10-31/training_reference_observations.json": "5488cb175f49eefbf9b3e850ddc17f1e6363f779e3d10d50741da57e8634ec7c",
+    "reports/figures/error_analysis_2026-10-31/visual_observations.json": "c4085abf161fc67484585a67405269613de0663c3ff61052a0ef969130a7180c"
+  },
+  "image_hash_checks": {
+    "evaluation_images": 2800,
+    "training_references": 149,
+    "all_match": true
+  },
+  "reference_selection": "Middle training path in alphabetical order; illustrative, not nearest neighbour.",
+  "visual_observations": [
+    {
+      "split": "val",
+      "true_id": "Beate",
+      "pred_id": "Anara",
+      "image_path": "val/Beate/121223 RG AF Beate wpt894 Sylv_6_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Strong orange/red colour cast and very dark eye regions. This is an illumination/colour-shift example; crop correctness and identity are not adjudicated."
+    },
+    {
+      "split": "val",
+      "true_id": "Cynthia",
+      "pred_id": "Jack",
+      "image_path": "val/Cynthia/150124 AW AF Cynthia 14h39 AM Jack Martin1_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Branches cross the face and deep shadows obscure the eye region. External occlusion and uneven lighting are visible."
+    },
+    {
+      "split": "val",
+      "true_id": "Dorothee",
+      "pred_id": "Mel",
+      "image_path": "val/Dorothee/151223 PPA AF Dorothee wpt978 Sylv_2_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Oblique/profile view with strong side/back lighting and bright haze. Facial appearance differs substantially from a uniformly lit frontal view."
+    },
+    {
+      "split": "val",
+      "true_id": "Pauline",
+      "pred_id": "Cerise",
+      "image_path": "val/Pauline/080124 AD AF Pauline faecal wpt1246 Sylv_M9_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Fairly clear, near-frontal face with both eyes visible. No obvious gross occlusion or low-resolution problem in this displayed crop; a confident error also occurs in apparently usable images."
+    },
+    {
+      "split": "val",
+      "true_id": "Renee",
+      "pred_id": "Rachida",
+      "image_path": "val/Renee/131223 AD AF Renee wpt896 Sylv_2_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Near-frontal face with both eyes visible, but soft detail and relatively flat contrast. No gross crop failure established."
+    },
+    {
+      "split": "val",
+      "true_id": "Rocky",
+      "pred_id": "Mickey",
+      "image_path": "val/Rocky/170124 AW AF Cynthia AM Rocky wpt2902 Martin1_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Largely frontal face with dark shadow over the eye region. The face is otherwise visibly present; no identity-label conclusion is drawn."
+    },
+    {
+      "split": "val",
+      "true_id": "Tack",
+      "pred_id": "Jamie",
+      "image_path": "val/Tack/260823 OH AM Tack wpt450 Jess16_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Fairly clear, near-frontal face with both eyes visible. No obvious gross crop failure in the displayed image; fine-grained identity confusion remains a possibility."
+    },
+    {
+      "split": "val",
+      "true_id": "Bijou",
+      "pred_id": "Drew",
+      "image_path": "val/Bijou/190823 AW AF Bijou wpt1820 Sylv1_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Strongly blurred/soft oblique face, with little fine texture visible. Limited image detail is a plausible difficulty, not a demonstrated cause."
+    },
+    {
+      "split": "test",
+      "true_id": "Cerise",
+      "pred_id": "Richard",
+      "image_path": "test/Cerise/131224 AD AM Richard AF Cerise wpt4756 Sylv1_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Very dark face with poor eye visibility; a hand is visible at the lower edge near the mouth/chin. Illumination and partial obstruction merit review."
+    },
+    {
+      "split": "test",
+      "true_id": "Drew",
+      "pred_id": "Cleo",
+      "image_path": "test/Drew/290823 AW AF Drew during follow 14h05 Sylv_2_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "The two selected Drew-to-Cleo errors show different views: a near-frontal/downward face and a more oblique face. No gross crop failure is established from the crops alone."
+    },
+    {
+      "split": "test",
+      "true_id": "Gina",
+      "pred_id": "Julia",
+      "image_path": "test/Gina/171223 AW AF Gina unsure wpt1033 Sylv_3_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Strong profile/three-quarter view: the far eye is not visible and only one side of the facial structure is exposed."
+    },
+    {
+      "split": "test",
+      "true_id": "Mickey",
+      "pred_id": "Drew",
+      "image_path": "test/Mickey/P1010611_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Downward/oblique head view with the eyes narrowed or shadowed. Viewpoint and eye visibility are possible difficulties."
+    },
+    {
+      "split": "test",
+      "true_id": "Nathalie",
+      "pred_id": "Sophie",
+      "image_path": "test/Nathalie/120124 CC AF Nathalie unsure wpt1332 SylvM1_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Close oblique face with the far eye hidden and the face/fur meeting the crop borders. Whether the crop excludes useful information requires the source photo."
+    },
+    {
+      "split": "test",
+      "true_id": "Rocky",
+      "pred_id": "Cleo",
+      "image_path": "test/Rocky/071223 AW AM Rocky wpt746 Sylv_3_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Small but apparently usable, mostly frontal crop with both eyes visible. No obvious gross occlusion; an error is not automatically a crop error."
+    },
+    {
+      "split": "test",
+      "true_id": "Drew",
+      "pred_id": "Cleo",
+      "image_path": "test/Drew/290823 AW AF Drew during follow 14h05 Sylv_4_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "The two selected Drew-to-Cleo errors show different views: a near-frontal/downward face and a more oblique face. No gross crop failure is established from the crops alone."
+    },
+    {
+      "split": "test",
+      "true_id": "Richard",
+      "pred_id": "Eliane",
+      "image_path": "test/Richard/080123 AD AM Richard 11h23 Martin3_crop0.JPG",
+      "observer": "assistant visual inspection of selected query crops",
+      "observation": "Head tilted/downward with a dark eye region; much of the visible crop is forehead and surrounding fur. Viewpoint and eye visibility merit review."
+    }
+  ],
+  "training_reference_observations": [
+    {
+      "id": "Eliane",
+      "image_path": "train/Eliane/131224 AD AF Eliane wpt4735 Sylv3_crop0.JPG",
+      "observation": "The selected training reference shows fur/body and a railing, with no recognizable face or visible eyes/nose. Review this YOLO crop against its original photograph. The image was not removed or relabelled; its causal contribution to errors is unknown.",
+      "observer": "assistant visual inspection of the full-resolution crop",
+      "review_status": "needs source-photo review"
+    }
+  ]
+}

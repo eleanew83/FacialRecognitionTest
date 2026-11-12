@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Macaque identification error analysis — 31 October 2026</title>
+<style>
+body{font:16px system-ui,sans-serif;color:#172536;background:#f3f5f7;margin:0}main{max-width:1400px;margin:auto;padding:28px}h1{font-size:30px}h2{margin-top:35px}.muted{color:#526171}a{color:#0069a0}.box,article{background:white;border:1px solid #d5dde4;border-radius:8px;padding:18px;margin:14px 0}.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}label{display:flex;flex-direction:column;font-size:14px;gap:5px}input,select,button{font:inherit;padding:8px;border:1px solid #a8b7c3;border-radius:4px}button{cursor:pointer;background:#e6eef4}.scroll{overflow:auto;max-height:650px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:9px;border-bottom:1px solid #dce3e9;text-align:left;white-space:nowrap}th{background:#eaf0f5;position:sticky;top:0}tr:hover{background:#eff6fb}.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.photos img{width:100%;height:224px;object-fit:contain;background:#edf0f3}.photos p{margin:6px 0;font-size:14px}.badge{padding:3px 7px;background:#e7edf2;border-radius:4px;font-size:13px}.note{border-left:4px solid #b57600;padding-left:12px}.figures{display:grid;grid-template-columns:1fr 1fr;gap:12px}.figures img{width:100%}footer{margin-top:25px}@media(max-width:650px){main{padding:12px}.photos,.figures{grid-template-columns:1fr}}
+</style><main>
+<h1>Macaque identification: error analysis</h1>
+<p class="muted">31 October 2026 · ±45° training + seven-angle probability mean · Saved predictions; no new training or inference.</p>
+<div class="box" id="summary"></div>
+<p><a href="../../markdown/ERROR_ANALYSIS_2026-10-31.md">Full written report</a> · <a href="../../pdf/Macaque_ReID_Error_Analysis_2026-10-31.pdf">PDF and example sheets</a> · <a href="per_individual_metrics.csv">Per-individual CSV</a> · <a href="error_review_queue.csv">Blank error-review CSV</a> · <a href="analysis_data.json">Sources and checks</a></p>
+<p class="note">Validation is the development view. Test errors are retrospective diagnostics; redesign informed by them requires a fresh final holdout. Visual causes are not automatically assigned. Scores are uncalibrated. This page's thumbnails and data are embedded; file links require the project files.</p>
+<noscript><p>Enable JavaScript for the searchable tables and gallery, or open the PDF report linked above.</p></noscript>
+<p><strong>PDF photo coverage:</strong> 32 selected error queries, each with two illustrative training references, plus one flagged training crop. <a href="pdf_image_filenames.csv">Every PDF image: filenames and page numbers</a> · <a href="all_error_filenames.csv">All 437 error filenames</a>.</p>
+<h2>All 149 individuals</h2><div class="controls">
+<label>Search individual or group<input id="classSearch" placeholder="e.g. Harry"></label>
+<label>Order by<select id="classSort"><option value="valRecall">Lowest validation recall</option><option value="valErrors">Most validation errors</option><option value="testRecall">Lowest test recall</option><option value="testErrors">Most test errors</option><option value="name">Name</option></select></label></div>
+<p id="classCount" class="muted"></p><div class="scroll box"><table><thead><tr><th>Individual</th><th>Sex</th><th>Current group</th><th>Train</th><th>Val correct/total</th><th>Val recall</th><th>Val precision</th><th>Test correct/total</th><th>Test recall</th><th>Test precision</th><th>Inspect errors</th></tr></thead><tbody id="classes"></tbody></table></div>
+<h2>Every identification error</h2><p>Query crops are accompanied by illustrative training references for both identities. These are not nearest neighbours. Images are contained without stretching. Original-image links require the project filesystem.</p>
+<div class="controls">
+<label>Split<select id="split"><option value="val">Validation</option><option value="test">Test</option><option value="all">Both</option></select></label>
+<label>Search IDs, filename or group<input id="errorSearch" placeholder="Name or filename"></label>
+<label>Sex confusion<select id="sex"><option value="all">All errors</option><option value="same">Same sex</option><option value="cross">Cross sex</option></select></label>
+<label>Minimum model score<input id="minScore" type="number" min="0" max="1" step="0.1" value="0"></label>
+<label>Order<select id="errorSort"><option value="confidence">Highest confidence</option><option value="margin">Smallest top-two margin</option><option value="name">True identity</option><option value="size">Smallest crop</option></select></label>
+<button id="reset">Reset filters</button></div>
+<p id="errorCount" class="muted"></p><div id="gallery"></div><button id="more">Show 20 more</button>
+<h2>Overview figures</h2><div class="figures" id="figures"></div>
+<footer class="muted">All 2,800 evaluation crops and 149 training references match the saved manifest SHA-256. Group means current membership, not group at capture. This error gallery does not replace the complete manual crop audit.</footer>
+</main><script id="data" type="application/json">__DATA__</script><script>
+'use strict';
+const D=JSON.parse(document.getElementById('data').textContent),el=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pc=x=>(100*x).toFixed(1)+'%';
+el('summary').innerHTML=['val','test'].map(s=>{const r=D.summaries[s];return `<strong>${s==='val'?'Validation':'Test'}:</strong> ${r.correct}/${r.num_samples} correct (${pc(r.top1)}); ${r.errors} errors; ${r.errors_confidence_ge_90} wrong with score ≥90%.`}).join('<br>');
+const individuals=Object.fromEntries(D.classes.filter(r=>r.split==='val').map(v=>[v.id,{v,t:D.classes.find(t=>t.split==='test'&&t.id===v.id)}]));
+function classTable(){
+ const q=el('classSearch').value.toLowerCase(),sort=el('classSort').value;
+ let rows=Object.values(individuals).filter(({v})=>`${v.id} ${v.group}`.toLowerCase().includes(q));
+ rows.sort((a,b)=>{let d=sort==='valRecall'?a.v.recall-b.v.recall:sort==='valErrors'?b.v.errors-a.v.errors:sort==='testRecall'?a.t.recall-b.t.recall:sort==='testErrors'?b.t.errors-a.t.errors:0;return d||a.v.id.localeCompare(b.v.id)});
+ el('classCount').textContent=`${rows.length} individuals. Recall = correct / images for that individual; small counts make rates unstable.`;
+ el('classes').innerHTML=rows.map(({v,t})=>`<tr><td>${esc(v.id)}</td><td>${esc(v.sex)}</td><td>${esc(v.group)}</td><td>${v.train_images}</td><td>${v.correct}/${v.support}</td><td>${pc(v.recall)}</td><td>${pc(v.precision)}</td><td>${t.correct}/${t.support}</td><td>${pc(t.recall)}</td><td>${pc(t.precision)}</td><td><button data-id="${esc(v.id)}">View</button></td></tr>`).join('');
+ el('classes').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{exactIdentity=b.dataset.id;el('errorSearch').value=b.dataset.id;el('split').value='val';el('sex').value='all';el('minScore').value=0;limit=20;gallery();el('errorCount').scrollIntoView({behavior:'smooth'})}));
+}
+let limit=20,exactIdentity='';
+function gallery(){
+ const split=el('split').value,q=el('errorSearch').value.toLowerCase(),sex=el('sex').value,min=Number(el('minScore').value)||0,sort=el('errorSort').value;
+ let rows=D.errors.filter(r=>(split==='all'||r.split===split)&&(!exactIdentity||r.true_id===exactIdentity||r.pred_id===exactIdentity)&&`${r.true_id} ${r.pred_id} ${r.image_path} ${r.true_group} ${r.pred_group}`.toLowerCase().includes(q)&&(sex==='all'||Boolean(r.same_sex)===(sex==='same'))&&r.confidence>=min);
+ rows.sort((a,b)=>(sort==='confidence'?b.confidence-a.confidence:sort==='margin'?a.top2_margin-b.top2_margin:sort==='size'?a.min_dimension-b.min_dimension:a.true_id.localeCompare(b.true_id))||a.image_path.localeCompare(b.image_path));
+ el('errorCount').textContent=`${rows.length} matching errors; showing ${Math.min(limit,rows.length)}. References are training images, not evaluation evidence.`;
+ el('gallery').innerHTML=rows.slice(0,limit).map(r=>`<article><span class="badge">${r.split==='val'?'Validation':'Test'}</span> <strong>${esc(r.true_id)} → ${esc(r.pred_id)}</strong> · score ${pc(r.confidence)} · true rank ${r.true_rank} · ${r.same_sex?'same':'cross'} sex · ${r.width}×${r.height}px
+ <div class="photos"><div><p>Misidentified query: ${esc(r.true_id)}</p><img loading="lazy" src="${r.thumbnail}" alt="Query ${esc(r.true_id)}"></div><div><p>True-ID training reference: ${esc(r.true_id)}</p><img loading="lazy" src="${D.references[r.true_id]}" alt="Training reference ${esc(r.true_id)}"></div><div><p>Predicted-ID training reference: ${esc(r.pred_id)}</p><img loading="lazy" src="${D.references[r.pred_id]}" alt="Training reference ${esc(r.pred_id)}"></div></div>
+ ${D.referenceNotes[r.true_id]?`<p class="note">True-ID reference needs review: ${esc(D.referenceNotes[r.true_id])}</p>`:''}
+ ${D.referenceNotes[r.pred_id]?`<p class="note">Predicted-ID reference needs review: ${esc(D.referenceNotes[r.pred_id])}</p>`:''}
+ <p>Top 3: ${esc(r.top3_ids)} · true-ID score ${pc(r.true_probability)} · top-two margin ${pc(r.top2_margin)}</p>
+ <p>Current groups: ${esc(r.true_group)} → ${esc(r.pred_group)} · true-ID training images: ${r.train_images}</p>
+ ${D.observations[r.image_path]?`<p class="note">Visual observation: ${esc(D.observations[r.image_path])}</p>`:''}
+ <p class="muted">${esc(r.image_path)}</p><a href="${esc(r.crop_link)}">Original crop</a>${r.source_link?` · <a href="${esc(r.source_link)}">Source photograph</a>`:''}</article>`).join('');
+ el('more').hidden=rows.length<=limit;
+}
+['classSearch','classSort'].forEach(id=>el(id).addEventListener('input',classTable));
+['split','errorSearch','sex','minScore','errorSort'].forEach(id=>el(id).addEventListener('input',()=>{if(id==='errorSearch')exactIdentity='';limit=20;gallery()}));
+el('more').addEventListener('click',()=>{limit+=20;gallery()});
+el('reset').addEventListener('click',()=>{exactIdentity='';el('split').value='val';el('errorSearch').value='';el('sex').value='all';el('minScore').value=0;el('errorSort').value='confidence';limit=20;gallery()});
+el('figures').innerHTML=Object.entries(D.figures).map(([name,src])=>`<img src="${src}" alt="${esc(name)}">`).join('');
+classTable();gallery();
+</script></html>

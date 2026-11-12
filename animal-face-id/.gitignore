@@ -73,3 +73,6 @@ data/chimpanzee_faces/processed/
 # Config overrides (optional - uncomment if needed)
 # configs/local_*.yaml
 
+
+# Generated manual-review grids and local review progress
+/reports/crop_review_*/

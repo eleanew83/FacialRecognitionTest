@@ -1,0 +1,9 @@
+[
+  {
+    "id": "Eliane",
+    "image_path": "train/Eliane/131224 AD AF Eliane wpt4735 Sylv3_crop0.JPG",
+    "observation": "The selected training reference shows fur/body and a railing, with no recognizable face or visible eyes/nose. Review this YOLO crop against its original photograph. The image was not removed or relabelled; its causal contribution to errors is unknown.",
+    "observer": "assistant visual inspection of the full-resolution crop",
+    "review_status": "needs source-photo review"
+  }
+]

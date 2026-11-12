@@ -1,0 +1,130 @@
+[
+  {
+    "split": "val",
+    "true_id": "Beate",
+    "pred_id": "Anara",
+    "image_path": "val/Beate/121223 RG AF Beate wpt894 Sylv_6_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Strong orange/red colour cast and very dark eye regions. This is an illumination/colour-shift example; crop correctness and identity are not adjudicated."
+  },
+  {
+    "split": "val",
+    "true_id": "Cynthia",
+    "pred_id": "Jack",
+    "image_path": "val/Cynthia/150124 AW AF Cynthia 14h39 AM Jack Martin1_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Branches cross the face and deep shadows obscure the eye region. External occlusion and uneven lighting are visible."
+  },
+  {
+    "split": "val",
+    "true_id": "Dorothee",
+    "pred_id": "Mel",
+    "image_path": "val/Dorothee/151223 PPA AF Dorothee wpt978 Sylv_2_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Oblique/profile view with strong side/back lighting and bright haze. Facial appearance differs substantially from a uniformly lit frontal view."
+  },
+  {
+    "split": "val",
+    "true_id": "Pauline",
+    "pred_id": "Cerise",
+    "image_path": "val/Pauline/080124 AD AF Pauline faecal wpt1246 Sylv_M9_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Fairly clear, near-frontal face with both eyes visible. No obvious gross occlusion or low-resolution problem in this displayed crop; a confident error also occurs in apparently usable images."
+  },
+  {
+    "split": "val",
+    "true_id": "Renee",
+    "pred_id": "Rachida",
+    "image_path": "val/Renee/131223 AD AF Renee wpt896 Sylv_2_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Near-frontal face with both eyes visible, but soft detail and relatively flat contrast. No gross crop failure established."
+  },
+  {
+    "split": "val",
+    "true_id": "Rocky",
+    "pred_id": "Mickey",
+    "image_path": "val/Rocky/170124 AW AF Cynthia AM Rocky wpt2902 Martin1_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Largely frontal face with dark shadow over the eye region. The face is otherwise visibly present; no identity-label conclusion is drawn."
+  },
+  {
+    "split": "val",
+    "true_id": "Tack",
+    "pred_id": "Jamie",
+    "image_path": "val/Tack/260823 OH AM Tack wpt450 Jess16_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Fairly clear, near-frontal face with both eyes visible. No obvious gross crop failure in the displayed image; fine-grained identity confusion remains a possibility."
+  },
+  {
+    "split": "val",
+    "true_id": "Bijou",
+    "pred_id": "Drew",
+    "image_path": "val/Bijou/190823 AW AF Bijou wpt1820 Sylv1_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Strongly blurred/soft oblique face, with little fine texture visible. Limited image detail is a plausible difficulty, not a demonstrated cause."
+  },
+  {
+    "split": "test",
+    "true_id": "Cerise",
+    "pred_id": "Richard",
+    "image_path": "test/Cerise/131224 AD AM Richard AF Cerise wpt4756 Sylv1_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Very dark face with poor eye visibility; a hand is visible at the lower edge near the mouth/chin. Illumination and partial obstruction merit review."
+  },
+  {
+    "split": "test",
+    "true_id": "Drew",
+    "pred_id": "Cleo",
+    "image_path": "test/Drew/290823 AW AF Drew during follow 14h05 Sylv_2_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "The two selected Drew-to-Cleo errors show different views: a near-frontal/downward face and a more oblique face. No gross crop failure is established from the crops alone."
+  },
+  {
+    "split": "test",
+    "true_id": "Gina",
+    "pred_id": "Julia",
+    "image_path": "test/Gina/171223 AW AF Gina unsure wpt1033 Sylv_3_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Strong profile/three-quarter view: the far eye is not visible and only one side of the facial structure is exposed."
+  },
+  {
+    "split": "test",
+    "true_id": "Mickey",
+    "pred_id": "Drew",
+    "image_path": "test/Mickey/P1010611_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Downward/oblique head view with the eyes narrowed or shadowed. Viewpoint and eye visibility are possible difficulties."
+  },
+  {
+    "split": "test",
+    "true_id": "Nathalie",
+    "pred_id": "Sophie",
+    "image_path": "test/Nathalie/120124 CC AF Nathalie unsure wpt1332 SylvM1_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Close oblique face with the far eye hidden and the face/fur meeting the crop borders. Whether the crop excludes useful information requires the source photo."
+  },
+  {
+    "split": "test",
+    "true_id": "Rocky",
+    "pred_id": "Cleo",
+    "image_path": "test/Rocky/071223 AW AM Rocky wpt746 Sylv_3_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Small but apparently usable, mostly frontal crop with both eyes visible. No obvious gross occlusion; an error is not automatically a crop error."
+  },
+  {
+    "split": "test",
+    "true_id": "Drew",
+    "pred_id": "Cleo",
+    "image_path": "test/Drew/290823 AW AF Drew during follow 14h05 Sylv_4_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "The two selected Drew-to-Cleo errors show different views: a near-frontal/downward face and a more oblique face. No gross crop failure is established from the crops alone."
+  },
+  {
+    "split": "test",
+    "true_id": "Richard",
+    "pred_id": "Eliane",
+    "image_path": "test/Richard/080123 AD AM Richard 11h23 Martin3_crop0.JPG",
+    "observer": "assistant visual inspection of selected query crops",
+    "observation": "Head tilted/downward with a dark eye region; much of the visible crop is forehead and surrounding fur. Viewpoint and eye visibility merit review."
+  }
+]

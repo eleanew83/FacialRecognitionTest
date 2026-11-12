@@ -4,8 +4,21 @@
 
 | Evaluation date | Report | Markdown | Word |
 | --- | --- | --- | --- |
+| 31 October 2026 | Selected-model error analysis: every individual, confusion pairs and visual review | [Read Markdown](markdown/ERROR_ANALYSIS_2026-10-31.md) | — |
 | 28 October 2026 | Augmentation and seven-angle averaging comparison | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-28_augmentation_comparison.md) | [Open Word](word/Macaque_ReID_Report_2026-10-28_Augmentation_Comparison.docx) |
 | 23 October 2026 | Current 149-identity baseline | [Read Markdown](markdown/FINAL_EVAL_REPORT_2026-10-23_baseline.md) | [Open Word](word/Macaque_ReID_Report_2026-10-23_Baseline.docx) |
+
+The 31 October error analysis uses the selected ±45° + seven-angle mean model.
+[Open the searchable offline report](figures/error_analysis_2026-10-31/error_analysis.html)
+for all 149 individuals and every validation/test error, with true/predicted-ID
+training references. [PDF and example sheets](pdf/Macaque_ReID_Error_Analysis_2026-10-31.pdf),
+[per-individual metrics](figures/error_analysis_2026-10-31/per_individual_metrics.csv),
+and a [blank error-review queue](figures/error_analysis_2026-10-31/error_review_queue.csv)
+are included. Each PDF photo now has a complete crop filename;
+[a filename index](figures/error_analysis_2026-10-31/pdf_image_filenames.csv)
+maps selected examples and training references to PDF pages and original source photos.
+[All 437 error filenames](figures/error_analysis_2026-10-31/all_error_filenames.csv)
+are listed separately. This analysis does not replace the complete manual crop audit.
 
 The 28 October report was consolidated on 30 October for supervisor review.
 The main figures compare the baseline and all five augmentation policies together:
