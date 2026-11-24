@@ -1,6 +1,8 @@
-"""Build and serve a manual crop audit. Never modifies images or dataset labels.
+"""Build/serve a crop audit and an explicit, journalled correction editor.
 
-Use the project Python environment (Pillow required only for the build command).
+Review decisions alone never modify images. Correction Apply buttons can edit
+original-folder files with backups; face outputs are stored separately.
+Use the project Python environment (Pillow required for building and editing).
 See docs/CROP_REVIEW.md for the review workflow and SSH/VS Code instructions.
 """
 from __future__ import annotations
@@ -9,6 +11,7 @@ import argparse
 import csv
 import errno
 import hashlib
+import importlib.util
 import io
 import json
 import mimetypes
@@ -321,6 +324,15 @@ class ReviewStore:
 def handler_for(store):
     thumbnail_names = {r['key'] + '.jpg' for r in store.records.values()}
 
+    def corrections():
+        with store.lock:
+            if not hasattr(store, 'corrections'):
+                spec = importlib.util.spec_from_file_location('macaque_crop_corrections', Path(__file__).with_name('crop_corrections.py'))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                store.corrections = module.CorrectionStore(store)
+            return store.corrections
+
     class Handler(BaseHTTPRequestHandler):
         def send(self, data, mime, code=200, filename=None):
             self.send_response(code)
@@ -338,6 +350,11 @@ def handler_for(store):
 
         def do_GET(self):
             route = unquote(urlsplit(self.path).path)
+            if route == '/corrections' or route.startswith('/api/corrections/'):
+                try:
+                    return corrections().handle_get(self, route, urlsplit(self.path).query)
+                except (ValueError, OSError) as exc:
+                    return self.send_json({'error': str(exc)}, 400)
             if route == '/api/review':
                 with store.lock:
                     return self.send_json(store.state)
@@ -355,6 +372,8 @@ def handler_for(store):
                 field = 'crop_absolute' if kind == 'crop' else 'source_photo'
                 root = Path(store.inventory['crop_root' if kind == 'crop' else 'source_root'])
                 candidate = Path(record[field]) if record[field] else None
+                if kind == 'source' and hasattr(store, 'corrections'):
+                    candidate = store.corrections.selected_image(key, 'master')
                 if not candidate or not candidate.resolve().is_relative_to(root.resolve()):
                     return self.send_json({'error': 'Source unavailable.'}, 404)
             elif route in ('/', '/index.html'):
@@ -371,7 +390,7 @@ def handler_for(store):
                 self.send_json({'error': 'Image unavailable on this machine.'}, 404)
 
         def do_POST(self):
-            if self.path != '/api/review':
+            if self.path != '/api/review' and not self.path.startswith('/api/corrections/'):
                 return self.send_json({'error': 'Not found.'}, 404)
             origin = self.headers.get('Origin')
             if origin and origin != 'http://' + self.headers.get('Host', ''):
@@ -382,7 +401,10 @@ def handler_for(store):
                 length = int(self.headers.get('Content-Length', '0'))
                 if not 0 < length <= 16_000_000:
                     raise ValueError('Invalid request size.')
-                result = store.update(json.loads(self.rfile.read(length)))
+                payload = json.loads(self.rfile.read(length))
+                if self.path.startswith('/api/corrections/'):
+                    return corrections().handle_post(self, self.path, payload)
+                result = store.update(payload)
                 if result is None:
                     return self.send_json({'error': 'Another tab changed this review. Export a backup, then reload before continuing.'}, 409)
                 self.send_json(result)

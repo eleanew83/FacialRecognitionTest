@@ -123,6 +123,75 @@ otherwise valid image. Keep realistic hard examples. This tool flags decisions;
 apply confirmed corrections later to a new, traceable dataset version. Do not
 automatically change identities to agree with model predictions.
 
+## Correction editor
+
+Use the same server command, then click **Open correction editor** above the
+grid or the correction link inside an enlarged image. The direct address is
+<http://localhost:8766/corrections> when your forwarded port is 8766. The grid's
+**review decisions remain a separate completed audit**.
+
+1. Choose a queue: flagged review records, uncertain filenames, saved correction
+   drafts, applied corrections, or all images. Filter by individual or filename.
+   Your original review note and suggested ID are visible beside each image.
+2. Choose the source version. **Original folder photo** opens the current photo
+   in the master identity folder. **Preserved full source before face cropping**
+   opens the source-split version, which can contain more context than an already
+   manually cropped master photo. Paths, dimensions and hashes are shown.
+3. Choose an operation from the table below and confirm its target identity.
+4. For crop operations, drag a rectangle on the full source. Move it by dragging
+   inside; resize it by dragging a corner. Pixel-coordinate inputs allow precise
+   adjustment. Use Zoom, Clear rectangle, or Undo rectangle as needed.
+5. Drafts autosave to the correction workspace. **Preview changes** shows the
+   output image(s), destination paths and backup directory. Only **Apply this
+   correction** performs the displayed file operations.
+6. **Undo last applied correction for this image** restores the last operation
+   for that record, including original-folder moves/crops. Undo refuses to
+   overwrite a file changed outside the editor after the operation.
+
+| Operation | What Apply does |
+| --- | --- |
+| Recrop face only | Writes a new face crop from the selected rectangle. Original-folder photo remains unchanged. |
+| Relabel face crop only | Keeps existing face bytes and writes them under the corrected ID in the correction outputs. Original stays in its folder. |
+| Relabel crop + move original | Writes the corrected-ID face output and moves the original into that individual's registered source folder. |
+| Relabel crop + copy original | Writes the corrected-ID face output and creates an original-photo copy under that individual, retaining the old-folder original. |
+| Crop original-folder photo | Replaces the actual folder photo with the selected region, after preserving its pre-edit bytes. |
+| Move original / Copy original | Moves or copies the source photo to the target folder. A rectangle optionally isolates the intended individual as part of that operation. |
+| Keep / Exclude / Defer | Records the disposition for the corrected dataset; preserved source and historical crop files remain available. |
+
+Relabel operations use the existing/current face crop. For a photograph with no
+face crop, first use **Recrop face only** to create one. To retain more than one
+individual from a photograph, choose **Keep existing face too** when adding a
+face crop. All derived samples retain their common source-group identifier.
+
+**Original-folder operations really change the master-folder files when Apply
+is clicked.** Each operation preserves old bytes, handles destination-name
+collisions, and uses atomic replacements rather than writing through existing
+hard links. For a combined relabel and source operation, the preview shows both
+the face output and the source-photo output.
+
+Use your own CSD3 SSH/VS Code connection. Because the login node is shared, the
+editor checks that the forwarded connection belongs to the same user as the
+server before accepting correction requests.
+
+Files are saved below `reports/crop_review_2026-11-10/corrections/`:
+
+- `state.json`: correction drafts, applied histories and revision checks.
+- `faces/`: corrected face outputs, arranged by transaction, split and target ID.
+- `backups/`: pre-edit bytes needed to undo changes to original-folder files.
+- `transactions/`: write-ahead journals and applied operation provenance.
+- `previews/`: generated previews and source/target checks for a proposed apply.
+
+**Download correction backup** exports draft decisions, applied effects and
+transaction metadata. It does not contain the image/backup bytes: retain the
+whole correction directory on CSD3 as well. The folder is already ignored by Git.
+
+Historical active face crops and `data/macaque_faces/splits.json` are not
+overwritten by editor actions. After the correction pass, assemble a new training
+generation from the approved corrections, exclusions and source changes before
+retraining. An original-folder edit marks its face output as needing verification;
+recrop the face or verify its replacement before that final assembly. See the
+[correction and retraining plan](../reports/markdown/CORRECTION_PLAN_2026-11-24.md).
+
 ## Progress and backups
 
 While the server is running, decisions save atomically to
@@ -171,8 +240,9 @@ more than finishing the grid quickly.
 
 ## Rebuild or use another dataset
 
-Pillow is required to build thumbnails; serving uses only Python's standard
-library. Run from the repository root:
+Pillow is required to build thumbnails and use the correction editor. Serving
+the original review grid alone uses Python's standard library. Run from the
+repository root:
 
 ```bash
 /rds/user/ylj20/hpc-work/venvs/macaque/bin/python \
