@@ -76,3 +76,8 @@ data/chimpanzee_faces/processed/
 
 # Generated manual-review grids and local review progress
 /reports/crop_review_*/
+
+# Published reviewed image generations and isolated builds
+/data/macaque_faces/reviewed_*/
+/data/macaque_faces/.reviewed_*.build-*/
+/data/macaque_faces/.reviewed_*.build.lock

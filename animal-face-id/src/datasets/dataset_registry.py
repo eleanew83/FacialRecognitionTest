@@ -35,6 +35,8 @@ def _instantiate_dataset(name: str, split: str, config: dict[str, Any]) -> Any:
             split=split,
             transform=transforms,
             identity_registry=config.get("identity_registry"),
+            evaluation_subset=config.get("evaluation_subset"),
+            evaluation_subset_sha256=config.get("evaluation_subset_sha256"),
         )
 
     msg = f"Unknown dataset '{name}'. Supported: animal_faces, macaque_faces."

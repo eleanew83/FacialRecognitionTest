@@ -27,6 +27,9 @@ class SplitIntegrityTests(unittest.TestCase):
                          source_photo_key("photo.jpg"))
         self.assertEqual(source_photo_key("photo_abcdef12.jpg"), "photo")
         self.assertEqual(source_photo_key("photo.JPG_crop1.JPG"), "photo")
+        self.assertEqual(source_photo_key("photo_cropped .jpg"), "photo")
+        self.assertEqual(source_photo_key("photo_cropped _crop0.jpg"), "photo")
+        self.assertEqual(source_photo_key(" photo_cropped .JPG "), "photo")
         self.assertNotEqual(source_photo_key("photo_1.jpg"), source_photo_key("photo_2.jpg"))
         self.assertNotEqual(source_photo_key("photo_20221230.jpg"),
                             source_photo_key("photo_20221231.jpg"))

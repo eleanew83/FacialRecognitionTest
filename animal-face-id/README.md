@@ -49,14 +49,28 @@ A result for a new/unknown individual. The model's classification confidence may
 
 ## Dataset
 
-**Split integrity:** exact duplicate images were found in the historical evaluation. The active manifest and crop folders include the reviewed label corrections, and dataset loading verifies actual file/pixel hashes, label conflicts, and the complete folder inventory. Distinct crops sharing a filename are retained. The earlier scores are historical; retrain with `configs/train_macaque_arcface_clean.yaml` for results on the repaired data.
+The current reviewed generation is [`data/macaque_faces/reviewed_2026-11-25/`](data/macaque_faces/reviewed_2026-11-25/), published on
+25 November 2026. [`current_dataset.json`](data/macaque_faces/current_dataset.json)
+records its exact paths and counts.
 
-- **156 identity labels**, **6665** train / **1302** val / **1498** test face crops after the reviewed corrections on 7 October 2026.
-- Only exact byte or decoded RGB duplicates are consolidated. Previously trained-on exact image content stays out of validation/test; filenames do not determine whether crops are duplicates. See [Data Preparation](./docs/DATA_PREPARATION.md) for the audit and future split commands.
-- This repo consumes:
-  - the crops under `…/yolo_detection/.../macaque_crops/{train,val,test}/<ID>/`, and
-  - the split manifest `data/macaque_faces/splits.json` (each entry `{"id", "path"}`).
-- The earlier imbalance statistics refer to the historical split; recompute them for the repaired manifest.
+- **9,583 original photographs** in `originals/`, arranged by current group, sex and identity.
+- **9,574 reviewed face crops across 149 identities** in `faces/`:
+  **6,876 train / 1,271 validation / 1,427 test**.
+- The training manifest is `faces/splits.json`; the generation includes its canonical identity registry and correction audit.
+- Exact bytes and decoded face pixels are checked. Distinct crops are retained, and all derivatives of a camera photograph stay in one split.
+- Active macaque training configs point to this generation. Train a fresh model and rebuild its gallery before using it for current-dataset results. Historical checkpoints and metrics remain historical.
+
+For comparisons with earlier results, the main configs now use the
+hash-locked **1,236 common validation / 1,391 common test photos**
+across all 149 identities. The comparison subset leaves the physical reviewed split intact; its
+training set still contains 6,876 crops. The previous best ±45° + mean-TTA model scores
+**85.19% Top-1 / 83.57% macro-F1** on this exact common test set.
+See [the comparison summary](data/macaque_faces/comparison_2026-11-25/summary.json)
+and [comparison instructions](docs/DATA_PREPARATION.md#comparison-with-previous-results).
+
+The earlier `data/macaque_faces/splits.json` and YOLO crop tree are preserved as
+inputs to the completed review. See [Data Preparation](docs/DATA_PREPARATION.md)
+for the generation policy and provenance.
 
 ---
 

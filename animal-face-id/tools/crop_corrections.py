@@ -216,6 +216,12 @@ class CorrectionStore:
             paths['full'] = ('Preserved full source before face cropping', confined(self.full_root, self.full_root / source_path))
         for name, item in effects['copies'].items():
             paths[name] = ('Copied original — ' + item['identity'], confined(self.source_root, item['path']))
+        # Offline boxes refer to the export-time photograph, even if a previous
+        # imported operation has since cropped or moved its live original.
+        index = self.root / 'offline_inputs' / 'index.json'
+        if index.exists():
+            for name, item in json.loads(index.read_text()).get(key, {}).items():
+                paths[name] = (item['label'], confined(index.parent, item['path']))
         return paths
 
     def selected_image(self, key, variant, state=None):

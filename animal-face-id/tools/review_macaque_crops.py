@@ -333,6 +333,25 @@ def handler_for(store):
                 store.corrections = module.CorrectionStore(store)
             return store.corrections
 
+    def originals():
+        with store.lock:
+            if not hasattr(store, 'originals'):
+                spec = importlib.util.spec_from_file_location('macaque_original_editor', Path(__file__).with_name('original_photo_editor.py'))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                store.originals = module.OriginalPhotoStore(store)
+            return store.originals
+
+    def organized_faces():
+        source_store = originals()
+        with store.lock:
+            if not hasattr(store, 'organized_faces'):
+                spec = importlib.util.spec_from_file_location('macaque_organized_faces', Path(__file__).with_name('organized_face_editor.py'))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                store.organized_faces = module.OrganizedFaceStore(store, source_store)
+            return store.organized_faces
+
     class Handler(BaseHTTPRequestHandler):
         def send(self, data, mime, code=200, filename=None):
             self.send_response(code)
@@ -350,6 +369,16 @@ def handler_for(store):
 
         def do_GET(self):
             route = unquote(urlsplit(self.path).path)
+            if route == '/organized-faces' or route.startswith('/api/organized-faces/'):
+                try:
+                    return organized_faces().handle_get(self, route, urlsplit(self.path).query)
+                except (ValueError, OSError) as exc:
+                    return self.send_json({'error': str(exc)}, 400)
+            if route == '/originals' or route.startswith('/api/originals/'):
+                try:
+                    return originals().handle_get(self, route, urlsplit(self.path).query)
+                except (ValueError, OSError) as exc:
+                    return self.send_json({'error': str(exc)}, 400)
             if route == '/corrections' or route.startswith('/api/corrections/'):
                 try:
                     return corrections().handle_get(self, route, urlsplit(self.path).query)
@@ -390,7 +419,7 @@ def handler_for(store):
                 self.send_json({'error': 'Image unavailable on this machine.'}, 404)
 
         def do_POST(self):
-            if self.path != '/api/review' and not self.path.startswith('/api/corrections/'):
+            if self.path != '/api/review' and not self.path.startswith(('/api/corrections/', '/api/originals/', '/api/organized-faces/')):
                 return self.send_json({'error': 'Not found.'}, 404)
             origin = self.headers.get('Origin')
             if origin and origin != 'http://' + self.headers.get('Host', ''):
@@ -402,6 +431,10 @@ def handler_for(store):
                 if not 0 < length <= 16_000_000:
                     raise ValueError('Invalid request size.')
                 payload = json.loads(self.rfile.read(length))
+                if self.path.startswith('/api/organized-faces/'):
+                    return organized_faces().handle_post(self, self.path, payload)
+                if self.path.startswith('/api/originals/'):
+                    return originals().handle_post(self, self.path, payload)
                 if self.path.startswith('/api/corrections/'):
                     return corrections().handle_post(self, self.path, payload)
                 result = store.update(payload)
@@ -517,7 +550,7 @@ def open_review_server(args):
             except OSError as exc:
                 if exc.errno != errno.EADDRINUSE:
                     raise
-            if attempt == 0 and stop_previous_review_server(port):
+            if attempt == 0 and not getattr(args, 'no_replace', False) and stop_previous_review_server(port):
                 # Include any decisions saved by the old server during shutdown.
                 store = ReviewStore(args.output)
                 continue
@@ -537,7 +570,9 @@ def serve(args):
             threading.Thread(target=server.shutdown, daemon=True).start()
 
     old_handler = signal.signal(signal.SIGTERM, stop)
-    print(f'Open http://localhost:{args.port}\nProgress saves to {args.output.resolve() / "review_state.json"}\nUse VS Code port forwarding or SSH -L for a remote HPC session. Ctrl-C stops the server.', flush=True)
+    page = '/organized-faces' if args.command == 'faces-serve' else '/originals' if args.command == 'source-serve' else ''
+    progress = 'original_photo_edits/face_stage/corrections/state.json' if args.command == 'faces-serve' else 'original_photo_edits/state.json' if page else 'review_state.json'
+    print(f'Open http://localhost:{args.port}{page}\nProgress saves to {args.output.resolve() / progress}\nUse VS Code port forwarding or SSH -L for a remote HPC session. Ctrl-C stops the server.', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -560,12 +595,49 @@ def main():
     originals.add_argument('--workers', type=int, default=4, choices=range(1, 17))
     show = commands.add_parser('serve', help='Open the review UI with source-photo access and disk autosave.')
     show.add_argument('--port', type=int, default=8765, help='Starting port; replace your previous crop-review server or choose the next available port.')
-    for command in (make, show, originals):
+    portable = commands.add_parser('offline-export', help='Package the correction editor and full-size photos for disconnected laptop work.')
+    portable.add_argument('--scope', choices=('attention', 'work', 'all'), default='attention',
+                          help='Flagged images (default), flagged + uncertain filenames, or all images.')
+    portable.add_argument('--workers', type=int, default=4, choices=range(1, 17))
+    restore = commands.add_parser('offline-import', help='Validate downloaded offline results; add --apply to perform the queued corrections.')
+    restore.add_argument('results', type=Path)
+    restore.add_argument('--apply', action='store_true', help='Apply confirmed instructions with normal backups and undo journals. Safe to retry.')
+    source_build = commands.add_parser('source-build', help='Find related numbered archive frames for whole-monkey original-photo editing.')
+    source_build.add_argument('--archive', type=Path, default=ROOT.parent.parent / 'Gibraltar_Macaques_Photos')
+    source_add = commands.add_parser('source-add-goblin', help='Append visually flagged Goblin photos without replacing saved original-photo work.')
+    source_add.add_argument('--audit', type=Path, default=DEFAULT_OUTPUT / 'goblin_audit_2026-11-25/all_95_goblin_images.csv')
+    source_show = commands.add_parser('source-serve', help='Serve the separate whole-monkey original-photo editor without stopping existing review servers.')
+    source_show.add_argument('--port', type=int, default=8767)
+    source_show.set_defaults(no_replace=True)
+    faces_show = commands.add_parser('faces-serve', help='Serve Stage 2 face cropping for completed original-photo batches, separately from existing servers.')
+    faces_show.add_argument('--port', type=int, default=8768)
+    faces_show.set_defaults(no_replace=True)
+    for command in (make, show, originals, portable, restore, source_build, source_add, source_show, faces_show):
         command.add_argument('--output', type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
     try:
-        {'build': build, 'serve': serve, 'add-sources': add_sources}[args.command](args)
-    except RuntimeError as exc:
+        if args.command in ('source-build', 'source-add-goblin'):
+            spec = importlib.util.spec_from_file_location('original_photo_editor', Path(__file__).with_name('original_photo_editor.py'))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if args.command == 'source-build':
+                module.build_catalog(ReviewStore(args.output), args.archive)
+            else:
+                result = module.append_goblin_candidates(ReviewStore(args.output), args.audit)
+                if result['added_frames'] == 0:
+                    print('Goblin candidates already present: ' + json.dumps(result))
+        elif args.command in ('source-serve', 'faces-serve'):
+            if not (args.output / 'original_photo_edits/catalog.json').exists():
+                raise ValueError('Run source-build once before starting the original-photo editor.')
+            serve(args)
+        elif args.command.startswith('offline-'):
+            spec = importlib.util.spec_from_file_location('offline_corrections', Path(__file__).with_name('offline_corrections.py'))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.run(args, ReviewStore(args.output))
+        else:
+            {'build': build, 'serve': serve, 'add-sources': add_sources}[args.command](args)
+    except (RuntimeError, ValueError, OSError) as exc:
         parser.exit(1, f'{exc}\n')
 
 

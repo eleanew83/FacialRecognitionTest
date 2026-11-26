@@ -34,8 +34,8 @@ def main() -> None:
                              "Subtracts tau*log(train prior) from logits to boost rare IDs.")
     parser.add_argument("--tag", default=None, help="Optional suffix for output filenames (e.g. 'logitadj').")
     parser.add_argument("--split", choices=("val", "test"), default="test")
-    parser.add_argument("--tta", choices=("none", "mean", "max"), default="none",
-                        help="Pool probabilities across seven rotations from -30 to +30 degrees.")
+    parser.add_argument("--tta", choices=("none", "mean", "max"), default=None,
+                        help="Override config data.evaluation_tta (default none); mean/max pool seven rotations.")
     parser.add_argument("--tta-angles", nargs="+", type=float, default=None,
                         help="Override rotation angles when --tta is mean or max.")
     parser.add_argument("--no-plots", action="store_true", help="Skip plotting for faster comparisons.")

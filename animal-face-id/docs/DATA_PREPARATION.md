@@ -1,11 +1,128 @@
 # Data Preparation Guide
 
-The active dataset uses a checked manifest at `data/macaque_faces/splits.json`.
-Each record contains an identity, its path relative to `data.raw_root`, file and
-decoded RGB hashes, and the file size/timestamp checked during the repair.
+## Current reviewed generation, 25 November 2026
 
-The current dataset has **156 identity labels** and **6665 train / 1302 validation /
-1498 test crops** (9465 total). All 156 labels appear in every split.
+The active dataset is [`../data/macaque_faces/reviewed_2026-11-25/`](../data/macaque_faces/reviewed_2026-11-25/).
+The current-generation pointer is
+[`current_dataset.json`](../data/macaque_faces/current_dataset.json).
+It contains **9,583 original photographs** and **9,574 face crops**
+across **149 canonical identities**, split into
+**6,876 train / 1,271 validation / 1,427 test**.
+
+`originals/` contains independent, checksum-verified copies of the completed active
+identity folders. `faces/` combines unchanged reviewed historical crops, earlier
+manual face corrections and the 74 approved crops from organised originals.
+Excluded, retired and superseded crops are omitted. Infant-only original-photo
+cases are retained under the user's policy that infants do not count as additional
+individuals. The two explicitly selected Goblin retirements were applied with
+transaction backups. The deferred Wally/Pom RAW frame remains only in the preserved
+archive and is absent from this generation.
+
+`faces/splits.json` includes byte/RGB hashes, canonical identity metadata, original
+photo paths and camera-source groups. Distinct face crops are preserved; exact
+bytes or decoded RGB duplicates are consolidated. Every camera photograph and its
+derivatives remain in one split, including different individuals from one photo.
+Historical membership is retained where possible, with shared-frame conflicts
+assigned to train first and identity coverage repaired as whole groups. Each
+identity occurs in all three splits. These new splits require fresh training;
+historical checkpoints and galleries are not results on this generation.
+
+`summary.json` contains validation results; `audit/` contains input snapshots,
+retained-face provenance, exclusions, transaction journals and pre-activation
+configs. Active macaque configs now use this generation's face root, manifest and
+registry. The historical review manifest and registry remain unchanged.
+
+For a future completed review, assemble into a **new** output directory:
+
+```bash
+python tools/assemble_reviewed_dataset.py --output data/macaque_faces/reviewed_NEW_DATE
+python tools/assemble_reviewed_dataset.py --output data/macaque_faces/reviewed_NEW_DATE --activate-only
+```
+
+The build publishes only after file/content, folder inventory, identity coverage
+and source-group separation checks pass. Activation backs up existing configs and
+rolls them back if updating the references fails. Failed build stages are kept
+separately and do not become the active generation.
+
+The sections below preserve the earlier repairs and their historical counts.
+
+## Comparison with previous results
+
+The November generation was **not randomly reshuffled**. Of 9,389 unchanged face
+crops, **9,239 retained their split** and **150 moved** so derivatives of a camera
+photo stay together. New/replacement faces follow those camera-source groups.
+Physical split counts changed from **6,665 / 1,302 / 1,498** to
+**6,876 / 1,271 / 1,427** (train/validation/test).
+The final extra test-to-training move fixes a trailing-space filename that hid
+a shared camera frame; it is recorded with backups in the generation's audit.
+
+For a matched evaluation, [`benchmark.json`](../data/macaque_faces/comparison_2026-11-25/benchmark.json)
+freezes **1,236 validation** and **1,391 test** images
+that retain identical bytes, RGB fingerprints and canonical identities in the
+corresponding old and reviewed splits. Both subsets cover all **149 identities**.
+Photos exposed in training, and test photos exposed in validation, are excluded
+by camera frame and content. The primary provenance scope is the October
+canonical dataset with a preserved manifest, not the unavailable pre-repair
+July training folds.
+
+The main macaque configs use `data.evaluation_subset` and its SHA-256 to select
+these samples **after validating the full dataset**. Training still uses all
+6,876 reviewed training images. Class indices remain bound to the complete
+149-class taxonomy. A changed benchmark or missing/changed sample fails loading;
+there is no automatic replacement of evaluation photos. Subset selection does not rewrite the physical face folders
+or the published split manifest.
+
+The primary reference is the validation-selected canonical ArcFace ±45° checkpoint
+evaluated with seven-angle mean probability averaging on 29 October 2026. Its complete saved predictions reproduce the original full-test
+metrics exactly. Restricted to the common test set, its baseline is
+**Top-1 85.1905%**, **macro-F1 83.5737%**.
+The original full-test Top-1 was **85.1135%** on 1,498 photos.
+These are different evaluation cohorts; compare future models with the common
+baseline. Older 156-identity headline scores are historical and use a different
+taxonomy and photo set.
+
+Two controlled training configurations keep model, augmentation, optimiser,
+epoch budget, seed and common validation/test photos matched. Only training data
+differs (6,665 pre-review versus 6,876 reviewed crops):
+
+```bash
+sbatch scripts/run_train_eval_gpu.sh configs/compare_before_review.yaml before_review_common
+sbatch scripts/run_train_eval_gpu.sh configs/compare_after_review.yaml after_review_common
+```
+
+These configurations are prepared; no new training results are claimed. The saved
+historical checkpoint was selected using its original validation set, so retrain
+both configurations for a controlled measurement of the review's training-data
+effect. The historical-baseline config is protected from normal dataset-reference
+activation.
+
+Evaluation result filenames include the benchmark name, preserving historical
+reports. After evaluating a candidate model, compare its complete per-image CSV:
+
+```bash
+python tools/compare_reviewed_results.py compare \
+  --benchmark data/macaque_faces/comparison_2026-11-25/benchmark.json \
+  --predictions /path/to/new_hard_examples.csv \
+  --metrics /path/to/new_metrics_summary.json \
+  --output /path/to/paired_comparison.json
+```
+
+The tool matches exact photos regardless of CSV order, checks their current
+bytes and canonical labels, reports Top-1 and macro-F1 deltas, and gives a paired
+accuracy interval by resampling camera-source groups. That interval describes
+evaluation-sample variability, not variation between training seeds. The primary
+comparison uses seven-angle mean TTA and no logit adjustment, matching the reference.
+Both matched configs use the original winning ±45° training policy. The evaluation
+CLI reads `data.evaluation_tta: mean` automatically; `--tta none` explicitly requests
+a secondary single-view score. The earlier aug3 single-view reference is preserved
+in `comparison_2026-11-25/reference_aug3_none/`. Alternative
+evaluation methods should be reported separately.
+
+For a secondary score on all 1,427 reviewed test crops, use
+`data/macaque_faces/comparison_2026-11-25/eval_full_reviewed.yaml` with the same
+candidate checkpoint. Keep that score separate from the paired common-cohort
+comparison. [`summary.json`](../data/macaque_faces/comparison_2026-11-25/summary.json)
+and `split_changes.csv` record the exact counts and changes.
 
 ## Reviewed labels and exact duplicate policy, 7 October 2026
 

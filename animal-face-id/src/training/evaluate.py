@@ -310,16 +310,13 @@ def run_final_evaluation(
     out_dir: str | Path = "artifacts/final_eval",
     write_report: bool = True,
     split: str = "test",
-    tta_mode: str = "none",
+    tta_mode: str | None = None,
     tta_angles=None,
     make_plots: bool = True,
 ) -> Dict[str, Any]:
     """Evaluate *ckpt* on val/test with optional rotation TTA; write metrics."""
     if split not in {"val", "test"}:
         raise ValueError("Evaluation split must be val or test")
-    if tta_mode not in {"none", "mean", "max"}:
-        raise ValueError("TTA mode must be none, mean, or max")
-    angles = list(ROTATION_ANGLES if tta_angles is None else tta_angles) if tta_mode != "none" else []
     config_path = config if isinstance(config, str) else "<dict>"
     if isinstance(config, str):
         config = load_config(config)
@@ -327,6 +324,10 @@ def run_final_evaluation(
         config = config.as_dict()
 
     data_cfg = dict(config["data"])
+    tta_mode = data_cfg.get("evaluation_tta", "none") if tta_mode is None else tta_mode
+    if tta_mode not in {"none", "mean", "max"}:
+        raise ValueError("TTA mode must be none, mean, or max")
+    angles = list(ROTATION_ANGLES if tta_angles is None else tta_angles) if tta_mode != "none" else []
     data_cfg.pop("tta_angles", None)
     if tta_mode != "none":
         data_cfg["tta_angles"] = angles
@@ -341,6 +342,9 @@ def run_final_evaluation(
     )
     class_names = list(getattr(test_loader.dataset, "classes",
                                [str(i) for i in range(data_cfg.get("num_classes", 0))]))
+    benchmark = getattr(test_loader.dataset, "evaluation_benchmark", None)
+    if benchmark:
+        tag = f"{tag}_{benchmark['name']}" if tag else benchmark['name']
 
     model, head = _load_checkpoint(config, ckpt, dev)
     registry = discover_registry(data_cfg["raw_root"], data_cfg.get("identity_registry")) if data_cfg.get("dataset_name") == "macaque_faces" else None
@@ -389,6 +393,7 @@ def run_final_evaluation(
         "identity_registry_version": registry.payload["version"] if registry else None,
         "classifier_scoring": "Alias probabilities summed into canonical identities" if len(head.output_class_names) != len(class_names) else "Original classifier outputs",
         "evaluation_tag": tag,
+        "evaluation_benchmark": benchmark,
         "top1": basic["top1"],
         "topk": topk,
         "f1_macro": basic["f1_macro"],

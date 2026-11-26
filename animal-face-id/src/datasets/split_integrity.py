@@ -23,12 +23,12 @@ def source_photo_key(path: str | Path) -> str:
     The key spans identity folders: two faces from one source photo belong
     in the same split.
     """
-    name = Path(path).name.casefold()
+    name = Path(path).name.casefold().strip()
     while True:
         previous = name
         if Path(name).suffix in IMAGE_EXTENSIONS:
-            name = Path(name).stem
-        name = re.sub(r"(?:_crop\d+|_cropped|_(?=[0-9a-f]{8}$)(?=[0-9a-f]*[a-f])[0-9a-f]{8})$", "", name)
+            name = Path(name).stem.strip()
+        name = re.sub(r"(?:_crop\d+|_cropped|_(?=[0-9a-f]{8}$)(?=[0-9a-f]*[a-f])[0-9a-f]{8})$", "", name).strip()
         if name == previous:
             break
     return re.sub(r"\s+", " ", name).strip()

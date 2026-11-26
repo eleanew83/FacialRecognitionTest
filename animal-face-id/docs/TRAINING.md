@@ -2,14 +2,66 @@
 
 This guide explains how to train the macaque face identification model using the prepared dataset. The entire training process is controlled by a configuration file.
 
+## Reviewed dataset: previous winning policy
+
+The ready-to-run config is [`compare_after_review.yaml`](../configs/compare_after_review.yaml).
+It matches the previous 85.11% winner: ImageNet-pretrained ResNet50, 256-dimensional
+ArcFace embeddings, margin 0.5/scale 30, the complete aggressive ±45° augmentation
+profile, batch 32, eight workers, 30 epochs, AdamW at 0.0003, weight decay 0.01,
+cosine schedule, mixed precision, gradient clipping 1.0 and seed 42.
+
+Training uses all **6,876 reviewed training crops**. Existing split membership is
+retained wherever source-photo grouping permits; the job does not resplit data.
+The fixed common cohorts contain **1,236 validation / 1,391 test crops**, covering
+all 149 identities. Checkpoint selection uses ordinary validation images as before;
+the final evaluation averages probabilities over seven rotations from −30° to +30°.
+The previous winner scores 85.19% Top-1 on this exact common test cohort.
+
+Submit one GPU job:
+
+```bash
+cd /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id
+sbatch scripts/run_reviewed_rot45_gpu.sh
+```
+
+This requests the previous resources: one Ampere GPU, eight CPUs, 32 GB RAM and
+two hours. It trains, evaluates with mean TTA and writes a paired comparison
+against the previous ±45° winner automatically. Thread counts and the short
+`TMPDIR` match the working augmentation launcher. A read-only setup check is:
+
+```bash
+bash scripts/run_reviewed_rot45_gpu.sh --check-only
+```
+
+The setup check compares hyperparameters with the preserved winning config,
+checks the split/registry/benchmark inputs and rejects existing run outputs.
+Actual training also validates every image through the dataset loader. The job
+requires CUDA and keeps an exclusive run lock to prevent duplicate runs. It
+snapshots its config and comparison files before training.
+
+Outputs:
+
+- Best weights: `artifacts/compare_after_review_rot45_mean_common_20261125_best.pt`.
+- Last weights and epoch metrics use the same prefix.
+- Snapshots, evaluation outputs and `paired_comparison.json`:
+  `artifacts/reviewed_training/rot45_mean_20261125/`.
+- Scheduler logs: `artifacts/ltr_logs/JOBID_reviewed_rot45.out` and `.err`.
+
+The model starts from the same ImageNet initialization policy as the previous
+winner; it does not fine-tune that saved face checkpoint. Gallery rebuilding is
+a subsequent inference step after the training result is available.
+
 ## 1. Understanding the Configuration Files
 
 All training parameters are defined in YAML files located in the `configs/` directory. You can select a configuration or create a new one to run an experiment.
 
 Here are the key configurations provided:
 
+- **`configs/compare_after_review.yaml`**: recommended reviewed-data training run,
+  using the winning ±45° policy and fixed common evaluation cohorts above.
+
 -   **`configs/train_macaque_arcface_aug2.yaml`**:
-    -   **Purpose**: The main configuration for the current best model.
+    -   **Purpose**: An earlier baseline configuration retained for comparison.
     -   **Backbone**: `resnet50` with an `arcface` head.
     -   **Augmentation**: basic; loss: cross-entropy. Produces `macaque-resnet50-arcface_aug2_best.pt`.
 
@@ -21,7 +73,7 @@ Here are the key configurations provided:
 
 ### Key Parameters to Know
 
--   `data.num_classes`: Must match the number of individuals in your dataset (`156` for the current macaque set).
+-   `data.num_classes`: Must match the number of individuals in your dataset (`149` for the current macaque set).
 -   `model.backbone`: The neural network architecture (e.g., `resnet18`, `resnet50`).
 -   `model.head`: The final layer type. `arcface` is recommended for face ID tasks as it encourages better feature separation than a standard `linear` classifier.
 -   `trainer.max_epochs`: The total number of times the training loop will iterate over the entire dataset.
@@ -39,10 +91,10 @@ To start a training run, you execute the main training script `src/training/trai
 python -m src.training.train --config <path_to_your_config.yaml>
 ```
 
-**Example: Training the current best model:**
+**Example: Training the reviewed model in an existing GPU allocation:**
 
 ```bash
-python -m src.training.train --config configs/train_macaque_arcface_aug2.yaml
+python -m src.training.train --config configs/compare_after_review.yaml
 ```
 
 **Example: Running the long-tail experiment (strong aug + class-balanced loss):**

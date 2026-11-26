@@ -1,5 +1,17 @@
 # Review every macaque crop
 
+The completed review was assembled on **25 November 2026** into
+[`data/macaque_faces/reviewed_2026-11-25/`](../data/macaque_faces/reviewed_2026-11-25/): **9,583 originals** and
+**9,574 face crops across 149 identities**.
+Use [`current_dataset.json`](../data/macaque_faces/current_dataset.json) for the
+current folder paths, and the generation's `summary.json` and `audit/` for
+verification and provenance. Active training configs point to this generation.
+The review grids and correction workspaces below remain the historical decision
+records. Infant-only Goblin cases were retained by policy; the two selected
+Goblin removals were applied with backups. All 74 current organised-original
+face crops were complete when this generation was built.
+
+
 The review grid covers **9,555 images across 149 individuals**: all **9,465
 active recognition crops**, plus **90 original photographs without active
 crops**. The crop manifest contains 6,665 training, 1,302 validation and 1,498
@@ -191,6 +203,236 @@ generation from the approved corrections, exclusions and source changes before
 retraining. An original-folder edit marks its face output as needing verification;
 recrop the face or verify its replacement before that final assembly. See the
 [correction and retraining plan](../reports/markdown/CORRECTION_PLAN_2026-11-24.md).
+
+## Whole-monkey original-photo editor
+
+This is a separate page for fixing the actual identity-folder photographs. The
+initial queue contains **48 frames across 12 sequences**: the 17 photographs
+behind the 18 deferred review entries, plus **31 additional numbered frames**.
+It includes all eight Wally/Pom Canon RAW frames, developed at full resolution
+with the installed `dcraw` tool. Identical filenames across identity folders and
+RAW/JPEG versions of a frame appear together. Related frames are candidates for
+inspection, not automatically incorrect images.
+
+The Goblin visual audit added **58 further photographs**, bringing Stage 1 to
+**106 photographs**. Its complete catalog contains 65 Goblin camera-photo groups
+representing 67 audited files. Following the user's policy, the default Show
+filter is now **Goblin · multiple individuals (excluding infants)**: it shows
+the **33 groups** flagged with another adult or juvenile. Infant-only and possible
+occluded-infant cases do not appear in that view and were retained unchanged by
+policy. The complete catalog remains available through **All photographs**.
+Changing Show resets Photo sequence to All sequences; sequence choices include
+only the selected view's photographs.
+
+All non-infant Goblin cases were reviewed before publishing the generation above.
+The two explicit old-copy retirements were applied with transaction backups.
+An Edit batch can retire selected old copies without creating a new output crop;
+Keep and Defer still record decisions without changing files.
+
+The additions are recorded in `original_photo_edits/goblin_queue_extension.json`;
+an exact pre-extension catalog backup is in `catalog_backups/`. The repeatable
+`source-add-goblin` command appends missing candidates from the visual-audit CSV
+without rebuilding existing records. Updated servers reload an extended catalog
+automatically. Servers started before that capability was added need restarting,
+or use the updated server on port 8769 at `/originals` (and `/organized-faces`
+for Stage 2 on the same port).
+
+The queue groups names ending in short frame counters, for example `Sylv_1`,
+`Sylv2`, `Martin3` and `EL_J4`. It preserves numeric timestamp filenames so it
+does not accidentally group unrelated photographs. The archive was also checked
+for frames within 60 seconds of the timestamp-named Tack photograph; no additional
+frames were found in that interval.
+
+Start the separate server with this **single-line command**, from any directory:
+
+```
+/rds/user/ylj20/hpc-work/venvs/macaque/bin/python /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/tools/review_macaque_crops.py source-serve
+```
+
+Forward port **8767** in VS Code and open **http://localhost:8767/originals**.
+If occupied, the command tries subsequent ports and prints the actual URL. It
+does not stop or replace the existing review/correction servers.
+
+1. Choose a photo sequence or inspect the unfinished queue. The source defaults
+   to the widest available photograph, favouring the untouched archive when
+   dimensions are equal. The archive is `Gibraltar_Macaques_Photos`; the active
+   folder collection being corrected is `Gibraltar_Macaques_Photos_Cleaned_Updated`.
+2. Draw around each **whole visible monkey**, using **Draw another monkey** for
+   additional outputs. Select a rectangle to assign its identity, move it, resize
+   it or adjust original-pixel coordinates. Use **Full resolution** for closer
+   inspection; crop exports always use full-resolution source pixels.
+3. For each output choose **Replace existing** or **Add a new image** in that
+   identity's registered folder. A single existing copy for the identity is
+   selected as its replacement by default; check that choice. New images get
+   distinct names that include the target identity.
+4. Inspect the existing folder copies below the canvas. Explicitly select
+   **Retire this old folder copy** for a wrong assignment that should disappear.
+   Replacing a file and retiring it are mutually exclusive. A new output alone
+   does not remove a wrong old-folder copy.
+5. Click **Preview entire photo batch**. Check every crop, identity, destination
+   path and retirement, then **Apply changes to original folders**. Every output
+   comes from the same untouched source, so creating the first crop does not
+   destroy the source for the next individual.
+6. For related photos that need no changes click **No changes needed — next photo**.
+   This records the photo as checked, keeps its files and advances through the
+   unfinished queue. Find those decisions later using the **No changes needed**
+   filter. Alternatively select **No changes needed — keep current originals**
+   in the operation menu and preview/record it. For uncertain cases choose
+   **Defer** and add notes, then preview and record the decision. Boxes/removal selections are retained as draft context but do not
+   change files for Keep/Defer.
+
+Drafts autosave in the separate workspace. **Download workspace backup** exports
+the source catalog, drafts and applied transaction metadata. Image/backup bytes
+stay on CSD3. Use one editing tab. To change an already applied photo, first use
+**Undo this photo's applied batch**, then adjust and preview the draft again.
+Undo refuses to overwrite later external file edits.
+
+The workspace is `reports/crop_review_2026-11-10/original_photo_edits/`:
+
+- `catalog.json` and `expanded_photo_queue.csv`: grouped source versions, seed
+  notes, numbered frames and existing identity-folder copies.
+- `state.json`: separate draft decisions and applied photo histories.
+- `developed_raw/` and `image_cache/`: full-resolution RAW development and fast
+  browser views. The camera originals remain untouched in the archive.
+- `previews/`, `transactions/`, `backups/`: staged output pixels, write-ahead
+  journals, provenance and pre-edit bytes for rollback/undo.
+
+The initial queue has already been built. For a fresh workspace it can be built
+with `source-build` (optional `--archive /absolute/archive/path`). Rebuilding a
+workspace with saved drafts or applied work is refused to preserve its catalog.
+
+This page updates the active original folders. It records which source/frame
+each output came from and that the face dataset needs verification/rebuilding;
+it does not rewrite the completed review or the existing face-correction state.
+Before retraining, consume this workspace alongside the face corrections,
+regenerate/verify faces for affected originals, apply exclusions and keep
+derivatives of the same photo together when checking train/validation/test splits.
+
+## Stage 2: crop faces after organising originals
+
+The new face workflow uses only **new or replaced originals from applied Edit
+batches** in the whole-monkey editor. **No changes needed** photographs and
+unchanged copies retained within an edited batch do not enter this queue: their
+earlier approved face crops remain in use. Original-photo drafts and deferred
+source decisions are also excluded until their organisation is complete.
+
+Start the face-stage server with this single-line command:
+
+```
+/rds/user/ylj20/hpc-work/venvs/macaque/bin/python /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/tools/review_macaque_crops.py faces-serve
+```
+
+Forward port **8768** and open **http://localhost:8768/organized-faces**. If that
+port is occupied, use the actual port printed by the command. Existing review
+and original-photo servers are left running. Updated servers also expose Stage 1
+at `/originals`, so its link and Stage 2 can be used on the same server.
+
+1. Finish and apply the original-folder changes in Stage 1. Each new/replaced
+   individual image becomes a separate face-stage item under its assigned ID.
+2. Open Stage 2, or click **Reload newly organised originals** if it is already
+   open. The default queue shows unfinished face crops for changed originals.
+3. Check the displayed identity, draw a tight rectangle around that individual's
+   face, and use **Preview changes → Save face crop / decision**. Zoom and the
+   original-pixel coordinate controls work as in the earlier face editor. The
+   identity is fixed to the organised folder; change its assignment in Stage 1
+   if necessary. The whole-monkey original is preserved.
+4. Choose **No usable face** to exclude that face output, or **Defer** when
+   identification/face suitability needs another look. Deferred faces remain
+   unfinished and are available in the Deferred faces filter. Applied face crops
+   and exclusions can be undone in this stage.
+5. Use **Export approved faces + decisions** for the JSON inventory of approved
+   outputs, exclusions and pending decisions. Face images remain on CSD3 under
+   `original_photo_edits/face_stage/corrections/faces/`; drafts and transaction
+   histories are in that workspace's `state.json` and `transactions/`.
+
+Every output records its organised original's hash, parent photo group and
+original-organisation transaction. Undoing/reapplying Stage 1 creates a new
+version: faces from an inactive version are omitted from export. External source
+changes or modified face-output files also prevent their export as approved.
+Reload the page after changing the original organisation.
+
+This stage preserves the earlier review and face-correction workspace. For
+retraining, assemble the new faces together with approved unchanged earlier faces
+and exclusions, consuming the original-photo transactions to replace superseded
+examples. Keep derivatives of the same camera photograph in one split. Exported
+split hints (including `unassigned` for genuinely new photos) are provisional;
+this stage does not itself rebuild the final training manifest or retrain a model.
+
+## Offline correction editor (no CSD3 connection needed while editing)
+
+The portable editor runs by opening a local HTML file on your laptop. It includes
+full-resolution source photographs, existing face crops, identity labels and your
+review notes. It supports the same face-crop, relabel, original-photo crop/move/copy,
+exclude, keep and defer operations. No Python, web server or internet is required
+on the laptop. The online review and correction pages remain separate and available.
+
+1. Download the generated `offline_corrections_*.zip` from
+   `reports/crop_review_2026-11-10/` using VS Code Explorer → right-click → **Download**.
+2. Extract the **whole ZIP** on your laptop. Keep the `assets` folder beside
+   `index.html`, then open `index.html` in Chrome, Edge or Firefox. You can now
+   disconnect from CSD3. Do not try to edit inside the compressed ZIP.
+3. Draw a rectangle, choose the operation/identity, click **Preview changes**, then
+   **Save offline correction**. A saved draft alone is unfinished work; it does
+   not confirm an operation for application to the dataset.
+4. Click **Download results** after every session, and before closing the page.
+   This creates a small JSON file containing your boxes, notes, identities and
+   confirmed operations. Keep the latest download. Browser autosave is convenient
+   but browser storage can be cleared or unavailable, especially for local files.
+5. To resume, reopen the same extracted package. If progress is missing, use
+   **Load results JSON** to restore your latest download. Use one active tab.
+
+The default package includes the **220 flagged images**. The default unfinished
+queue skips corrections already applied when the package was exported, and images
+you have saved offline. Use **Flagged in completed review** or **All images** to
+revisit them. Undo removes the last offline operation for that image; it does not
+undo existing CSD3 corrections.
+
+Photos in the offline package are immutable. Original-photo edits/moves/copies
+are saved as instructions, not performed on your laptop. After queueing an original
+crop or move, you can also queue a face crop: draw its box using the displayed
+**export-time original**, which remains the coordinate reference. The importer
+preserves those original bytes so later boxes remain correct after a source edit.
+To inspect the actual resulting source folder, import the batch, then open the
+online editor or export a fresh package.
+
+To generate another package on CSD3, run this **single-line command**:
+
+```
+/rds/user/ylj20/hpc-work/venvs/macaque/bin/python /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/tools/review_macaque_crops.py offline-export
+```
+
+Use `--scope work` to include flagged images plus uncertain-filename candidates,
+or `--scope all` for the entire database. Each export creates a new package ID.
+Results must be restored into the same package they came from. The CSD3 package
+manifest is retained under `corrections/offline_packages/`; do not delete it.
+
+When ready to apply the corrections, upload the latest results JSON to CSD3.
+First check it (replace the results path with the uploaded file):
+
+```
+/rds/user/ylj20/hpc-work/venvs/macaque/bin/python /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/tools/review_macaque_crops.py offline-import /absolute/path/to/macaque_results.json
+```
+
+This checks the dataset, exported source hashes, identity choices, rectangles and
+whether online corrections have changed. It reports confirmed operations and
+unfinished drafts without changing photographs or correction state. To actually
+perform the confirmed corrections, use the same command with `--apply`:
+
+```
+/rds/user/ylj20/hpc-work/venvs/macaque/bin/python /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/tools/review_macaque_crops.py offline-import /absolute/path/to/macaque_results.json --apply
+```
+
+Import uses the existing backups, transaction journals and undo mechanism.
+Already imported operations are skipped when retrying or importing a later
+download with additional operations. An interrupted batch can be rerun; earlier
+committed operations stay applied. An unexpected change stops the batch, so check
+the error before retrying. Do not edit the same images in the online editor while
+using/importing an offline package. Downloaded results and a copy are retained in
+`corrections/offline_imports/` after successful application. Unconfirmed drafts
+remain in your results file for resuming offline; they are not applied.
+
+Offline correction does not rebuild the training manifest. After all changes,
+assemble/validate the corrected dataset and its splits before retraining.
 
 ## Progress and backups
 

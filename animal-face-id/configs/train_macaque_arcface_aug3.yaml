@@ -1,9 +1,8 @@
-# Canonical names/current groups from the updated master; existing split membership retained.
-name: macaque-resnet50-arcface_aug3_canonical_20261014
+name: macaque-resnet50-arcface_aug3_canonical_20261014_reviewed_20261125
 data:
   dataset_name: macaque_faces
-  raw_root: /rds/user/ylj20/hpc-work/FacialRecognitionTest/yolo_detection/yolo_detection_code/output/macaque_crops
-  splits_path: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/splits.json
+  raw_root: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/faces
+  splits_path: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/faces/splits.json
   batch_size: 32
   num_workers: 8
   image_size: 224
@@ -18,7 +17,9 @@ data:
   - 0.225
   augment: strong
   randaug_magnitude: 5
-  identity_registry: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/identity_registry.json
+  identity_registry: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/identity_registry.json
+  evaluation_subset: /rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/comparison_2026-11-25/benchmark.json
+  evaluation_subset_sha256: da43110d4fa77015d76bf9769ae316f9af78d4223b70760fbff7d9a0017900a3
 model:
   backbone: resnet50
   embedding_dim: 256
@@ -38,8 +39,8 @@ trainer:
   checkpoint_dir: artifacts
   seed: 42
 inference:
-  checkpoint: artifacts/macaque-resnet50-arcface_aug3_canonical_20261014_best.pt
-  gallery_path: artifacts/macaque-resnet50-arcface_aug3_canonical_20261014_gallery.pkl
+  checkpoint: artifacts/macaque-resnet50-arcface_aug3_canonical_20261014_reviewed_20261125_best.pt
+  gallery_path: artifacts/macaque-resnet50-arcface_aug3_canonical_20261014_reviewed_20261125_gallery.pkl
   knn:
     metric: cosine
     top_k: 5

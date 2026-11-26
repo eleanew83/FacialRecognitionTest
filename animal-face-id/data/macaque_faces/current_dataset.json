@@ -1,0 +1,30 @@
+{
+  "generation": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25",
+  "originals": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/originals",
+  "faces": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/faces",
+  "splits_path": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/faces/splits.json",
+  "identity_registry": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/identity_registry.json",
+  "summary": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/reviewed_2026-11-25/summary.json",
+  "original_photo_count": 9583,
+  "face_crop_count": 9574,
+  "identity_count": 149,
+  "split_counts": {
+    "train": 6876,
+    "val": 1271,
+    "test": 1427
+  },
+  "training_ready": true,
+  "model_and_gallery_retraining_required": true,
+  "activated_at": "2026-11-25T23:14:51.448606+00:00",
+  "comparison_protocol": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/comparison_2026-11-25/benchmark.json",
+  "comparison_summary": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/data/macaque_faces/comparison_2026-11-25/summary.json",
+  "primary_evaluation_counts": {
+    "val": 1236,
+    "test": 1391
+  },
+  "split_revision": 2,
+  "comparison_protocol_sha256": "da43110d4fa77015d76bf9769ae316f9af78d4223b70760fbff7d9a0017900a3",
+  "comparison_configured_at": "2026-11-25T23:41:14.669606+00:00",
+  "preferred_training_config": "/rds/user/ylj20/hpc-work/FacialRecognitionTest/animal-face-id/configs/compare_after_review.yaml",
+  "preferred_evaluation_tta": "mean"
+}

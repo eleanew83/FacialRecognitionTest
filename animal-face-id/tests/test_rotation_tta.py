@@ -104,16 +104,17 @@ class RotationTTATests(unittest.TestCase):
                           "path": [f"image_{i}.jpg" for i in range(5)]}])
         head = torch.nn.Linear(12, 5)
         head.output_class_names = list(loader.dataset.classes)
-        config = {"data": {"dataset_name": "animal_faces", "num_classes": 5},
+        config = {"data": {"dataset_name": "animal_faces", "num_classes": 5, "evaluation_tta": "mean"},
                   "model": {"head": "linear"}}
         with tempfile.TemporaryDirectory() as tmp, \
                 patch("src.training.evaluate.build_dataloader", return_value=loader) as build, \
                 patch("src.training.evaluate._load_checkpoint", return_value=(torch.nn.Flatten(), head)):
             summary = run_final_evaluation(config, "fixture.pt", device="cpu", split="val",
-                                           tta_mode="mean", out_dir=tmp,
+                                           out_dir=tmp,
                                            make_plots=False, write_report=False)
             self.assertEqual(summary["num_samples"], 5)
             self.assertEqual(summary["split"], "val")
+            self.assertEqual(summary["tta_mode"], "mean")
             self.assertEqual(build.call_args.kwargs["split"], "val")
             self.assertEqual(build.call_args.kwargs["config"]["tta_angles"], list(ROTATION_ANGLES))
             with np.load(next(Path(tmp).glob("*_view_probabilities.npz"))) as saved:

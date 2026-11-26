@@ -11,6 +11,7 @@ from torch.utils.data import Dataset
 
 from .split_integrity import validate_manifest
 from .identity_registry import discover_registry
+from .evaluation_subset import select_evaluation_subset
 
 
 class MacaqueFacesDataset(Dataset):
@@ -23,6 +24,8 @@ class MacaqueFacesDataset(Dataset):
         split: str,
         transform: Any | None = None,
         identity_registry: str | Path | None = None,
+        evaluation_subset: str | Path | None = None,
+        evaluation_subset_sha256: str | None = None,
     ) -> None:
         self.raw_root = Path(raw_root)
         self.splits_path = Path(splits_path)
@@ -41,6 +44,10 @@ class MacaqueFacesDataset(Dataset):
         self.samples: List[Dict[str, str]] = payload[self.split]
         all_labels = {item["id"] for entries in payload.values() for item in entries}
         self.class_to_idx: Dict[str, int] = {label: idx for idx, label in enumerate(sorted(all_labels))}
+        self.evaluation_benchmark = None
+        if evaluation_subset is not None and split in {'val', 'test'}:
+            self.samples, self.evaluation_benchmark = select_evaluation_subset(
+                self.samples, split, evaluation_subset, self.classes, evaluation_subset_sha256)
 
         # Sanity check paths
         missing = []
